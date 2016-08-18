@@ -1,44 +1,43 @@
 package com.example.yadav.myapplication2;
 
 import android.content.DialogInterface;
-import android.graphics.Bitmap;
-import android.provider.Settings;
+import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.KeyEvent;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.view.View;
-import android.util.Log;
-import android.view.View.OnClickListener;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
-import com.android.internal.http.multipart.MultipartEntity;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.PersistentCookieStore;
+import com.loopj.android.http.RequestParams;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
+import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.client.CookieStore;
+import cz.msebera.android.httpclient.cookie.Cookie;
+
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String LOG_TAG = "GetSample";
+
     private CheckBox chkKeys;
     private ImageButton settBtn;
     private EditText editTextKey11;
@@ -52,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private Button loginBtn;
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,39 +59,116 @@ public class MainActivity extends AppCompatActivity {
 
         loginBtn = (Button) findViewById(R.id.loginButton);
 
+
+
         loginBtn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
                 RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
                 String url ="http://pradeepyadav.net/login";
                 JSONObject params = new JSONObject();
-                
-// Request a string response from the provided URL.
-                StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                        new Response.Listener<String>() {
-                            @Override
-                            public void onResponse(String response) {
-                                // Display the first 500 characters of the response string.
-                                String toFind = "csrfmiddlewaretoken";
-                                int csrfStart = response.indexOf(toFind);
-                                String csrfTocken = response.substring(csrfStart+28, csrfStart+60);
-                                System.out.println(csrfTocken);
-
-                                // send multi part form data
 
 
-                                // send multi part form data ends here
 
-                            }
-                        }, new Response.ErrorListener() {
+                final AsyncHttpClient client = new AsyncHttpClient();
+
+                final PersistentCookieStore myCookieStore = new PersistentCookieStore(MainActivity.this);
+
+                client.setCookieStore(myCookieStore);
+                myCookieStore.clear();
+                client.get("http://192.168.0.100/logout", new AsyncHttpResponseHandler() {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.i("res" , error.getMessage());
+                    public void onSuccess(int statusCode, Header[] headers, byte[] response) {
 
+                        // called when response HTTP status is "200 OK"
+                        System.out.println(statusCode);
+                        System.out.println("on success - logout");
+
+                        //"X-CSRFToken"
+                    }
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
+                        // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                        System.out.println("on failure - logout");
+                        System.out.println(statusCode);
                     }
                 });
-// Add the request to the RequestQueue.
-                queue.add(stringRequest);
+                client.removeAllHeaders();
+                client.get("http://192.168.0.100/login", new AsyncHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, byte[] response) {
+                        // called when response HTTP status is "200 OK"
+                        Header hdr = headers[5];
+                        Log.i("extracted" , hdr.getValue());
+
+                        List<Cookie> cooks =  myCookieStore.getCookies();
+                        Cookie c = cooks.get(0);
+                        String csrfToken = c.getValue();
+
+                        RequestParams params = new RequestParams();
+                        params.put("username", "admin");
+                        params.put("password", "indiaerp");
+                        params.put("csrfmiddlewaretoken", csrfToken);
+
+                        Log.i("csrf token before login" , csrfToken);
+
+                        client.removeAllHeaders();
+                        //myCookieStore.clear();
+                        client.post("http://192.168.0.100/login", params, new AsyncHttpResponseHandler() {
+                            @Override
+                            public void onSuccess(int statusCode, Header[] headers, byte[] response) {
+                                // called when response HTTP status is "200 OK"
+                                System.out.println("on onSuccess");
+                                System.out.println(headers.getClass());
+
+                                Header hdr = headers[5];
+                                Log.i("extracted" , hdr.getValue());
+                                // i need to get the new csrf token here and update the persistant cookie store
+
+
+                                //"X-CSRFToken"
+
+
+                                //client.addHeader("X-CSRFToken" , csrfToken);
+
+                                client.get("http://192.168.0.100/api/HR/users/?mode=mySelf", new AsyncHttpResponseHandler() {
+                                    @Override
+                                    public void onSuccess(int statusCode, Header[] headers, byte[] response) {
+                                        // called when response HTTP status is "200 OK"
+                                        System.out.println(statusCode);
+                                        //"X-CSRFToken"
+                                    }
+                                    @Override
+                                    public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
+                                        // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                                        System.out.println("on failure");
+                                        System.out.println(statusCode);
+                                        List<Cookie> cooks =  myCookieStore.getCookies();
+                                        Cookie c = cooks.get(0);
+                                        String csrfToken = c.getValue();
+                                        Log.i("csrf after get faiure" , csrfToken);
+
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
+                                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                                System.out.println("on failure");
+                                System.out.println(statusCode);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
+                        // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                        System.out.println("on failure");
+                        System.out.println(statusCode);
+                    }
+                });
+
                 Log.i("TAG" , "clicked");
             }
         });
