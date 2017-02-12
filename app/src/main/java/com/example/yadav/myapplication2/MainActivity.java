@@ -2,6 +2,7 @@ package com.example.yadav.myapplication2;
 
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -23,16 +24,24 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.PersistentCookieStore;
 import com.loopj.android.http.RequestParams;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.client.CookieStore;
+import cz.msebera.android.httpclient.client.HttpClient;
+import cz.msebera.android.httpclient.client.protocol.ClientContext;
 import cz.msebera.android.httpclient.cookie.Cookie;
+import cz.msebera.android.httpclient.protocol.HttpContext;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -64,108 +73,74 @@ public class MainActivity extends AppCompatActivity {
         loginBtn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-                String url ="http://pradeepyadav.net/login";
-                JSONObject params = new JSONObject();
-
-
 
                 final AsyncHttpClient client = new AsyncHttpClient();
 
-                final PersistentCookieStore myCookieStore = new PersistentCookieStore(MainActivity.this);
-
-                client.setCookieStore(myCookieStore);
-                myCookieStore.clear();
-                client.get("http://192.168.0.100/logout", new AsyncHttpResponseHandler() {
+                client.get("http://pradeepyadav.net/login", new AsyncHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, byte[] response) {
-
-                        // called when response HTTP status is "200 OK"
                         System.out.println(statusCode);
-                        System.out.println("on success - logout");
 
-                        //"X-CSRFToken"
-                    }
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
-                        // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                        System.out.println("on failure - logout");
-                        System.out.println(statusCode);
-                    }
-                });
-                client.removeAllHeaders();
-                client.get("http://192.168.0.100/login", new AsyncHttpResponseHandler() {
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, byte[] response) {
-                        // called when response HTTP status is "200 OK"
                         Header hdr = headers[5];
-                        Log.i("extracted" , hdr.getValue());
+                        String headerStr = hdr.getValue();
 
-                        List<Cookie> cooks =  myCookieStore.getCookies();
-                        Cookie c = cooks.get(0);
-                        String csrfToken = c.getValue();
-
+                        Pattern pattern = Pattern.compile("csrftoken=(.*?);");
+                        Matcher matcher = pattern.matcher(headerStr);
+                        String csrftoken = "";
+                        while (matcher.find()) {
+                            csrftoken = matcher.group(1);
+                        }
                         RequestParams params = new RequestParams();
                         params.put("username", "admin");
                         params.put("password", "indiaerp");
-                        params.put("csrfmiddlewaretoken", csrfToken);
+                        params.put("csrfmiddlewaretoken", csrftoken);
 
-                        Log.i("csrf token before login" , csrfToken);
-
-                        client.removeAllHeaders();
-                        //myCookieStore.clear();
-                        client.post("http://192.168.0.100/login", params, new AsyncHttpResponseHandler() {
+                        client.post("http://pradeepyadav.net/login", params, new AsyncHttpResponseHandler() {
                             @Override
                             public void onSuccess(int statusCode, Header[] headers, byte[] response) {
                                 // called when response HTTP status is "200 OK"
-                                System.out.println("on onSuccess");
-                                System.out.println(headers.getClass());
-
-                                Header hdr = headers[5];
-                                Log.i("extracted" , hdr.getValue());
-                                // i need to get the new csrf token here and update the persistant cookie store
-
-
-                                //"X-CSRFToken"
-
-
-                                //client.addHeader("X-CSRFToken" , csrfToken);
-
-                                client.get("http://192.168.0.100/api/HR/users/?mode=mySelf", new AsyncHttpResponseHandler() {
-                                    @Override
-                                    public void onSuccess(int statusCode, Header[] headers, byte[] response) {
-                                        // called when response HTTP status is "200 OK"
-                                        System.out.println(statusCode);
-                                        //"X-CSRFToken"
-                                    }
-                                    @Override
-                                    public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
-                                        // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                                        System.out.println("on failure");
-                                        System.out.println(statusCode);
-                                        List<Cookie> cooks =  myCookieStore.getCookies();
-                                        Cookie c = cooks.get(0);
-                                        String csrfToken = c.getValue();
-                                        Log.i("csrf after get faiure" , csrfToken);
-
-                                    }
-                                });
                             }
-
                             @Override
                             public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
                                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
                                 System.out.println("on failure");
                                 System.out.println(statusCode);
                             }
+                            @Override
+                            public void onFinish() {
+
+                                client.get("http://pradeepyadav.net/api/HR/users/?mode=mySelf", new JsonHttpResponseHandler() {
+                                    @Override
+                                    public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
+                                        // Pull out the first event on the public timeline
+                                        System.out.println(statusCode);
+
+                                        HttpContext cntxt = client.getHttpContext();
+                                        CookieStore cookieStore = (CookieStore) cntxt.getAttribute(ClientContext.COOKIE_STORE);
+
+                                        try {
+                                            final JSONObject obj = response.getJSONObject(0);
+                                            String username =  obj.getString("username");
+                                            System.out.println(username);
+                                        }catch (JSONException e){
+                                            throw  new RuntimeException(e);
+                                        }
+                                    }
+                                    @Override
+                                    public void onFinish() {
+                                        System.out.println("finished");
+
+                                    }
+                                });
+                            }
                         });
                     }
-
                     @Override
                     public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
                         // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                        System.out.println("on failure");
+                        System.out.println("failure");
                         System.out.println(statusCode);
+
                     }
                 });
 
