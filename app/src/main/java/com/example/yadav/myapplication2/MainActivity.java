@@ -1,6 +1,9 @@
 package com.example.yadav.myapplication2;
 
+import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
@@ -24,24 +27,44 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.FileAsyncHttpResponseHandler;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.PersistentCookieStore;
 import com.loopj.android.http.RequestParams;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.NameValuePair;
 import cz.msebera.android.httpclient.client.CookieStore;
 import cz.msebera.android.httpclient.client.HttpClient;
 import cz.msebera.android.httpclient.client.protocol.ClientContext;
 import cz.msebera.android.httpclient.cookie.Cookie;
+import cz.msebera.android.httpclient.impl.client.BasicCookieStore;
+import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
+import cz.msebera.android.httpclient.message.BasicNameValuePair;
 import cz.msebera.android.httpclient.protocol.HttpContext;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.PrivateKey;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import com.example.yadav.myapplication2.User;
+
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -58,7 +81,64 @@ public class MainActivity extends AppCompatActivity {
     private EditText editTextKey23;
     private EditText editTextKey24;
     private Button loginBtn;
+    private User user;
 
+    Context context;
+    private CookieStore httpCookieStore;
+    private AsyncHttpClient client;
+
+
+    private static final String serverURL = "http://pradeepyadav.net";
+
+    protected void getUser(){
+        client.get(serverURL + "/api/HR/users/?mode=mySelf", new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
+                try {
+                    JSONObject usrObj = response.getJSONObject(0);
+                    String username = usrObj.getString("username");
+                    String firstName = usrObj.getString("first_name");
+                    Integer pk = usrObj.getInt("pk");
+                    String lastName = usrObj.getString("last_name");
+                    JSONObject profileObj = usrObj.getJSONObject("profile");
+                    String DPLink = profileObj.getString("displayPicture");
+
+                    user = new User(username ,pk);
+                    user.setFirstName(firstName);
+                    user.setLastName(lastName);
+
+                    client.get(DPLink, new FileAsyncHttpResponseHandler(context) {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, File file) {
+                            // Do something with the file `response`
+                            Bitmap pp = BitmapFactory.decodeFile(file.getAbsolutePath());
+                            user.setProfilePicture(pp);
+                        }
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers,Throwable e, File file) {
+                            // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                            System.out.println("failure");
+                            System.out.println(statusCode);
+                        }
+                    });
+
+                    System.out.println(username);
+                }catch (JSONException e){
+                    throw  new RuntimeException(e);
+                }
+            }
+            @Override
+            public void onFinish() {
+                System.out.println("finished 001");
+
+            }
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                System.out.println("finished failed 001");
+            }
+        });
+    }
 
 
     @Override
@@ -66,39 +146,87 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        context = MainActivity.this.getApplicationContext();
+        httpCookieStore = new PersistentCookieStore(context);
+        client = new AsyncHttpClient();
+
         loginBtn = (Button) findViewById(R.id.loginButton);
-
-
-
         loginBtn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                final AsyncHttpClient client = new AsyncHttpClient();
+                // reading the existing keys
 
-                client.get("http://pradeepyadav.net/login", new AsyncHttpResponseHandler() {
+                File path = context.getFilesDir();
+                final File file = new File(path, ".libreerp.key");
+
+                int length = (int) file.length();
+
+                byte[] bytes = new byte[length];
+
+                try {
+                    FileInputStream in = new FileInputStream(file);
+                    in.read(bytes);
+                    in.close();
+                }catch (FileNotFoundException e){
+
+                }catch (IOException e){
+
+                }
+
+                String contents = new String(bytes);
+                String[] keysArr = contents.split("\n");
+                final String csrftoken = keysArr[0];
+                final String sessionid = keysArr[1];
+
+
+
+
+                BasicClientCookie newCsrftokenCookie = new BasicClientCookie("csrftoken", csrftoken);
+                newCsrftokenCookie.setVersion(1);
+                newCsrftokenCookie.setDomain(serverURL);
+                newCsrftokenCookie.setPath("/");
+                httpCookieStore.addCookie(newCsrftokenCookie);
+
+                BasicClientCookie newSessionidtokenCookie = new BasicClientCookie("sessionid", sessionid);
+                newSessionidtokenCookie.setVersion(1);
+                newSessionidtokenCookie.setDomain(serverURL);
+                newSessionidtokenCookie.setPath("/");
+                httpCookieStore.addCookie(newSessionidtokenCookie);
+
+                client.setCookieStore(httpCookieStore);
+
+
+                getUser();
+
+                client.get(serverURL+ "/login", new AsyncHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, byte[] response) {
                         System.out.println(statusCode);
-
-                        Header hdr = headers[5];
-                        String headerStr = hdr.getValue();
-
-                        Pattern pattern = Pattern.compile("csrftoken=(.*?);");
-                        Matcher matcher = pattern.matcher(headerStr);
-                        String csrftoken = "";
-                        while (matcher.find()) {
-                            csrftoken = matcher.group(1);
-                        }
                         RequestParams params = new RequestParams();
+                        try {
+                            Header hdr = headers[5];
+                            String headerStr = hdr.getValue();
+
+                            Pattern pattern = Pattern.compile("csrftoken=(.*?);");
+                            Matcher matcher = pattern.matcher(headerStr);
+                            String csrftoken = "";
+                            while (matcher.find()) {
+                                csrftoken = matcher.group(1);
+                            }
+                            params.put("csrfmiddlewaretoken", csrftoken);
+                        }catch (ArrayIndexOutOfBoundsException e){
+
+                        }
+
                         params.put("username", "admin");
                         params.put("password", "indiaerp");
-                        params.put("csrfmiddlewaretoken", csrftoken);
 
-                        client.post("http://pradeepyadav.net/login", params, new AsyncHttpResponseHandler() {
+                        client.post(serverURL+ "/login", params, new AsyncHttpResponseHandler() {
                             @Override
                             public void onSuccess(int statusCode, Header[] headers, byte[] response) {
                                 // called when response HTTP status is "200 OK"
+                                System.out.println("on failure");
                             }
                             @Override
                             public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
@@ -108,30 +236,26 @@ public class MainActivity extends AppCompatActivity {
                             }
                             @Override
                             public void onFinish() {
+                                // saving the new cookies to the SD card , in future release this
+                                // should be encrypted and then saved to key storage system of the OS
+                                List<Cookie> lst = httpCookieStore.getCookies();
+                                Cookie csrfCookie = lst.get(0);
+                                Cookie sessionCookie = lst.get(1);
 
-                                client.get("http://pradeepyadav.net/api/HR/users/?mode=mySelf", new JsonHttpResponseHandler() {
-                                    @Override
-                                    public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
-                                        // Pull out the first event on the public timeline
-                                        System.out.println(statusCode);
+                                String csrf = csrfCookie.getValue();
+                                String session = sessionCookie.getValue();
+                                String keys = String.format("%s\n%s",csrf , session) ;
 
-                                        HttpContext cntxt = client.getHttpContext();
-                                        CookieStore cookieStore = (CookieStore) cntxt.getAttribute(ClientContext.COOKIE_STORE);
+                                // writing the new keys
+                                try {
+                                    FileOutputStream stream = new FileOutputStream(file);
+                                    stream.write(keys.getBytes());
+                                    stream.close();
+                                }catch (IOException e){
 
-                                        try {
-                                            final JSONObject obj = response.getJSONObject(0);
-                                            String username =  obj.getString("username");
-                                            System.out.println(username);
-                                        }catch (JSONException e){
-                                            throw  new RuntimeException(e);
-                                        }
-                                    }
-                                    @Override
-                                    public void onFinish() {
-                                        System.out.println("finished");
+                                }
 
-                                    }
-                                });
+                                getUser();
                             }
                         });
                     }
@@ -144,7 +268,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-                Log.i("TAG" , "clicked");
             }
         });
 
