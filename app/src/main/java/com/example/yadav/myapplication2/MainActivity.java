@@ -191,11 +191,56 @@ public class MainActivity extends AppCompatActivity {
             public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
                 System.out.println("finished failed 001");
-                login("admin", "indiaerp");
             }
         });
     }
 
+    static public AsyncHttpClient getHTTPClient(Context context){
+        // reading the existing keys
+        File path = context.getFilesDir();
+        File file = new File(path, ".libreerp.key");
+
+        int length = (int) file.length();
+
+        byte[] bytes = new byte[length];
+
+        try {
+            FileInputStream in = new FileInputStream(file);
+            in.read(bytes);
+            in.close();
+        }catch (FileNotFoundException e){
+
+        }catch (IOException e){
+
+        }
+
+        String contents = new String(bytes);
+        String[] keysArr = contents.split("\n");
+        final String csrftoken = keysArr[0];
+        final String sessionid = keysArr[1];
+
+
+
+
+        BasicClientCookie newCsrftokenCookie = new BasicClientCookie("csrftoken", csrftoken);
+        newCsrftokenCookie.setVersion(1);
+        newCsrftokenCookie.setDomain(serverURL);
+        newCsrftokenCookie.setPath("/");
+
+        CookieStore httpCookieStore = new PersistentCookieStore(context);
+        AsyncHttpClient client = new AsyncHttpClient();
+
+        httpCookieStore.addCookie(newCsrftokenCookie);
+
+        BasicClientCookie newSessionidtokenCookie = new BasicClientCookie("sessionid", sessionid);
+        newSessionidtokenCookie.setVersion(1);
+        newSessionidtokenCookie.setDomain(serverURL);
+        newSessionidtokenCookie.setPath("/");
+        httpCookieStore.addCookie(newSessionidtokenCookie);
+
+        client.setCookieStore(httpCookieStore);
+        return client;
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -209,54 +254,20 @@ public class MainActivity extends AppCompatActivity {
         File path = context.getFilesDir();
         file = new File(path, ".libreerp.key");
 
+
+        // check if the file exist
+        if (file.exists()){
+            Intent intent = new Intent(context, HomeActivity.class);
+            startActivity(intent);
+        }
+
         loginBtn = (Button) findViewById(R.id.loginButton);
         loginBtn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                // reading the existing keys
-
-                int length = (int) file.length();
-
-                byte[] bytes = new byte[length];
-
-                try {
-                    FileInputStream in = new FileInputStream(file);
-                    in.read(bytes);
-                    in.close();
-                }catch (FileNotFoundException e){
-
-                }catch (IOException e){
-
-                }
-
-                String contents = new String(bytes);
-                String[] keysArr = contents.split("\n");
-                final String csrftoken = keysArr[0];
-                final String sessionid = keysArr[1];
-
-
-
-
-                BasicClientCookie newCsrftokenCookie = new BasicClientCookie("csrftoken", csrftoken);
-                newCsrftokenCookie.setVersion(1);
-                newCsrftokenCookie.setDomain(serverURL);
-                newCsrftokenCookie.setPath("/");
-                httpCookieStore.addCookie(newCsrftokenCookie);
-
-                BasicClientCookie newSessionidtokenCookie = new BasicClientCookie("sessionid", sessionid);
-                newSessionidtokenCookie.setVersion(1);
-                newSessionidtokenCookie.setDomain(serverURL);
-                newSessionidtokenCookie.setPath("/");
-                httpCookieStore.addCookie(newSessionidtokenCookie);
-
-                client.setCookieStore(httpCookieStore);
-
-
-                getUser();
-
-
-
+                EditText usernameEdit   = (EditText)findViewById(R.id.usernameEditText);
+                EditText passwordEdit   = (EditText)findViewById(R.id.passwordEditText);
+                login(usernameEdit.getText().toString() , passwordEdit.getText().toString());
             }
         });
 

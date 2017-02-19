@@ -51,6 +51,9 @@ public class User {
     public String getName(){
       return String.format("%s %s", _firstName, _lastName);
     };
+    public String getUsername(){
+        return _username;
+    };
     public Bitmap getProfilePicture(){
         return profilePicture;
     };

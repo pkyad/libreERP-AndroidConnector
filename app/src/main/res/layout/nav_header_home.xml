@@ -17,9 +17,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingTop="@dimen/nav_header_vertical_spacing"
-        android:paddingBottom="@dimen/nav_header_bottom_spacing"
-        app:civ_border_width="1dp"
-        app:civ_border_color="#0b383d"/>
+        android:paddingBottom="@dimen/nav_header_bottom_spacing" />
 
     <TextView
         android:layout_width="match_parent"
