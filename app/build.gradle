@@ -12,6 +12,9 @@ android {
         versionName "1.0"
     }
     buildTypes {
+        debug {
+            debuggable true
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -24,11 +27,13 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:24.1.1'
+    compile 'org.apache.httpcomponents:httpcore:4.4.1'
+    compile 'org.apache.httpcomponents:httpclient:4.5'
+    compile 'com.android.support:appcompat-v7:24.2.1'
     compile 'com.mcxiaoke.volley:library:1.0.19'
     compile 'org.apache.httpcomponents:httpcore:4.4.1'
     compile 'org.apache.httpcomponents:httpclient:4.5'
-    compile 'com.android.support:appcompat-v7:24.1.1'
-    compile 'org.apache.httpcomponents:httpcore:4.4.1'
-    compile 'org.apache.httpcomponents:httpclient:4.5'
     compile 'com.loopj.android:android-async-http:1.4.9'
+    compile 'com.android.support:design:24.2.1'
+    compile 'de.hdodenhof:circleimageview:2.1.0'
 }

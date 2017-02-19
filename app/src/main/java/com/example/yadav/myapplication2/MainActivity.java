@@ -2,10 +2,10 @@ package com.example.yadav.myapplication2;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -19,12 +19,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.FileAsyncHttpResponseHandler;
@@ -33,15 +27,9 @@ import com.loopj.android.http.PersistentCookieStore;
 import com.loopj.android.http.RequestParams;
 
 import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.NameValuePair;
 import cz.msebera.android.httpclient.client.CookieStore;
-import cz.msebera.android.httpclient.client.HttpClient;
-import cz.msebera.android.httpclient.client.protocol.ClientContext;
 import cz.msebera.android.httpclient.cookie.Cookie;
-import cz.msebera.android.httpclient.impl.client.BasicCookieStore;
 import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
-import cz.msebera.android.httpclient.message.BasicNameValuePair;
-import cz.msebera.android.httpclient.protocol.HttpContext;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -52,18 +40,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.PrivateKey;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import com.example.yadav.myapplication2.User;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -82,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText editTextKey24;
     private Button loginBtn;
     private User user;
+    private File file;
 
     Context context;
     private CookieStore httpCookieStore;
@@ -89,6 +69,77 @@ public class MainActivity extends AppCompatActivity {
 
 
     private static final String serverURL = "http://pradeepyadav.net";
+
+    protected void login(final String username , final String password){
+        client.get(serverURL+ "/login", new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] response) {
+                System.out.println(statusCode);
+                RequestParams params = new RequestParams();
+                try {
+                    Header hdr = headers[5];
+                    String headerStr = hdr.getValue();
+
+                    Pattern pattern = Pattern.compile("csrftoken=(.*?);");
+                    Matcher matcher = pattern.matcher(headerStr);
+                    String csrftoken = "";
+                    while (matcher.find()) {
+                        csrftoken = matcher.group(1);
+                    }
+                    params.put("csrfmiddlewaretoken", csrftoken);
+                }catch (ArrayIndexOutOfBoundsException e){
+
+                }
+
+                params.put("username", username);
+                params.put("password", password);
+
+                client.post(serverURL+ "/login", params, new AsyncHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, byte[] response) {
+                        // called when response HTTP status is "200 OK"
+                        System.out.println("on failure");
+                    }
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
+                        // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                        System.out.println("on failure");
+                        System.out.println(statusCode);
+                    }
+                    @Override
+                    public void onFinish() {
+                        // saving the new cookies to the SD card , in future release this
+                        // should be encrypted and then saved to key storage system of the OS
+                        List<Cookie> lst = httpCookieStore.getCookies();
+                        Cookie csrfCookie = lst.get(0);
+                        Cookie sessionCookie = lst.get(1);
+
+                        String csrf = csrfCookie.getValue();
+                        String session = sessionCookie.getValue();
+                        String keys = String.format("%s\n%s",csrf , session) ;
+
+                        // writing the new keys
+                        try {
+                            FileOutputStream stream = new FileOutputStream(file);
+                            stream.write(keys.getBytes());
+                            stream.close();
+                        }catch (IOException e){
+
+                        }
+
+                        getUser();
+                    }
+                });
+            }
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                System.out.println("failure");
+                System.out.println(statusCode);
+
+            }
+        });
+    }
 
     protected void getUser(){
         client.get(serverURL + "/api/HR/users/?mode=mySelf", new JsonHttpResponseHandler() {
@@ -107,12 +158,16 @@ public class MainActivity extends AppCompatActivity {
                     user.setFirstName(firstName);
                     user.setLastName(lastName);
 
+
                     client.get(DPLink, new FileAsyncHttpResponseHandler(context) {
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, File file) {
                             // Do something with the file `response`
                             Bitmap pp = BitmapFactory.decodeFile(file.getAbsolutePath());
                             user.setProfilePicture(pp);
+                            user.saveUserToFile(context);
+                            Intent intent = new Intent(context, HomeActivity.class);
+                            startActivity(intent);
                         }
                         @Override
                         public void onFailure(int statusCode, Header[] headers,Throwable e, File file) {
@@ -136,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
             public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
                 System.out.println("finished failed 001");
+                login("admin", "indiaerp");
             }
         });
     }
@@ -150,15 +206,15 @@ public class MainActivity extends AppCompatActivity {
         httpCookieStore = new PersistentCookieStore(context);
         client = new AsyncHttpClient();
 
+        File path = context.getFilesDir();
+        file = new File(path, ".libreerp.key");
+
         loginBtn = (Button) findViewById(R.id.loginButton);
         loginBtn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
 
                 // reading the existing keys
-
-                File path = context.getFilesDir();
-                final File file = new File(path, ".libreerp.key");
 
                 int length = (int) file.length();
 
@@ -199,74 +255,7 @@ public class MainActivity extends AppCompatActivity {
 
                 getUser();
 
-                client.get(serverURL+ "/login", new AsyncHttpResponseHandler() {
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, byte[] response) {
-                        System.out.println(statusCode);
-                        RequestParams params = new RequestParams();
-                        try {
-                            Header hdr = headers[5];
-                            String headerStr = hdr.getValue();
 
-                            Pattern pattern = Pattern.compile("csrftoken=(.*?);");
-                            Matcher matcher = pattern.matcher(headerStr);
-                            String csrftoken = "";
-                            while (matcher.find()) {
-                                csrftoken = matcher.group(1);
-                            }
-                            params.put("csrfmiddlewaretoken", csrftoken);
-                        }catch (ArrayIndexOutOfBoundsException e){
-
-                        }
-
-                        params.put("username", "admin");
-                        params.put("password", "indiaerp");
-
-                        client.post(serverURL+ "/login", params, new AsyncHttpResponseHandler() {
-                            @Override
-                            public void onSuccess(int statusCode, Header[] headers, byte[] response) {
-                                // called when response HTTP status is "200 OK"
-                                System.out.println("on failure");
-                            }
-                            @Override
-                            public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
-                                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                                System.out.println("on failure");
-                                System.out.println(statusCode);
-                            }
-                            @Override
-                            public void onFinish() {
-                                // saving the new cookies to the SD card , in future release this
-                                // should be encrypted and then saved to key storage system of the OS
-                                List<Cookie> lst = httpCookieStore.getCookies();
-                                Cookie csrfCookie = lst.get(0);
-                                Cookie sessionCookie = lst.get(1);
-
-                                String csrf = csrfCookie.getValue();
-                                String session = sessionCookie.getValue();
-                                String keys = String.format("%s\n%s",csrf , session) ;
-
-                                // writing the new keys
-                                try {
-                                    FileOutputStream stream = new FileOutputStream(file);
-                                    stream.write(keys.getBytes());
-                                    stream.close();
-                                }catch (IOException e){
-
-                                }
-
-                                getUser();
-                            }
-                        });
-                    }
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
-                        // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                        System.out.println("failure");
-                        System.out.println(statusCode);
-
-                    }
-                });
 
             }
         });

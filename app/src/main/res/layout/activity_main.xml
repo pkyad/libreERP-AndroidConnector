@@ -16,7 +16,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Username/Email"
-        android:id="@+id/textViewUsername"
+        android:id="@+id/textViewOldPassword"
         android:layout_marginTop="47dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
@@ -29,18 +29,18 @@
         android:id="@+id/textViewPassword"
         android:layout_marginTop="40dp"
         android:layout_below="@+id/usernameEditText"
-        android:layout_alignRight="@+id/textViewUsername"
-        android:layout_alignEnd="@+id/textViewUsername" />
+        android:layout_alignRight="@+id/textViewOldPassword"
+        android:layout_alignEnd="@+id/textViewOldPassword" />
 
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/usernameEditText"
-        android:layout_alignBaseline="@+id/textViewUsername"
-        android:layout_alignBottom="@+id/textViewUsername"
+        android:layout_alignBaseline="@+id/textViewOldPassword"
+        android:layout_alignBottom="@+id/textViewOldPassword"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:layout_toEndOf="@+id/textViewUsername"
+        android:layout_toEndOf="@+id/textViewOldPassword"
         android:inputType="text"
         android:layout_alignLeft="@+id/loginButton"
         android:layout_alignStart="@+id/loginButton" />
@@ -55,7 +55,7 @@
         android:layout_alignBottom="@+id/textViewPassword"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:layout_toEndOf="@+id/textViewUsername"
+        android:layout_toEndOf="@+id/textViewOldPassword"
         android:layout_alignLeft="@+id/usernameEditText"
         android:layout_alignStart="@+id/usernameEditText" />
 
@@ -260,7 +260,7 @@
         android:background="@null"
         android:layout_alignBottom="@+id/loginButton"
         android:layout_alignTop="@+id/loginButton"
-        android:layout_alignRight="@+id/textViewUsername"
-        android:layout_alignEnd="@+id/textViewUsername" />
+        android:layout_alignRight="@+id/textViewOldPassword"
+        android:layout_alignEnd="@+id/textViewOldPassword" />
 
 </RelativeLayout>
