@@ -21,29 +21,20 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.PersistentCookieStore;
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
-
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 
 public class HomeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private User usr;
+    public User usr;
     private Context context;
     private FragmentManager fragmentManager;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,9 +91,23 @@ public class HomeActivity extends AppCompatActivity
                     .replace(R.id.content_frame, new HomeFragment())
                     .commit();
             setTitle("Home");
+            NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+            int size = navigationView.getMenu().size();
+            for (int i = 0; i < size; i++) {
+                navigationView.getMenu().getItem(i).setChecked(false);
+            }
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void logout(Context context){
+        File path = context.getFilesDir();
+        File file = new File(path, ".libreerp.key");
+        boolean deleted = file.delete();
+        Intent intent = new Intent(context, MainActivity.class);
+        startActivity(intent);
+        finish(); // finish activity
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -127,14 +132,10 @@ public class HomeActivity extends AppCompatActivity
 
             new AlertDialog.Builder(HomeActivity.this)
                 .setTitle("Logout")
-                .setMessage("Are you sure you want to delete this entry?")
+                .setMessage("Are you sure you want to logout ?")
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        File path = context.getFilesDir();
-                        File file = new File(path, ".libreerp.key");
-                        boolean deleted = file.delete();
-                        Intent intent = new Intent(context, MainActivity.class);
-                        startActivity(intent);
+                        logout(context);
                     }
                 })
                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -166,7 +167,7 @@ public class HomeActivity extends AppCompatActivity
             return;
         }
         if (exit) {
-            finish(); // finish activity
+            this.moveTaskToBack(true);
         } else {
             Toast.makeText(this, "Press Back again to Exit.",
                     Toast.LENGTH_SHORT).show();

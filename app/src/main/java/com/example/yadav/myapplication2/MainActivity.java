@@ -6,6 +6,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -18,6 +21,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -40,6 +44,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,23 +67,70 @@ public class MainActivity extends AppCompatActivity {
     private EditText editTextKey24;
     private Button loginBtn;
     private User user;
-    private File file;
+    private File keyFile;
+    private File settingsFile;
+    public static String settingsFileName = ".libreerp.settings";
+    public static String keyFileName = ".libreerp.key";
 
     Context context;
     private CookieStore httpCookieStore;
     private AsyncHttpClient client;
+    static EditText erpPathInput;
+    static String keyText = "";
 
-
-    private static final String serverURL = "http://pradeepyadav.net";
+    private static String serverURL = "";//http://pradeepyadav.net
 
     protected void login(final String username , final String password){
+        if (chkKeys.isChecked()){
+            String key11 = editTextKey11.getText().toString();
+            String key12 = editTextKey12.getText().toString();
+            String key13 = editTextKey13.getText().toString();
+            String key14 = editTextKey14.getText().toString();
+            String key21 = editTextKey21.getText().toString();
+            String key22 = editTextKey22.getText().toString();
+            String key23 = editTextKey23.getText().toString();
+            String key24 = editTextKey24.getText().toString();
+
+            if (key11.equals(key21) && key12.equals(key22) && key13.equals(key23) && key14.equals(key24)){
+                keyText = String.format("%s%s%s%s", key11,key12, key13,key14);
+            }else{
+                String msg;
+                if (key11.isEmpty()){
+                    msg = "Please provide a login key!";
+                }else{
+                    msg = "Keys not matching!";
+                }
+                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }else {
+            keyText = "";
+        }
+
         client.get(serverURL+ "/login", new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] response) {
                 System.out.println(statusCode);
                 RequestParams params = new RequestParams();
+                try{
+                    String res = new String(response, "UTF-8");
+//                    System.out.println(res);
+                }catch (UnsupportedEncodingException e){
+
+                }
                 try {
-                    Header hdr = headers[5];
+                    int ind = -1;
+                    for (int i = 0; i < headers.length; i++){
+                        if(headers[i].getName().equals("Set-Cookie")){
+                            ind= i;
+                            break;
+                        }
+                    }
+                    if(ind == -1){
+                        return;
+                    };
+
+                    Header hdr = headers[ind];
                     String headerStr = hdr.getValue();
 
                     Pattern pattern = Pattern.compile("csrftoken=(.*?);");
@@ -105,29 +158,49 @@ public class MainActivity extends AppCompatActivity {
                         // called when response HTTP status is "4XX" (eg. 401, 403, 404)
                         System.out.println("on failure");
                         System.out.println(statusCode);
+                        String msg;
+                        if(statusCode == 401){
+                            msg ="Wrong username or password";
+                            Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+                        }
+                        else if(statusCode != 302){
+                            msg = String.format("Error while logining : %s", statusCode);
+                            Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+                        }
+
                     }
                     @Override
                     public void onFinish() {
                         // saving the new cookies to the SD card , in future release this
                         // should be encrypted and then saved to key storage system of the OS
                         List<Cookie> lst = httpCookieStore.getCookies();
-                        Cookie csrfCookie = lst.get(0);
-                        Cookie sessionCookie = lst.get(1);
+                        if(lst.isEmpty()){
+                            Toast.makeText(MainActivity.this, String.format("Error , Empty cookie store"), Toast.LENGTH_SHORT).show();
+                        }else{
 
-                        String csrf = csrfCookie.getValue();
-                        String session = sessionCookie.getValue();
-                        String keys = String.format("%s\n%s",csrf , session) ;
+                            if (lst.size() <2){
+                                String msg = String.format("Error while logining, fetal error!");
+                                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+                                return;
+                            }
 
-                        // writing the new keys
-                        try {
-                            FileOutputStream stream = new FileOutputStream(file);
-                            stream.write(keys.getBytes());
-                            stream.close();
-                        }catch (IOException e){
+                            Cookie csrfCookie = lst.get(0);
+                            Cookie sessionCookie = lst.get(1);
 
+                            String csrf = csrfCookie.getValue();
+                            String session = sessionCookie.getValue();
+                            String keys = String.format("%s\n%s",csrf , session) ;
+
+                            // writing the new keys
+                            try {
+                                FileOutputStream stream = new FileOutputStream(keyFile);
+                                stream.write(keys.getBytes());
+                                stream.close();
+                            }catch (IOException e){
+
+                            }
+                            getUser();
                         }
-
-                        getUser();
                     }
                 });
             }
@@ -163,6 +236,7 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, File file) {
                             // Do something with the file `response`
+                            writeConfigFile(context);
                             Bitmap pp = BitmapFactory.decodeFile(file.getAbsolutePath());
                             user.setProfilePicture(pp);
                             user.saveUserToFile(context);
@@ -195,17 +269,43 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void presentServerSettingsDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
+        builder.setTitle("ERP Server");
+        erpPathInput = new EditText(MainActivity.this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        erpPathInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        erpPathInput.setText(serverURL);
+        builder.setView(erpPathInput);
+
+        builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                serverURL = erpPathInput.getText().toString();
+                System.out.println(serverURL);
+            }
+        });
+        builder.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.setIcon(R.drawable.ic_action_gear);
+
+        builder.show();
+    }
+
     static public AsyncHttpClient getHTTPClient(Context context){
         // reading the existing keys
         File path = context.getFilesDir();
-        File file = new File(path, ".libreerp.key");
+        File keyFile = new File(path, keyFileName);
 
-        int length = (int) file.length();
+        int length = (int) keyFile.length();
 
         byte[] bytes = new byte[length];
 
         try {
-            FileInputStream in = new FileInputStream(file);
+            FileInputStream in = new FileInputStream(keyFile);
             in.read(bytes);
             in.close();
         }catch (FileNotFoundException e){
@@ -219,112 +319,101 @@ public class MainActivity extends AppCompatActivity {
         final String csrftoken = keysArr[0];
         final String sessionid = keysArr[1];
 
+        CookieStore httpCookieStoreSt = new PersistentCookieStore(context.getApplicationContext());
+        httpCookieStoreSt.clear();
+        AsyncHttpClient clientSt = new AsyncHttpClient();
 
-
+        String slimedUrl = serverURL.replace("http://", "").replace("https://", "");
 
         BasicClientCookie newCsrftokenCookie = new BasicClientCookie("csrftoken", csrftoken);
         newCsrftokenCookie.setVersion(1);
-        newCsrftokenCookie.setDomain(serverURL);
+        newCsrftokenCookie.setDomain(slimedUrl);
         newCsrftokenCookie.setPath("/");
-
-        CookieStore httpCookieStore = new PersistentCookieStore(context);
-        AsyncHttpClient client = new AsyncHttpClient();
-
-        httpCookieStore.addCookie(newCsrftokenCookie);
-
+        httpCookieStoreSt.addCookie(newCsrftokenCookie);
         BasicClientCookie newSessionidtokenCookie = new BasicClientCookie("sessionid", sessionid);
         newSessionidtokenCookie.setVersion(1);
-        newSessionidtokenCookie.setDomain(serverURL);
+        newSessionidtokenCookie.setDomain(slimedUrl);
         newSessionidtokenCookie.setPath("/");
-        httpCookieStore.addCookie(newSessionidtokenCookie);
+        httpCookieStoreSt.addCookie(newSessionidtokenCookie);
+        clientSt.addHeader("X-CSRFToken" , csrftoken);
+        clientSt.setCookieStore(httpCookieStoreSt);
 
-        client.setCookieStore(httpCookieStore);
-        return client;
+        return clientSt;
     };
+
+    protected void writeConfigFile(Context context){
+
+        JSONObject settJson = new JSONObject();
+        try{
+            settJson.put("domain" , serverURL );
+            settJson.put("keyText" , keyText );
+        }catch (JSONException e){
+        };
+
+        try {
+            FileOutputStream stream = new FileOutputStream(settingsFile);
+            stream.write(settJson.toString().getBytes());
+            stream.close();
+        }catch (IOException e){
+        }
+
+    };
+
+    public static JSONObject getSettingsJson(Context context){
+        File path = context.getFilesDir();
+        File settingsFile = new File(path, settingsFileName);
+
+        int length = (int) settingsFile.length();
+        byte[] bytes = new byte[length];
+
+        try {
+            FileInputStream in = new FileInputStream(settingsFile);
+            in.read(bytes);
+            in.close();
+        }catch (IOException e){
+
+        }
+        String contents = new String(bytes);
+        try{
+            JSONObject settJson = new JSONObject(contents);
+            return settJson;
+        }catch (JSONException e){
+            return new JSONObject();
+        }
+    }
+
+    protected void loadConfigFile(Context context){
+        int length = (int) settingsFile.length();
+        byte[] bytes = new byte[length];
+
+        try {
+            FileInputStream in = new FileInputStream(settingsFile);
+            in.read(bytes);
+            in.close();
+        }catch (FileNotFoundException e){
+            writeConfigFile(context);
+            loadConfigFile(context);
+            return;
+        }catch (IOException e){
+
+        }
+        String contents = new String(bytes);
+
+        try{
+            JSONObject settJson = new JSONObject(contents);
+            serverURL = settJson.getString("domain");
+            keyText = settJson.getString("keyText");
+        }catch (JSONException e){
+            Toast.makeText(MainActivity.this, "Settings not found!", Toast.LENGTH_SHORT).show();
+        }
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        context = MainActivity.this.getApplicationContext();
-        httpCookieStore = new PersistentCookieStore(context);
-        client = new AsyncHttpClient();
-
-        File path = context.getFilesDir();
-        file = new File(path, ".libreerp.key");
-
-
-        // check if the file exist
-        if (file.exists()){
-            Intent intent = new Intent(context, HomeActivity.class);
-            startActivity(intent);
-        }
-
-        loginBtn = (Button) findViewById(R.id.loginButton);
-        loginBtn.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                EditText usernameEdit   = (EditText)findViewById(R.id.usernameEditText);
-                EditText passwordEdit   = (EditText)findViewById(R.id.passwordEditText);
-                login(usernameEdit.getText().toString() , passwordEdit.getText().toString());
-            }
-        });
-
-        settBtn = (ImageButton) findViewById(R.id.imageButtonSettings);
-
-        settBtn.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-
-                builder.setTitle("ERP Server");
-                final EditText input = new EditText(MainActivity.this);
-                // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
-                input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
-                builder.setView(input);
-
-                builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                String m_Text = input.getText().toString();
-                                System.out.println(m_Text);
-                            }
-                        });
-                builder.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.cancel();
-                            }
-                        });
-                builder.setIcon(R.drawable.ic_action_gear);
-
-                builder.show();
-            }
-        });
-
-        LinearLayout passKeysLayout=(LinearLayout) findViewById(R.id.linearLayoutPassKeys);
-        passKeysLayout.setVisibility(LinearLayout.GONE);
-
-        chkKeys = (CheckBox) findViewById(R.id.passKeyCheckBox);
-
-        if(chkKeys.isChecked()){
-            chkKeys.toggle();
-        }
-
-        chkKeys.setOnClickListener(new OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                //is chkKeys checked?
-                LinearLayout passKeysLayout=(LinearLayout) findViewById(R.id.linearLayoutPassKeys);
-                if (((CheckBox) v).isChecked()) {
-                    passKeysLayout.setVisibility(LinearLayout.VISIBLE);
-                }else{
-                    passKeysLayout.setVisibility(LinearLayout.GONE);
-                }
-
-            }
-        });
 
         View.OnKeyListener goToNextKey = new View.OnKeyListener() {
             @Override
@@ -363,6 +452,111 @@ public class MainActivity extends AppCompatActivity {
         editTextKey24 = (EditText) findViewById(R.id.editTextKey24);
         editTextKey24.setOnKeyListener(goToNextKey);
 
+
+
+        context = MainActivity.this.getApplicationContext();
+
+        httpCookieStore = new PersistentCookieStore(context);
+        httpCookieStore.clear();
+        client = new AsyncHttpClient();
+        client.setCookieStore(httpCookieStore);
+
+        File path = context.getFilesDir();
+        keyFile = new File(path, keyFileName);
+        settingsFile = new File(path, settingsFileName); // a json file with the key value pair settings
+
+
+        loadConfigFile(context);
+        if (serverURL.length()<1){
+            Toast.makeText(MainActivity.this, "No server details forund!", Toast.LENGTH_SHORT).show();
+            presentServerSettingsDialog();
+        }
+
+        // check if the file exist
+        if (keyFile.exists()){
+            if (!keyText.isEmpty()){
+                // ask for the key
+                Intent intent = new Intent(context, KeyLoginActivity.class);
+                startActivity(intent);
+            }else {
+                Intent intent = new Intent(context, HomeActivity.class);
+                startActivity(intent);
+            }
+        }
+
+        EditText usernameEdit   = (EditText)findViewById(R.id.usernameEditText);
+        usernameEdit.setText("admin");
+        EditText passwordEdit   = (EditText)findViewById(R.id.passwordEditText);
+        passwordEdit.setText("indiaerp");
+
+
+        loginBtn = (Button) findViewById(R.id.loginButton);
+        loginBtn.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                EditText usernameEdit   = (EditText)findViewById(R.id.usernameEditText);
+                EditText passwordEdit   = (EditText)findViewById(R.id.passwordEditText);
+                login(usernameEdit.getText().toString() , passwordEdit.getText().toString());
+            }
+        });
+
+        settBtn = (ImageButton) findViewById(R.id.imageButtonSettings);
+
+        settBtn.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                presentServerSettingsDialog();
+            }
+        });
+
+        LinearLayout passKeysLayout=(LinearLayout) findViewById(R.id.linearLayoutPassKeys);
+        passKeysLayout.setVisibility(LinearLayout.GONE);
+
+        chkKeys = (CheckBox) findViewById(R.id.passKeyCheckBox);
+
+        if(chkKeys.isChecked()){
+            chkKeys.toggle();
+        }
+
+        chkKeys.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                //is chkKeys checked?
+                LinearLayout passKeysLayout=(LinearLayout) findViewById(R.id.linearLayoutPassKeys);
+                if (((CheckBox) v).isChecked()) {
+                    passKeysLayout.setVisibility(LinearLayout.VISIBLE);
+                }else{
+                    passKeysLayout.setVisibility(LinearLayout.GONE);
+                }
+
+            }
+        });
+
+
+
+
+    }
+    private Boolean exit = false;
+
+    @Override
+    public void onBackPressed() {
+        if (exit) {
+//            finish(); // finish activity
+            MainActivity.this.finish();
+            System.exit(0);
+        } else {
+            Toast.makeText(this, "Press Back again to Exit.",
+                    Toast.LENGTH_SHORT).show();
+            exit = true;
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    exit = false;
+                }
+            }, 3 * 1000);
+
+        }
 
     }
 }
