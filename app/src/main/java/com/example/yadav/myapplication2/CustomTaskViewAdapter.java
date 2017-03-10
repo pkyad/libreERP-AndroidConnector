@@ -1,6 +1,7 @@
 package com.example.yadav.myapplication2;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,6 +41,17 @@ public class CustomTaskViewAdapter extends RecyclerView.Adapter<CustomTaskViewAd
         holder.description.setText(my_data.get(position).getDescription());
         Glide.with(context).load("http://placehold.it/350x150").into(holder.imageView);
         holder.progressBar.setProgress(30 + position*10);
+        Integer color;
+        if (position == 2){
+            color = Color.rgb(0, 0, 100);
+        }else if (position==3){
+            color = Color.rgb(100, 0, 0);
+        }else {
+            color = Color.rgb(0, 100, 0);
+        }
+
+        holder.progressBar.getProgressDrawable().setColorFilter(
+                color, android.graphics.PorterDuff.Mode.SRC_IN);
     }
 
     @Override

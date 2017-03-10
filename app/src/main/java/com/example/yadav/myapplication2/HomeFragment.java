@@ -13,6 +13,9 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.InputType;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -38,9 +41,9 @@ public class HomeFragment extends Fragment {
     ImageButton loginBtn;
     FloatingActionButton fab;
 
-    private void presentServerSettingsDialog(Context context){
+    private void presentFilterSettingsDialog(Context context){
 
-        final CharSequence[] items = {" Follower "," Assignee "," Responsible ", " Recent first"};
+        final CharSequence[] items = {" Follower "," Assignee "," Responsible "};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
 
@@ -71,9 +74,34 @@ public class HomeFragment extends Fragment {
                 dialog.cancel();
             }
         });
-        builder.setIcon(R.drawable.ic_action_filter);
+        builder.setIcon(R.drawable.ic_action_filter_black);
 
         builder.show();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // Do something that differs the Activity's menu here
+        MenuItem itemSort = menu.getItem(1);
+        itemSort.setVisible(true);
+        MenuItem itemFilter = menu.getItem(2);
+        itemFilter.setVisible(true);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_filter:
+                presentFilterSettingsDialog(mainContext);
+                return false;
+            case R.id.action_sort:
+                return false;
+            default:
+                break;
+        }
+
+        return false;
     }
 
     @Nullable
@@ -81,18 +109,7 @@ public class HomeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         myView = inflater.inflate(R.layout.fragment_home, container, false);
         mainContext = myView.getContext();
-
-        fab = (FloatingActionButton) myView.findViewById(R.id.fab_filter);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // show settings popup
-
-                presentServerSettingsDialog(mainContext);
-                Toast.makeText(mainContext, "yes" , Toast.LENGTH_SHORT).show();
-            }
-        });
-
+        setHasOptionsMenu(true);
 
         recyclerView = (RecyclerView) myView.findViewById(R.id.recycler_view);
         data_list  = new ArrayList<>();
