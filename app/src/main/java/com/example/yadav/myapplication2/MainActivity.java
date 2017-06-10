@@ -224,8 +224,32 @@ public class MainActivity extends AppCompatActivity {
                     String firstName = usrObj.getString("first_name");
                     Integer pk = usrObj.getInt("pk");
                     String lastName = usrObj.getString("last_name");
+                    Integer settingsPk = usrObj.getInt("settings");
                     JSONObject profileObj = usrObj.getJSONObject("profile");
                     String DPLink = profileObj.getString("displayPicture");
+
+                    client.get(serverURL + "/api/PIM/settings/" + settingsPk.toString() + "/", new JsonHttpResponseHandler() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                            try {
+                                String mainThemeColor = response.getJSONObject("theme").getString("main");
+
+                            }catch (JSONException e){
+                                throw  new RuntimeException(e);
+                            }
+                        }
+                        @Override
+                        public void onFinish() {
+                            System.out.println("finished 001");
+
+                        }
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
+                            // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                            System.out.println("finished failed 001");
+                        }
+                    });
+
 
                     user = new User(username ,pk);
                     user.setFirstName(firstName);

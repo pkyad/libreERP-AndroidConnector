@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="vertical" android:layout_width="match_parent"
+android:layout_height="match_parent"
+xmlns:card_view="http://schemas.android.com/tools"
+android:id="@+id/timeline"
+android:layout_above="@+id/msgBox">
+
+
+<android.support.v7.widget.RecyclerView
+android:id="@+id/msgTexts"
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:scrollbars="vertical"
+card_view:cardCornerRadius="5dp"
+card_view:cardElevation="5dp"
+card_view:cardUseCompatPadding="true"
+/>
+
+<RelativeLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+
+    >
+    <EditText
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/msgBox"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignTop="@+id/msgBox"
+        android:layout_toRightOf="@+id/msgBox"
+        android:layout_toEndOf="@+id/msgBox"
+        android:layout_marginLeft="11dp"
+        android:layout_marginStart="11dp" />
+</RelativeLayout>
+</LinearLayout>

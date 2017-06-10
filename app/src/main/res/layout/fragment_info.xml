@@ -1,0 +1,120 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+    tools:context="com.example.yadav.myapplication2.TaskCardFragment$PlaceholderFragment">
+<RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/layout1">
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="hello this is main fragment"
+        android:layout_alignParentTop="true"
+        android:textSize="20dp" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/title"
+        android:layout_marginTop="10dp"
+        android:text="Responsible:"
+        android:id="@+id/responsible"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="himanshu"
+        android:id="@+id/responsiblename"
+        android:layout_above="@+id/assignee"
+        android:layout_alignLeft="@+id/followername"
+        android:layout_alignStart="@+id/followername" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="11dp"
+        android:text="Assignee:"
+        android:id="@+id/assignee"
+        android:layout_below="@+id/responsible"
+        android:layout_alignRight="@+id/responsible"
+        android:layout_alignEnd="@+id/responsible" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pradeep"
+        android:id="@+id/assigneename"
+        android:layout_alignBaseline="@+id/assignee"
+        android:layout_alignBottom="@+id/assignee"
+        android:layout_alignLeft="@+id/responsiblename"
+        android:layout_alignStart="@+id/responsiblename" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/follower"
+        android:layout_marginTop="11dp"
+        android:text="Follower:"
+
+        android:layout_below="@+id/assignee"
+        android:layout_alignRight="@+id/assignee"
+        android:layout_alignEnd="@+id/assignee" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/followername"
+        android:text="Pradeep"
+        android:layout_alignBaseline="@+id/follower"
+        android:layout_alignBottom="@+id/follower"
+        android:layout_toRightOf="@+id/follower"
+        android:layout_toEndOf="@+id/follower"
+        android:layout_marginLeft="24dp"
+        android:layout_marginStart="24dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/description1"
+        android:text="Description"
+        android:layout_marginTop="15dp"
+        android:layout_below="@+id/follower"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="This is description"
+        android:layout_below="@+id/description1"
+        android:id="@+id/description2"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/created"
+        android:layout_below="@+id/description2"
+        android:text="Created:"
+        android:layout_marginTop="10dp"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/dueDate"
+        android:layout_below="@+id/created"
+        android:text="DueDate:"
+        android:layout_marginTop="5dp"/>
+</RelativeLayout>
+<RelativeLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_below="@+id/layout1"
+    android:layout_marginTop="10dp">
+    <ListView android:layout_height="wrap_content"
+        android:id="@+id/subtasks"
+        android:layout_width="match_parent"
+        android:numColumns="1"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"></ListView>
+    </RelativeLayout>
+
+</RelativeLayout>

@@ -1,6 +1,8 @@
 package com.example.yadav.myapplication2;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Pradeep on 3/9/2017.
@@ -23,8 +25,11 @@ public class Task {
     private Integer pk;
     private String description;
     private Integer completion;
-    private Date created;
-    private Date dueDate;
+    private String created;
+    private String dueDate;
+    private String title;
+    private Integer assignee;
+    private Integer responsible;
 
     public void setPk(Integer pk) {
         this.pk = pk;
@@ -32,42 +37,55 @@ public class Task {
 
     public void setDescription(String description) {
         this.description = description;
-    }
 
+    }
     public void setCompletion(Integer completion) {
         this.completion = completion;
     }
 
-    public void setCreated(Date created) {
+    public void setCreated(String created) {
         this.created = created;
     }
 
-    public void setDueDate(Date dueDate) {
+    public void setDueDate(String dueDate) {
         this.dueDate = dueDate;
     }
+
+    public void setTitle(String title) {this.title = title;}
+
+    public void setAssignee(Integer assignee){this.assignee = assignee;}
+
+    public void setResponsible(Integer responsible) {
+        this.responsible = responsible;
+    }
+
 
     public Task(Integer pk) {
         this.pk = pk;
     }
 
+
     public Integer getPk() {
         return pk;
     }
+    public String getDescription() { return description;}
 
-    public String getDescription() {
-        return description;
-    }
 
     public Integer getCompletion() {
         return completion;
     }
 
-    public Date getCreated() {
+    public String getCreated() {
         return created;
     }
 
-    public Date getDueDate() {
+    public String getDueDate() {
         return dueDate;
     }
 
+    public String getTitle() {return title;}
+
+    public Integer getAssignee() {return assignee;}
+
+    public Integer getResponsible(){return responsible;}
 }

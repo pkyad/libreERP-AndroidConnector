@@ -28,6 +28,9 @@ public class CustomTaskViewAdapter extends RecyclerView.Adapter<CustomTaskViewAd
         this.my_data = my_data;
     }
 
+
+
+
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
@@ -38,9 +41,9 @@ public class CustomTaskViewAdapter extends RecyclerView.Adapter<CustomTaskViewAd
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
 
-        holder.description.setText(my_data.get(position).getDescription());
+        holder.description.setText(my_data.get(position).getDescription() );
         Glide.with(context).load("http://placehold.it/350x150").into(holder.imageView);
-        holder.progressBar.setProgress(30 + position*10);
+        holder.progressBar.setProgress(my_data.get(position).getCompletion());
         Integer color;
         if (position == 2){
             color = Color.rgb(0, 0, 100);
