@@ -47,6 +47,7 @@ public class dbhandler extends SQLiteOpenHelper {
     public static final String COLUMN_TEXT = "TEXT";
     public static final String COLUMN_COMMIT_PK = "COMMIT_PK";
     public static final String COLUMN_COMMIT_MESSAGE = "COMMIT_MESSAGE";
+    public static final String COLUMN_POST_USER = "POST_USER";
 
 
 //       users table
@@ -91,7 +92,8 @@ public class dbhandler extends SQLiteOpenHelper {
                 + COLUMN_CATEGORY + "  TEXT,"
                 + COLUMN_TEXT + " TEXT,"
                 + COLUMN_COMMIT_PK + " INTEGER,"
-                + COLUMN_COMMIT_MESSAGE + " TEXT"
+                + COLUMN_COMMIT_MESSAGE + " TEXT,"
+                + COLUMN_POST_USER + " TEXT"
                 + ");";
 
         String queryusers =  "CREATE TABLE " + TABLE_USERS + "(" + COLUMN_USERS_PK + " INTEGER,"
@@ -155,6 +157,7 @@ public class dbhandler extends SQLiteOpenHelper {
         initialValues.put(COLUMN_TEXT, comment.getText());
         initialValues.put(COLUMN_COMMIT_PK, comment.getCommitPK());
         initialValues.put(COLUMN_COMMIT_MESSAGE, comment.getCommitMessage());
+        initialValues.put(COLUMN_POST_USER,comment.getUser());
         SQLiteDatabase db = getWritableDatabase();
 
         return db.insert(TABLE_COMMENTS, null, initialValues);
@@ -412,12 +415,10 @@ public class dbhandler extends SQLiteOpenHelper {
         String query = "SELECT * FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK_COMMENT + " = " + pk_comment;
         Cursor c = db.rawQuery(query,null);
         c.moveToFirst();
-//        dbstring = c.getString(c.getColumnIndex("TEXT"));
-//        System.out.println("sdfgsdgsdgsdgsd======" + dbstring);
         while (!c.isAfterLast()){
             if(c.getString(c.getColumnIndex("TEXT"))!=null){
                 dbstring = c.getString(c.getColumnIndex("TEXT"));
-                System.out.println("sdfgsdgsdgsdgsd======" + dbstring);
+
             }
             c.moveToNext();
         }
@@ -435,12 +436,10 @@ public class dbhandler extends SQLiteOpenHelper {
         while (!c.isAfterLast()){
             if(c.getString(c.getColumnIndex("COMMIT_MESSAGE"))!=null){
                 dbstring = c.getString(c.getColumnIndex("COMMIT_MESSAGE"));
-                System.out.println("hololololo======" + dbstring);
             }
             c.moveToNext();
         }
         db.close();
-        System.out.println("hololololo1======" + dbstring);
         return dbstring;
     }
 
@@ -489,7 +488,23 @@ public class dbhandler extends SQLiteOpenHelper {
         cursor.close();
         return true;
     }
+    public String getPostUser(int pk_comment){
+        String dbstring = new String();
+        SQLiteDatabase db = getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK_COMMENT + " = " + pk_comment;
+        Cursor c = db.rawQuery(query,null);
+        c.moveToFirst();
 
+        while (!c.isAfterLast()){
+            if(c.getString(c.getColumnIndex("POST_USER"))!=null){
+                dbstring = c.getString(c.getColumnIndex("POST_USER"));
+            }
+            c.moveToNext();
+        }
+        db.close();
+
+        return dbstring;
+    }
 
 
 
@@ -578,8 +593,8 @@ public class dbhandler extends SQLiteOpenHelper {
         c.moveToFirst();
 
         while (!c.isAfterLast()){
-            if(c.getString(c.getColumnIndex("FIRST_NAME"))!=null || c.getString(c.getColumnIndex("LAST_NAME"))!=null){
-                dbstring = c.getString(c.getColumnIndex("FIRST_NAME")) + " " +  c.getString(c.getColumnIndex("LAST_NAME"));
+            if(c.getString(c.getColumnIndex("USERNAME"))!=null){
+                dbstring = c.getString(c.getColumnIndex("USERNAME"));
             }
             c.moveToNext();
         }
@@ -596,6 +611,40 @@ public class dbhandler extends SQLiteOpenHelper {
         }
         cursor.close();
         return true;
+    }
+    public String getProfilePictureLink(int userPK){
+        String dbstring = new String();
+        SQLiteDatabase db = getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_USERS + " WHERE " + COLUMN_USERS_PK + " = " + userPK ;
+        Cursor c = db.rawQuery(query,null);
+        c.moveToFirst();
+
+        while (!c.isAfterLast()){
+            if(c.getString(c.getColumnIndex("DISPLAY_PICTURE"))!=null){
+                dbstring = c.getString(c.getColumnIndex("DISPLAY_PICTURE"));
+            }
+            c.moveToNext();
+        }
+        db.close();
+
+        return dbstring;
+    }
+    public int getPostUserPk(String username){
+        int dbstring = 0;
+        SQLiteDatabase db = getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_USERS + " WHERE " + COLUMN_USERNAME + " = " + "'" + username + "'";
+
+        Cursor c = db.rawQuery(query,null);
+        c.moveToFirst();
+
+        while (!c.isAfterLast()){
+            if(c.getString(c.getColumnIndex("PK_USERS"))!=null){
+                dbstring = c.getInt(c.getColumnIndex("PK_USERS"));
+            }
+            c.moveToNext();
+        }
+        db.close();
+        return dbstring;
     }
 
 }

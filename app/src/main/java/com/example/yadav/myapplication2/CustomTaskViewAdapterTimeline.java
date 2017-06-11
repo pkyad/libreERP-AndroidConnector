@@ -62,7 +62,8 @@ public class CustomTaskViewAdapterTimeline extends RecyclerView.Adapter<CustomTa
 
         holder.comment.setText(my_data.get(position).getText());
         //Glide.with(context).load("http://placehold.it/350x150").into(holder.imageView);
-        holder.username.setText(my_data.get(position).getCategory());
+        holder.imageView.setImageBitmap(my_data.get(position).getDpUser());
+        holder.username.setText(my_data.get(position).getUser());
 //        Integer color;
 //        if (position == 2){
 //            color = Color.rgb(0, 0, 100);
@@ -92,7 +93,7 @@ public class CustomTaskViewAdapterTimeline extends RecyclerView.Adapter<CustomTa
         public ViewHolder(View itemView) {
             super(itemView);
             comment = (TextView) itemView.findViewById(R.id.comment);
-            //imageView = (ImageView) itemView.findViewById(R.id.image);
+            imageView = (ImageView) itemView.findViewById(R.id.userimage);
             username = (TextView) itemView.findViewById(R.id.username);
         }
     }

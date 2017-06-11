@@ -18,18 +18,20 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:scaleType="centerCrop" />
+
         <TextView
         android:id="@+id/username"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/userimage"
+            android:layout_alignLeft="@+id/userimage"
         android:paddingLeft="5dp"
         android:paddingRight="5dp"
         android:textColor="@color/cardview_dark_background"
         android:text="test"
         android:textSize="15sp"
         android:textStyle="normal"
-        android:typeface="sans" />
+        android:typeface="sans"
+            android:layout_alignParentTop="true" />
         <View
         android:layout_width="fill_parent"
         android:layout_height="2dp"

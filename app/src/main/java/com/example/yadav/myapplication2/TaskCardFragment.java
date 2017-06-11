@@ -2,6 +2,9 @@ package com.example.yadav.myapplication2;
 
 import android.app.ActionBar;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
@@ -26,6 +29,7 @@ import android.widget.TextClock;
 import android.widget.TextView;
 
 import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.FileAsyncHttpResponseHandler;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
@@ -33,6 +37,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,8 +66,8 @@ public class TaskCardFragment extends AppCompatActivity {
     static View ChildView;
     private static List<Comment> data_list;
     private static String serverURL;
-
-
+    static AsyncHttpClient client;
+    static Context context;
     private static FragmentManager fragmentManager;
 
     @Override
@@ -116,14 +123,14 @@ public class TaskCardFragment extends AppCompatActivity {
 
                     /////////////////////////////////////
 
-                    Context context = getActivity().getApplicationContext();
+                    context = getActivity().getApplicationContext();
                     JSONObject settJson = MainActivity.getSettingsJson(context);
                     try {
                         serverURL = settJson.getString("domain");
                     } catch (JSONException e) {
                         System.out.println("Error while getting the domain from settings");
                     }
-                    AsyncHttpClient client = MainActivity.getHTTPClient(context);
+                    client = MainActivity.getHTTPClient(context);
                     for(int i=0;i<users.size();i++) {
 
                         String url1 = String.format("%s/%s/%s/", serverURL, "/api/HR/userSearch", users.get(i));
@@ -149,15 +156,7 @@ public class TaskCardFragment extends AppCompatActivity {
                                         int social;
                                         String displaypicture;
 
-
                                         userpk = c.getInt("pk");
-
-
-                                        // fetch, store
-
-
-                                        // in the success of fetch, set the texts in the view
-
                                         username = c.getString("username");
                                         firstName = c.getString("first_name");
                                         lastName = c.getString("last_name");
@@ -166,7 +165,7 @@ public class TaskCardFragment extends AppCompatActivity {
                                         JSONObject profile = c.getJSONObject("profile");
                                         displaypicture = profile.getString("displayPicture");
 
-                                        Users users = new Users(userpk);
+                                        final Users users = new Users(userpk);
                                         users.setDesignation(designation);
                                         users.setDisplayPicture(displaypicture);
                                         users.setFirstName(firstName);
@@ -175,7 +174,25 @@ public class TaskCardFragment extends AppCompatActivity {
                                         users.setSocial(social);
                                         users.setUsername(username);
 
+                                        client.get(displaypicture, new FileAsyncHttpResponseHandler(context) {
+                                            @Override
+                                            public void onSuccess(int statusCode, Header[] headers, File file) {
+                                                // Do something with the file `response`
+                                                Bitmap pp = BitmapFactory.decodeFile(file.getAbsolutePath());
+                                                users.setProfilePicture(pp);
+                                                users.saveUserToFile(context);
+                                            }
+                                            @Override
+                                            public void onFailure(int statusCode, Header[] headers,Throwable e, File file) {
+                                                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                                                System.out.println("failure");
+                                                System.out.println(statusCode);
+                                            }
+                                        });
+
                                         db.insertTableUsers(users);
+
+
 
                                         // set it here
                                         TextView responsible1 = (TextView) rootView.findViewById(R.id.responsiblename);
@@ -237,6 +254,8 @@ public class TaskCardFragment extends AppCompatActivity {
 
                     TextView assignee1 = (TextView) rootView.findViewById(R.id.assigneename);
 
+
+
                     assignee1.setText(db.getUser(assignee));
                     db.getAllContacts(myPK);
                     listView = (ListView) rootView.findViewById(R.id.subtasks);
@@ -266,7 +285,7 @@ public class TaskCardFragment extends AppCompatActivity {
                     recyclerView.setAdapter(adapter);
 
                     ///////////////////
-                    Context context = getActivity().getApplicationContext();
+                    context = getActivity().getApplicationContext();
                     JSONObject settJson = MainActivity.getSettingsJson(context);
                     try {
                         serverURL = settJson.getString("domain");
@@ -275,7 +294,7 @@ public class TaskCardFragment extends AppCompatActivity {
                     }
 
 
-                    AsyncHttpClient client = MainActivity.getHTTPClient(context);
+                    client = MainActivity.getHTTPClient(context);
                     RequestParams params = new RequestParams();
                     params.put("task", myPK);
                     String url = String.format("%s/%s/", serverURL, "/api/taskBoard/timelineItem");
@@ -294,12 +313,14 @@ public class TaskCardFragment extends AppCompatActivity {
                                 String text;
                                 int pkCommit;
                                 String commitMessage;
+                                int user;
 
                                 dbhandler dba = new dbhandler(getActivity(), null, null, 3);
                                 for (int i = 0; i < response.length(); i++) {
 
                                     JSONObject c = response.getJSONObject(i);
                                     pkComment = c.getInt("pk");
+                                    user = c.getInt("user");
                                     if (!dba.CheckIfCOMMENT_PKAlreadyInDBorNot(pkComment)) {
                                         created = c.getString("created");
                                         category = c.getString("category");
@@ -317,6 +338,8 @@ public class TaskCardFragment extends AppCompatActivity {
                                         Comment comment = new Comment(pkComment);
                                         comment.setPkComment(pkComment);
                                         comment.setPkTask(pkTask);
+                                        comment.setUser(dba.getUser(user));
+
                                         comment.setCategory(category);
                                         comment.setCreated(created);
                                         comment.setText(text);
@@ -325,7 +348,7 @@ public class TaskCardFragment extends AppCompatActivity {
                                         dba.insertTableComment(comment);
                                     }
                                 }
-                                load_data_from_server(0);
+                                load_data_from_database(0);
                             } catch (final JSONException e) {
                                 Log.e("TAG", "Json parsing error: " + e.getMessage());
 
@@ -444,27 +467,31 @@ public class TaskCardFragment extends AppCompatActivity {
     }
 
 
-    private static void load_data_from_server(int id) {
+    private static void load_data_from_database(int id) {
 
-        final AsyncTask<Integer, Void, Void> task = new AsyncTask<Integer, Void, Void>() {
+        final AsyncTask<Integer, Void, Void> comment = new AsyncTask<Integer, Void, Void>() {
             @Override
             protected Void doInBackground(Integer... integers) {
 
                 dbhandler dba = new dbhandler(mainContext, null, null, 2);
                 //System.out.println("pkTask = "+pkTask);
+
                 for (int i = 0; i < dba.getTotalDBEntries_COMMENT(myPK); i++) {
+                    final Comment data = new Comment(i);
+                    data.setCategory(dba.getCategory(i,myPK));
+                    int comment_pk = dba.getCommentPK(i,myPK);
+                    data.setUser(dba.getPostUser(comment_pk));
+                    if(dba.getCategory(i,myPK).equals("message")) {
+                        data.setText(dba.getMessage(comment_pk));
+                    }
+                    else data.setText(dba.getCommitMessage(comment_pk));
+                   // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
 
-                        Comment data = new Comment(i);
+                    File dpFile = new File(context.getFilesDir(),dba.getPostUser(comment_pk) );
+                    File path = context.getFilesDir();
+                    Bitmap dpBitmap = BitmapFactory.decodeFile(dpFile.getPath());
+                    data.setDpUser(dpBitmap);
 
-                        data.setCategory(dba.getCategory(i,myPK));
-//                        int commit_pk = dba.getCommitPK(i);
-                        int comment_pk = dba.getCommentPK(i,myPK);
-                        System.out.println("comment pk = "+ comment_pk);
-                        if(dba.getCategory(i,myPK).equals("message")) {
-                            data.setText(dba.getMessage(comment_pk));
-                            System.out.println("TEXT==="+dba.getMessage(myPK));
-                        }
-                        else data.setText(dba.getCommitMessage(comment_pk));
                         data_list.add(data);
                 }
 
@@ -503,10 +530,8 @@ public class TaskCardFragment extends AppCompatActivity {
             }
         };
 
-        task.execute(id);
+        comment.execute(id);
     }
 
-
-
-    }
+}
 
