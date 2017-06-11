@@ -79,6 +79,8 @@ public class HomeToDoFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         // Do something that differs the Activity's menu here
+        MenuItem homeSort = menu.getItem(0);
+        homeSort.setVisible(false);
         MenuItem itemSort = menu.getItem(1);
         itemSort.setVisible(true);
         MenuItem itemFilter = menu.getItem(2);
@@ -101,34 +103,20 @@ public class HomeToDoFragment extends Fragment {
         return false;
     }
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+
+
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        myView = inflater.inflate(R.layout.fragment_home, container, false);
+        myView = inflater.inflate(R.layout.fragment_home_sub_todo, container, false);
         mainContext = myView.getContext();
         setHasOptionsMenu(true);
-
-
-        BottomNavigationView bottomNavigationView = (BottomNavigationView)
-                myView.findViewById(R.id.bottom_navigation);
-
-        bottomNavigationView.setOnNavigationItemSelectedListener(
-                new BottomNavigationView.OnNavigationItemSelectedListener() {
-                    @Override
-                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.action_favorites:
-
-                            case R.id.action_schedules:
-
-                            case R.id.action_music:
-
-                        }
-                        return true;
-                    }
-                });
-
-
 
         recyclerView = (RecyclerView) myView.findViewById(R.id.recycler_view);
         data_list  = new ArrayList<>();
@@ -150,6 +138,7 @@ public class HomeToDoFragment extends Fragment {
 
             }
         });
+
 
 
         return myView;

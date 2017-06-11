@@ -30,10 +30,21 @@ public class AboutFragment extends Fragment {
 
     View myView;
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // Do something that differs the Activity's menu here
+        MenuItem itemSort = menu.getItem(1);
+        itemSort.setVisible(false);
+        MenuItem itemFilter = menu.getItem(2);
+        itemFilter.setVisible(false);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         myView = inflater.inflate(R.layout.about_layout, container, false);
+        setHasOptionsMenu(true);
         return myView;
     }
 

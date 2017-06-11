@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
@@ -41,17 +42,21 @@ import java.util.List;
 public class HomeFragment extends Fragment {
 
     View myView;
-    private FragmentManager fragmentManager;
+    private FragmentManager homeFragmentManager;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        fragmentManager = getFragmentManager();
-        fragmentManager.beginTransaction()
-                .replace(R.id.content_frame_home, new HomeHomeFragment())
+        homeFragmentManager = getFragmentManager();
+        homeFragmentManager.beginTransaction()
+                .replace(R.id.content_frame_home, new HomeToDoFragment())
                 .commit();
         // implement the on click event lister for the bottom navigation plane
+
+//        Intent intent = new Intent(this.getContext(), TaskViewActivity.class);
+//        startActivity(intent);
+//        getActivity().finish(); // finish activity
 
     }
 
@@ -60,6 +65,43 @@ public class HomeFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         myView = inflater.inflate(R.layout.fragment_home , container, false);
+
+        setHasOptionsMenu(true);
+
+        BottomNavigationView bottomNavigationView = (BottomNavigationView)
+                myView.findViewById(R.id.bottom_navigation);
+
+
+        bottomNavigationView.getMenu().getItem(0).setChecked(false);
+        bottomNavigationView.getMenu().getItem(1).setChecked(true);
+        bottomNavigationView.getMenu().getItem(2).setChecked(false);
+
+        bottomNavigationView.setOnNavigationItemSelectedListener(
+                new BottomNavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                        int id = item.getItemId();
+
+                        if (id == R.id.action_home_home) {
+                            System.out.println("home");
+                            homeFragmentManager.beginTransaction()
+                                    .replace(R.id.content_frame_home, new HomeHomeFragment())
+                                    .commit();
+
+                        }else if (id == R.id.action_home_todo){
+                            System.out.println("Todo");
+                            homeFragmentManager.beginTransaction()
+                                    .replace(R.id.content_frame_home, new HomeToDoFragment())
+                                    .commit();
+                        }else if (id == R.id.action_home_project){
+                            homeFragmentManager.beginTransaction()
+                                    .replace(R.id.content_frame_home, new HomeProjectFragment())
+                                    .commit();
+                        }
+                        return true;
+                    }
+                });
+
         return myView;
     }
 

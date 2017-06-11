@@ -11,6 +11,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.util.Xml;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -27,6 +28,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.util.concurrent.TimeUnit;
+
+import rx.Observable;
+import rx.Subscription;
+import rx.functions.Action1;
+import ws.wamp.jawampa.PubSubData;
+import ws.wamp.jawampa.WampClient;
+import ws.wamp.jawampa.WampClientBuilder;
 
 public class HomeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -34,10 +43,65 @@ public class HomeActivity extends AppCompatActivity
     public User usr;
     private Context context;
     private FragmentManager fragmentManager;
-
+    private WampClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        WampClientBuilder builder = new WampClientBuilder();
+
+
+        try{
+            builder.withUri("ws://pradeepyadav.net:8080/ws")
+                    .withRealm("default")
+                    .withInfiniteReconnects()
+                    .withReconnectInterval(10, TimeUnit.SECONDS);
+
+            client = builder.build();
+
+            client.open();
+
+            String done = "ok";
+
+            client.statusChanged().subscribe(new Action1<WampClient.Status>() {
+                private Subscription procSubscription;
+
+                public void call(WampClient.Status t1) {
+                    Log.d("info","Session status changed to " + t1);
+
+                    if (t1 == WampClient.Status.Connected) {
+                        Log.d("info","Connected");
+
+                        procSubscription = client.makeSubscription("service.chat.admin").subscribe(new Action1<PubSubData>() {
+                            @Override
+                            public void call(PubSubData pubSubData) {
+                                String message = pubSubData.toString();
+                            }
+                        });
+
+                        client.publish("service.chat.admin", "{'key': 'some text messag'}");
+
+                    }
+                }
+
+
+
+
+            });
+
+
+
+
+            client.open();
+
+
+        }catch (ws.wamp.jawampa.ApplicationError e){
+            String done = "ok";
+        }
+
+
+
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);

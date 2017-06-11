@@ -34,6 +34,8 @@ import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.client.CookieStore;
 import cz.msebera.android.httpclient.cookie.Cookie;
 import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
+import ws.wamp.jawampa.WampClient;
+import ws.wamp.jawampa.WampClientBuilder;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -47,11 +49,14 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
 public class MainActivity extends AppCompatActivity {
+
+
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String LOG_TAG = "GetSample";
 
@@ -411,6 +416,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
+
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
