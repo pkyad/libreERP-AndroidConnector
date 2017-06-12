@@ -27,6 +27,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.libreerp.User;
+
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 

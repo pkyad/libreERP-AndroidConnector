@@ -12,6 +12,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.libreerp.User;
+
 /**
  * Created by yadav on 19/2/17.
  */
