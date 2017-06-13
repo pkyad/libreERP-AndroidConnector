@@ -4,9 +4,11 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
@@ -28,11 +30,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.libreerp.User;
+import com.example.libreerp.UserMeta;
+import com.example.libreerp.UserMetaHandler;
+import com.example.libreerp.Users;
 
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-import rx.Observable;
 import rx.Subscription;
 import rx.functions.Action1;
 import ws.wamp.jawampa.PubSubData;
@@ -49,6 +53,9 @@ public class HomeActivity extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
+
 
         WampClientBuilder builder = new WampClientBuilder();
 
@@ -86,13 +93,7 @@ public class HomeActivity extends AppCompatActivity
                     }
                 }
 
-
-
-
             });
-
-
-
 
             client.open();
 
@@ -120,6 +121,24 @@ public class HomeActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         context = HomeActivity.this.getApplicationContext();
+
+        Users users = new Users(context);
+
+        users.get(11 , new UserMetaHandler(){
+            @Override
+            public void onSuccess(UserMeta user){
+                System.out.println("yes65262626626");
+                // set text in the layout here
+            }
+            @Override
+            public void handleDP(Bitmap dp){
+                System.out.println("dp dsda");
+                // set text in the layout here
+            }
+
+        });
+
+
 
         usr = User.loadUser(context);
 
