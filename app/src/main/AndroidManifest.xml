@@ -24,10 +24,7 @@
             android:label="@string/title_activity_home"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".KeyLoginActivity" />
-        <activity
-            android:name=".TaskViewActivity"
-            android:label="@string/title_activity_task_view"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+
         <receiver android:name="RestartReceiver" >
             <intent-filter>
                 <action android:name="com.libreERP.RESTART_APP">

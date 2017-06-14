@@ -48,9 +48,39 @@ public class HomeActivity extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        context = getApplicationContext();
 
+        setContentView(R.layout.activity_home);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.setDrawerListener(toggle);
+        toggle.syncState();
 
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        //=======================
+
+        Users users = new Users(context);
+
+        users.get(11 , new UserMetaHandler(){
+            @Override
+            public void onSuccess(UserMeta user){
+                System.out.println("yes65262626626");
+                // set text in the layout here
+            }
+            @Override
+            public void handleDP(Bitmap dp){
+                System.out.println("dp dsda");
+                // set text in the layout here
+            }
+
+        });
 
         WampClientBuilder builder = new WampClientBuilder();
 
@@ -82,9 +112,7 @@ public class HomeActivity extends AppCompatActivity
                                 String message = pubSubData.toString();
                             }
                         });
-
                         client.publish("service.chat.admin", "{'key': 'some text messag'}");
-
                     }
                 }
 
@@ -96,44 +124,7 @@ public class HomeActivity extends AppCompatActivity
         }catch (ws.wamp.jawampa.ApplicationError e){
             String done = "ok";
         }
-
-
-
-
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
-        toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
-        context = HomeActivity.this.getApplicationContext();
-
-        Users users = new Users(context);
-
-        users.get(11 , new UserMetaHandler(){
-            @Override
-            public void onSuccess(UserMeta user){
-                System.out.println("yes65262626626");
-                // set text in the layout here
-            }
-            @Override
-            public void handleDP(Bitmap dp){
-                System.out.println("dp dsda");
-                // set text in the layout here
-            }
-
-        });
-
-
+        //=======================
 
         usr = User.loadUser(context);
 

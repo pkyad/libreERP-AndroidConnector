@@ -13,7 +13,5 @@ public class RestartReceiver extends BroadcastReceiver {
         Intent mainIntent = new Intent(context, LoginActivity.class);
         mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(mainIntent);
-
     }
-
 }
