@@ -1,6 +1,5 @@
 package com.example.yadav.myapplication2;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -8,8 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -24,6 +21,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.example.libreerp.Helper;
 import com.example.libreerp.User;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -36,8 +34,6 @@ import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.client.CookieStore;
 import cz.msebera.android.httpclient.cookie.Cookie;
 import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
-import ws.wamp.jawampa.WampClient;
-import ws.wamp.jawampa.WampClientBuilder;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -49,19 +45,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
 
-public class MainActivity extends AppCompatActivity {
-
-
-    private static final String TAG = MainActivity.class.getSimpleName();
-    private static final String LOG_TAG = "GetSample";
+public class LoginActivity extends AppCompatActivity {
 
     private CheckBox chkKeys;
     private ImageButton settBtn;
@@ -75,18 +65,17 @@ public class MainActivity extends AppCompatActivity {
     private EditText editTextKey24;
     private Button loginBtn;
     private User user;
-    private File keyFile;
-    private File settingsFile;
-    public static String settingsFileName = ".libreerp.settings";
-    public static String keyFileName = ".libreerp.key";
 
     Context context;
     private CookieStore httpCookieStore;
     private AsyncHttpClient client;
+
+    Helper helper;
+
     static EditText erpPathInput;
     static String keyText = "";
 
-    private static String serverURL = "";//http://pradeepyadav.net
+    private static String serverURL;
 
     protected void login(final String username , final String password){
         if (chkKeys.isChecked()){
@@ -108,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
                 }else{
                     msg = "Keys not matching!";
                 }
-                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+                Toast.makeText(LoginActivity.this, msg, Toast.LENGTH_SHORT).show();
                 return;
             }
         }else {
@@ -169,11 +158,11 @@ public class MainActivity extends AppCompatActivity {
                         String msg;
                         if(statusCode == 401){
                             msg ="Wrong username or password";
-                            Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(LoginActivity.this, msg, Toast.LENGTH_SHORT).show();
                         }
                         else if(statusCode != 302){
                             msg = String.format("Error while logining : %s", statusCode);
-                            Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(LoginActivity.this, msg, Toast.LENGTH_SHORT).show();
                         }
 
                     }
@@ -183,12 +172,12 @@ public class MainActivity extends AppCompatActivity {
                         // should be encrypted and then saved to key storage system of the OS
                         List<Cookie> lst = httpCookieStore.getCookies();
                         if(lst.isEmpty()){
-                            Toast.makeText(MainActivity.this, String.format("Error , Empty cookie store"), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(LoginActivity.this, String.format("Error , Empty cookie store"), Toast.LENGTH_SHORT).show();
                         }else{
 
                             if (lst.size() <2){
                                 String msg = String.format("Error while logining, fetal error!");
-                                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+                                Toast.makeText(LoginActivity.this, msg, Toast.LENGTH_SHORT).show();
                                 return;
                             }
 
@@ -201,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
 
                             // writing the new keys
                             try {
-                                FileOutputStream stream = new FileOutputStream(keyFile);
+                                FileOutputStream stream = new FileOutputStream(helper.keyFile);
                                 stream.write(keys.getBytes());
                                 stream.close();
                             }catch (IOException e){
@@ -244,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, File file) {
                             // Do something with the file `response`
-                            writeConfigFile(context);
+                            helper.writeConfigFile(serverURL , keyText);
                             Bitmap pp = BitmapFactory.decodeFile(file.getAbsolutePath());
                             user.setProfilePicture(pp);
                             user.saveUserToFile(context);
@@ -278,13 +267,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void presentServerSettingsDialog(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(LoginActivity.this);
 
         builder.setTitle("ERP Server");
-        erpPathInput = new EditText(MainActivity.this);
+        erpPathInput = new EditText(LoginActivity.this);
         // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
         erpPathInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
-        erpPathInput.setText(serverURL);
+        erpPathInput.setText(helper.serverURL);
         builder.setView(erpPathInput);
 
         builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -303,128 +292,20 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 
-    static public AsyncHttpClient getHTTPClient(Context context){
-        // reading the existing keys
-        File path = context.getFilesDir();
-        File keyFile = new File(path, keyFileName);
-
-        int length = (int) keyFile.length();
-
-        byte[] bytes = new byte[length];
-
-        try {
-            FileInputStream in = new FileInputStream(keyFile);
-            in.read(bytes);
-            in.close();
-        }catch (FileNotFoundException e){
-
-        }catch (IOException e){
-
-        }
-
-        String contents = new String(bytes);
-        String[] keysArr = contents.split("\n");
-        final String csrftoken = keysArr[0];
-        final String sessionid = keysArr[1];
-
-        CookieStore httpCookieStoreSt = new PersistentCookieStore(context.getApplicationContext());
-        httpCookieStoreSt.clear();
-        AsyncHttpClient clientSt = new AsyncHttpClient();
-
-        String slimedUrl = serverURL.replace("http://", "").replace("https://", "");
-
-        BasicClientCookie newCsrftokenCookie = new BasicClientCookie("csrftoken", csrftoken);
-        newCsrftokenCookie.setVersion(1);
-        newCsrftokenCookie.setDomain(slimedUrl);
-        newCsrftokenCookie.setPath("/");
-        httpCookieStoreSt.addCookie(newCsrftokenCookie);
-        BasicClientCookie newSessionidtokenCookie = new BasicClientCookie("sessionid", sessionid);
-        newSessionidtokenCookie.setVersion(1);
-        newSessionidtokenCookie.setDomain(slimedUrl);
-        newSessionidtokenCookie.setPath("/");
-        httpCookieStoreSt.addCookie(newSessionidtokenCookie);
-        clientSt.addHeader("X-CSRFToken" , csrftoken);
-        clientSt.setCookieStore(httpCookieStoreSt);
-
-        return clientSt;
-    };
-
-    protected void writeConfigFile(Context context){
-
-        JSONObject settJson = new JSONObject();
-        try{
-            settJson.put("domain" , serverURL );
-            settJson.put("keyText" , keyText );
-        }catch (JSONException e){
-        };
-
-        try {
-            FileOutputStream stream = new FileOutputStream(settingsFile);
-            stream.write(settJson.toString().getBytes());
-            stream.close();
-        }catch (IOException e){
-        }
-
-    };
-
-    public static JSONObject getSettingsJson(Context context){
-        File path = context.getFilesDir();
-        File settingsFile = new File(path, settingsFileName);
-
-        int length = (int) settingsFile.length();
-        byte[] bytes = new byte[length];
-
-        try {
-            FileInputStream in = new FileInputStream(settingsFile);
-            in.read(bytes);
-            in.close();
-        }catch (IOException e){
-
-        }
-        String contents = new String(bytes);
-        try{
-            JSONObject settJson = new JSONObject(contents);
-            return settJson;
-        }catch (JSONException e){
-            return new JSONObject();
-        }
-    }
-
-    protected void loadConfigFile(Context context){
-        int length = (int) settingsFile.length();
-        byte[] bytes = new byte[length];
-
-        try {
-            FileInputStream in = new FileInputStream(settingsFile);
-            in.read(bytes);
-            in.close();
-        }catch (FileNotFoundException e){
-            writeConfigFile(context);
-            loadConfigFile(context);
-            return;
-        }catch (IOException e){
-
-        }
-        String contents = new String(bytes);
-
-        try{
-            JSONObject settJson = new JSONObject(contents);
-            serverURL = settJson.getString("domain");
-            keyText = settJson.getString("keyText");
-        }catch (JSONException e){
-            Toast.makeText(MainActivity.this, "Settings not found!", Toast.LENGTH_SHORT).show();
-        }
-
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-
-
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        context = getApplicationContext();
+        helper = new Helper(context);
+        serverURL = helper.serverURL;
+
+        if ( serverURL == null || helper.serverURL.length()<1){
+            Toast.makeText(LoginActivity.this, "No server details forund!", Toast.LENGTH_SHORT).show();
+            presentServerSettingsDialog();
+        }
 
         View.OnKeyListener goToNextKey = new View.OnKeyListener() {
             @Override
@@ -432,7 +313,6 @@ public class MainActivity extends AppCompatActivity {
                 System.out.print(i);
                 if (keyEvent.getAction() == KeyEvent.ACTION_DOWN && i != KeyEvent.KEYCODE_DEL ) {
                     //do something here
-                    Log.i(TAG, "Keyed");
                     int id = getCurrentFocus().getNextFocusDownId();
                     System.out.println(id);
                     if(id != View.NO_ID) {
@@ -463,29 +343,16 @@ public class MainActivity extends AppCompatActivity {
         editTextKey24 = (EditText) findViewById(R.id.editTextKey24);
         editTextKey24.setOnKeyListener(goToNextKey);
 
-
-
-        context = MainActivity.this.getApplicationContext();
-
         httpCookieStore = new PersistentCookieStore(context);
         httpCookieStore.clear();
+
         client = new AsyncHttpClient();
         client.setCookieStore(httpCookieStore);
 
-        File path = context.getFilesDir();
-        keyFile = new File(path, keyFileName);
-        settingsFile = new File(path, settingsFileName); // a json file with the key value pair settings
-
-
-        loadConfigFile(context);
-        if (serverURL.length()<1){
-            Toast.makeText(MainActivity.this, "No server details forund!", Toast.LENGTH_SHORT).show();
-            presentServerSettingsDialog();
-        }
 
         // check if the file exist
-        if (keyFile.exists()){
-            if (!keyText.isEmpty()){
+        if (helper.keyExist){
+            if (!helper.keyText.isEmpty()){
                 // ask for the key
                 Intent intent = new Intent(context, KeyLoginActivity.class);
                 startActivity(intent);
@@ -543,10 +410,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
-
-
-
     }
     private Boolean exit = false;
 
@@ -554,7 +417,7 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         if (exit) {
 //            finish(); // finish activity
-            MainActivity.this.finish();
+            LoginActivity.this.finish();
             System.exit(0);
         } else {
             Toast.makeText(this, "Press Back again to Exit.",

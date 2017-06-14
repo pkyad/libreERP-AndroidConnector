@@ -185,7 +185,7 @@ public class HomeActivity extends AppCompatActivity
         File path = context.getFilesDir();
         File file = new File(path, ".libreerp.key");
         boolean deleted = file.delete();
-        Intent intent = new Intent(context, MainActivity.class);
+        Intent intent = new Intent(context, LoginActivity.class);
         startActivity(intent);
         finish(); // finish activity
     }

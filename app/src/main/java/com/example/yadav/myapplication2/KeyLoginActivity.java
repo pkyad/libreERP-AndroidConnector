@@ -4,18 +4,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.Toast;
+
+import com.example.libreerp.Helper;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.File;
-import java.net.Inet4Address;
 
 public class KeyLoginActivity extends AppCompatActivity {
     private EditText editTextKey11;
@@ -23,12 +19,14 @@ public class KeyLoginActivity extends AppCompatActivity {
     private EditText editTextKey13;
     private EditText editTextKey14;
 
+    Helper helper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_key_login);
 
-
+        helper = new Helper(getApplicationContext());
 
         View.OnKeyListener goToNextKey = new View.OnKeyListener() {
             @Override
@@ -64,7 +62,6 @@ public class KeyLoginActivity extends AppCompatActivity {
                 String key13 = editTextKey13.getText().toString();
                 String key14 = editTextKey14.getText().toString();
 
-
                 if (String.format("%s%s%s", key11,key12, key13).length() <3){
                     return true;
                 }
@@ -72,14 +69,13 @@ public class KeyLoginActivity extends AppCompatActivity {
 
                 Context context = KeyLoginActivity.this.getApplicationContext();
 
-                JSONObject settJson = MainActivity.getSettingsJson(context);
+                JSONObject settJson = helper.getSettingsJson();
                 try{
                     String storedKeyText = settJson.getString("keyText");
                     if (storedKeyText.equals(keyText)){
                         Intent intent = new Intent(context, HomeActivity.class);
                         startActivity(intent);
                     }else {
-//                        Toast.makeText(KeyLoginActivity.this, "Incorrect Key!", Toast.LENGTH_SHORT).show();
                         return false;
                     }
                 }catch (JSONException e){
@@ -88,10 +84,6 @@ public class KeyLoginActivity extends AppCompatActivity {
                 return true;
             };
         });
-
-//        InputMethodManager inputMethodManager =  (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
-//        inputMethodManager.toggleSoftInputFromWindow(editTextKey11.getApplicationWindowToken(), InputMethodManager.SHOW_FORCED, 0);
-//        editTextKey11.requestFocus();
 
     }
 }

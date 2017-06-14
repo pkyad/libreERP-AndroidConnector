@@ -22,24 +22,28 @@ import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
  * Created by yadav on 12/6/17.
  */
 public class Helper {
-    private static File keyFile;
+    public static File keyFile;
     private static File settingsFile;
     public static String settingsFileName = ".libreerp.settings";
     public static String keyFileName = ".libreerp.key";
-
-    public static String serverURL = "";//http://pradeepyadav.net
-    private static Context context;
+    public String serverURL;
+    public String keyText;
+    private Context context;
+    public Boolean keyExist = false;
 
     public Helper(Context cntx){
 
         File path = cntx.getFilesDir();
         settingsFile = new File(path, settingsFileName);
         keyFile = new File(path, keyFileName);
+        if(keyFile.exists()){
+            keyExist = true;
+        }
         context = cntx;
-        loadConfigFile(cntx);
+        loadConfigFile();
     }
 
-    protected void loadConfigFile(Context context){
+    public void loadConfigFile(){
         int length = (int) settingsFile.length();
         byte[] bytes = new byte[length];
 
@@ -57,6 +61,7 @@ public class Helper {
         try{
             JSONObject settJson = new JSONObject(contents);
             serverURL = settJson.getString("domain");
+            keyText = settJson.getString("keyText");
         }catch (JSONException e){
             Toast.makeText(context, "Settings not found!", Toast.LENGTH_SHORT).show();
         }
@@ -105,7 +110,7 @@ public class Helper {
         return clientSt;
     };
 
-    protected void writeConfigFile(String serverURL , String keyText){
+    public void writeConfigFile(String serverURL , String keyText){
 
         JSONObject settJson = new JSONObject();
         try{
