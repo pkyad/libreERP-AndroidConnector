@@ -1,6 +1,7 @@
-package com.example.yadav.myapplication2;
+package com.example.libreerp;
 
 import android.content.Context;
+import android.content.Intent;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -23,10 +24,15 @@ import com.loopj.android.http.RequestParams;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.cookie.Cookie;
 
 /**
  * Created by yadav on 19/2/17.
@@ -37,7 +43,8 @@ public class ChangePasswordFragment extends Fragment {
     User usr;
     private String serverURL;
     private Button changeBtn;
-    private HomeActivity homeAct;
+    private Context context;
+    private Helper helper;
 
     private static EditText oldPasswordEdit;
     private static EditText newPasswordEdit;
@@ -46,6 +53,11 @@ public class ChangePasswordFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         // Do something that differs the Activity's menu here
+
+        context = getActivity();
+        helper = new Helper(context);
+        usr = User.loadUser(context);
+
         MenuItem itemSort = menu.getItem(1);
         itemSort.setVisible(false);
         MenuItem itemFilter = menu.getItem(2);
@@ -53,7 +65,7 @@ public class ChangePasswordFragment extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
     }
 
-    protected void changePassword(Context context){
+    protected void changePassword(){
         oldPasswordEdit = (EditText) myView.findViewById(R.id.oldPasswordEditText);
         String oldPasswordOrOTP =  oldPasswordEdit.getText().toString();
 
@@ -63,9 +75,9 @@ public class ChangePasswordFragment extends Fragment {
         confirmPasswordEdit = (EditText) myView.findViewById(R.id.confirmPasswordEditText);
         String confirmPassword =  confirmPasswordEdit.getText().toString();
 
-        AsyncHttpClient client = MainActivity.getHTTPClient(context);
+        final AsyncHttpClient client = helper.getHTTPClient();
 
-        JSONObject settJson = MainActivity.getSettingsJson(context);
+        JSONObject settJson = helper.getSettingsJson();
         try{
             serverURL = settJson.getString("domain");
         }catch (JSONException e){
@@ -81,6 +93,9 @@ public class ChangePasswordFragment extends Fragment {
         params.put("password", newPassword);
         params.put("oldPassword",oldPasswordOrOTP);
 
+
+
+
         String url = String.format("%s/%s/%s/" , serverURL, "api/HR/users" , usr.getPk());
         client.patch( url, params, new AsyncHttpResponseHandler() {
             @Override
@@ -91,7 +106,33 @@ public class ChangePasswordFragment extends Fragment {
                     newPasswordEdit.setText("");
                     oldPasswordEdit.setText("");
                     Toast.makeText(getActivity().getApplicationContext(), "Password changed succesfully!", Toast.LENGTH_SHORT).show();
-                    homeAct.logout(getActivity().getApplicationContext());
+                    File path = context.getFilesDir();
+                    File file = new File(path, ".libreerp.key");
+                    final boolean deleted = file.delete();
+                    String url = String.format("%s/logout" , serverURL);
+                    client.get(url , new AsyncHttpResponseHandler() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, byte[] response) {
+                            // called when response HTTP status is "200 OK"
+                            System.out.println("on success");
+                            if(deleted){
+                                // send a broadcast
+                                Intent intent = new Intent();
+                                intent.setAction("com.libreERP.RESTART_APP");
+                                getActivity().sendBroadcast(intent);
+
+                            }
+                        }
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
+                            // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                            System.out.println("on failure");
+
+                        }
+
+                    });
+
+
 
                 }
             }
@@ -99,6 +140,7 @@ public class ChangePasswordFragment extends Fragment {
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
                 System.out.println(statusCode);
+                String res = new String(responseBody);
                 Toast.makeText(getActivity().getApplicationContext(), "Something went wrong!", Toast.LENGTH_SHORT).show();
 
             }
@@ -116,17 +158,15 @@ public class ChangePasswordFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
         myView = inflater.inflate(R.layout.change_password_layout, container, false);
         setHasOptionsMenu(true);
-        homeAct = (HomeActivity) getActivity();
-        usr = homeAct.usr;
 
         changeBtn = (Button) myView.findViewById(R.id.changeBtn);
         changeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                changePassword(homeAct.getApplicationContext());
+                changePassword();
             }
         });
 

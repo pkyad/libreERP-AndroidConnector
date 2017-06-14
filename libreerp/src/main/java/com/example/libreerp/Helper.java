@@ -92,16 +92,14 @@ public class Helper {
         String slimedUrl = serverURL.replace("http://", "").replace("https://", "");
 
         BasicClientCookie newCsrftokenCookie = new BasicClientCookie("csrftoken", csrftoken);
-        newCsrftokenCookie.setVersion(1);
         newCsrftokenCookie.setDomain(slimedUrl);
         newCsrftokenCookie.setPath("/");
         httpCookieStoreSt.addCookie(newCsrftokenCookie);
         BasicClientCookie newSessionidtokenCookie = new BasicClientCookie("sessionid", sessionid);
-        newSessionidtokenCookie.setVersion(1);
         newSessionidtokenCookie.setDomain(slimedUrl);
         newSessionidtokenCookie.setPath("/");
         httpCookieStoreSt.addCookie(newSessionidtokenCookie);
-        clientSt.addHeader("X-CSRFToken" , csrftoken);
+        clientSt.addHeader("X-CSRFTOKEN" , csrftoken);
         clientSt.setCookieStore(httpCookieStoreSt);
 
         return clientSt;

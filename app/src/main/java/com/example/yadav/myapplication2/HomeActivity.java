@@ -1,21 +1,14 @@
 package com.example.yadav.myapplication2;
 
-import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.Settings;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.util.Xml;
-import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -24,11 +17,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.libreerp.AboutFragment;
+import com.example.libreerp.ChangePasswordFragment;
+import com.example.libreerp.ProfileFragment;
 import com.example.libreerp.User;
 import com.example.libreerp.UserMeta;
 import com.example.libreerp.UserMetaHandler;
@@ -81,7 +76,7 @@ public class HomeActivity extends AppCompatActivity
                     if (t1 == WampClient.Status.Connected) {
                         Log.d("info","Connected");
 
-                        procSubscription = client.makeSubscription("service.chat.admin").subscribe(new Action1<PubSubData>() {
+                        procSubscription = client.makeSubscription("service.chat.deepak").subscribe(new Action1<PubSubData>() {
                             @Override
                             public void call(PubSubData pubSubData) {
                                 String message = pubSubData.toString();
