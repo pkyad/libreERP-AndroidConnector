@@ -53,11 +53,8 @@ public class ChangePasswordFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         // Do something that differs the Activity's menu here
-
-        context = getActivity();
-        helper = new Helper(context);
-        usr = User.loadUser(context);
-
+        MenuItem itemHome = menu.getItem(0);
+        itemHome.setVisible(true);
         MenuItem itemSort = menu.getItem(1);
         itemSort.setVisible(false);
         MenuItem itemFilter = menu.getItem(2);

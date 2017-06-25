@@ -24,11 +24,6 @@ import cz.msebera.android.httpclient.Header;
  * Created by yadav on 12/6/17.
  */
 
-
-
-
-
-
 public class Users {
     private Context context;
     private DBHandler dbHandler;

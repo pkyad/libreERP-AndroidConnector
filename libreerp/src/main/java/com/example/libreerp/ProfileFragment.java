@@ -24,6 +24,8 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         // Do something that differs the Activity's menu here
+        MenuItem itemHome = menu.getItem(0);
+        itemHome.setVisible(true);
         MenuItem itemSort = menu.getItem(1);
         itemSort.setVisible(false);
         MenuItem itemFilter = menu.getItem(2);

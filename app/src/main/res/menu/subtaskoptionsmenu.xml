@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/inProgress"
+        android:title="In Progress"
+        />
+    <item
+        android:id="@+id/stuck"
+        android:title="Stuck"
+        />
+    <item
+        android:id="@+id/complete"
+        android:title="Complete" />
+    <item
+        android:id="@+id/delete"
+        android:title="Delete"
+    />
+    <item
+        android:id="@+id/editSubtask"
+        android:title="Edit"
+        />
+</menu>

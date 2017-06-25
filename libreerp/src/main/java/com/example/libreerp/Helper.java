@@ -26,7 +26,7 @@ public class Helper {
     private static File settingsFile;
     public static String settingsFileName = ".libreerp.settings";
     public static String keyFileName = ".libreerp.key";
-    public String serverURL;
+    public String serverURL = "http://pradeepyadav.net";
     public String keyText;
     private Context context;
     public Boolean keyExist = false;

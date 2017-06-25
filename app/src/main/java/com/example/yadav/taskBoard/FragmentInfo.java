@@ -1,32 +1,37 @@
-package com.example.yadav.myapplication2;
+package com.example.yadav.taskBoard;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 /**
- * Created by yadav on 19/2/17.
+ * Created by cioc on 1/6/17.
  */
-public class HomeFragment extends Fragment {
 
+public class FragmentInfo extends Fragment {
     View myView;
-
+    TextView textView;
+    private FragmentManager fragmentManager;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
     }
 
+public FragmentInfo(){
+
+}
+
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        myView = inflater.inflate(R.layout.fragment_home , container, false);
-
-        setHasOptionsMenu(true);
-
+        myView = inflater.inflate(R.layout.fragment_info , container, false);
 
         return myView;
     }

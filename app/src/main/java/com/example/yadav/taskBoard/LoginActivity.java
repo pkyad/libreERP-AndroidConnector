@@ -1,4 +1,4 @@
-package com.example.yadav.myapplication2;
+package com.example.yadav.taskBoard;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -10,7 +10,6 @@ import android.os.Handler;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;

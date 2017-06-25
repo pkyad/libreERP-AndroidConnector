@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.yadav.myapplication2">
+    package="com.example.yadav.taskBoard">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -11,8 +11,10 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        tools:replace="android:icon">
-        <activity android:name=".LoginActivity">
+        tools:replace="android:icon"
+        android:screenOrientation="portrait">
+        <activity android:name="com.example.yadav.taskBoard.LoginActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -20,12 +22,19 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".HomeActivity"
+            android:name="com.example.yadav.taskBoard.HomeActivity"
             android:label="@string/title_activity_home"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".KeyLoginActivity" />
-
-        <receiver android:name="RestartReceiver" >
+        <activity android:name="com.example.yadav.taskBoard.KeyLoginActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:name="com.example.yadav.taskBoard.TaskCardFragment"
+            android:label="TODO"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar"/>
+        <receiver android:name="com.example.yadav.taskBoard.RestartReceiver"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="com.libreERP.RESTART_APP">
                 </action>
