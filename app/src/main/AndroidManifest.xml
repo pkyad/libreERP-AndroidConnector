@@ -10,8 +10,8 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
         tools:replace="android:icon"
+        android:theme="@style/AppTheme"
         android:screenOrientation="portrait">
         <activity android:name="com.example.yadav.taskBoard.LoginActivity"
             android:screenOrientation="portrait">
@@ -29,17 +29,11 @@
         <activity android:name="com.example.yadav.taskBoard.KeyLoginActivity"
             android:screenOrientation="portrait"/>
         <activity
-            android:name="com.example.yadav.taskBoard.TaskCardFragment"
+            android:name="com.example.yadav.taskBoard.TaskCardActivity"
             android:label="TODO"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar"/>
-        <receiver android:name="com.example.yadav.taskBoard.RestartReceiver"
-            android:screenOrientation="portrait">
-            <intent-filter>
-                <action android:name="com.libreERP.RESTART_APP">
-                </action>
-            </intent-filter>
-        </receiver>
+
     </application>
 
 </manifest>

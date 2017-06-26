@@ -40,10 +40,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import cz.msebera.android.httpclient.Header;
 
-public class TaskCardFragment extends AppCompatActivity {
+public class TaskCardActivity extends AppCompatActivity {
 
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
@@ -66,6 +67,8 @@ public class TaskCardFragment extends AppCompatActivity {
     static AsyncHttpClient client;
     static Context context;
     private static FragmentManager fragmentManager;
+
+    private FragmentManager userDetailsManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -171,18 +174,18 @@ public class TaskCardFragment extends AppCompatActivity {
 
                     int run = followers.size();
                     LinearLayout layoutList = (LinearLayout) rootView.findViewById(R.id.followers);
-                if(run==0){
-                    TextView followerText = (TextView) rootView.findViewById(R.id.follower);
-                    followerText.setVisibility(View.INVISIBLE);
-                }
-                else {
-                    for (int k = 0; k < run; k++) {
-                        View followerView = inflater.inflate(R.layout.follower_list_view, container, false);
-                        final UserView followersImage = (UserView) followerView.findViewById(R.id.followerslist);
-                        followersImage.setUser(followers.get(k));
-                        layoutList.addView(followerView);
+                    if(run==0){
+                        TextView followerText = (TextView) rootView.findViewById(R.id.follower);
+                        followerText.setVisibility(View.INVISIBLE);
                     }
-                }
+                    else {
+                        for (int k = 0; k < run; k++) {
+                            View followerView = inflater.inflate(R.layout.follower_list_view, container, false);
+                            UserView followersImage = (UserView) followerView.findViewById(R.id.followerslist);
+                            followersImage.setUser(followers.get(k));
+                            layoutList.addView(followerView);
+                        }
+                    }
                     listView.setAdapter(customSubTaskCardAdapter);
                         break;
 

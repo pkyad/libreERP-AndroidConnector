@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="com.example.yadav.taskBoard.TaskCardFragment$PlaceholderFragment">
+    tools:context="com.example.yadav.taskBoard.TaskCardActivity$PlaceholderFragment">
 
     <FrameLayout
         android:id="@+id/content_frame_timeline"

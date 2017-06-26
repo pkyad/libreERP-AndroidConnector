@@ -47,7 +47,7 @@ public class Users {
         if(!dbHandler.CheckIfUserIsInDatabase(pk)){
             final AsyncHttpClient client = helper.getHTTPClient();
 
-            String url = String.format("%s/%s/%s/" , helper.serverURL, "api/HR/userSearch" , pk);
+            String url = String.format("%s/%s/%s/?more=true" , helper.serverURL, "api/HR/userSearch" , pk);
             client.get( url, new JsonHttpResponseHandler() {
                 @Override
                 public void onSuccess(int statusCode, Header[] headers, JSONObject response) {

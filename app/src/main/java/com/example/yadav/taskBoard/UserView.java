@@ -21,6 +21,8 @@ import android.net.Uri;
 import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
 import android.support.annotation.DrawableRes;
+import android.support.design.widget.BottomSheetDialogFragment;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.support.v7.widget.AppCompatImageView;
@@ -29,6 +31,7 @@ import android.view.View;
 
 import com.example.libreerp.UserMeta;
 import com.example.libreerp.UserMetaHandler;
+import com.example.libreerp.UserViewBS;
 import com.example.libreerp.Users;
 
 
@@ -158,7 +161,6 @@ public class UserView extends AppCompatImageView {
         rect.set(1,1,mBorderRect.centerY()*2+bound.width()+35,mBorderRect.centerY()*2);
         strokerect.set(1,1,mBorderRect.centerY()*2+bound.width()+30,mBorderRect.centerY()*2-1);
         canvas.drawRoundRect(rect,mBorderRect.centerY(),mBorderRect.centerY(),rp);
-
         setMinimumWidth((int) mBorderRect.centerY()*2+bound.width()+35);
         if (mBitmap == null) {
             return;
@@ -300,7 +302,7 @@ public class UserView extends AppCompatImageView {
         initializeBitmap();
     }
 
-    public void setUser(int pk){
+    public void setUser(final int pk){
         System.out.println("yes");
         Users users = new Users(getContext());
         users.get(pk , new UserMetaHandler(){
@@ -320,25 +322,14 @@ public class UserView extends AppCompatImageView {
         setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getContext(), HomeActivity.class);
-                getContext().startActivity(intent);
+                final BottomSheetDialogFragment userViewBS = UserViewBS.newInstance(pk);
+                userViewBS.show(((AppCompatActivity) getContext()).getSupportFragmentManager(), userViewBS.getTag());
             }
         });
 
         invalidate();
     }
 
-//
-//    @Override
-//    public boolean OnClickListener(MotionEvent event)
-//    {
-//        float x = event.getX();
-//        float y = event.getY();
-//        System.out.println("sdfsddfds");
-//        Intent intent = new Intent(this.getContext(), HomeActivity.class);
-//        getContext().startActivity(intent);
-//        return true;
-//    }
 
 
     @Override

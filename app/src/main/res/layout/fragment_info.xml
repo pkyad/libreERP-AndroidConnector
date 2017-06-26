@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
 
-    tools:context="com.example.yadav.taskBoard.TaskCardFragment$PlaceholderFragment">
+    tools:context="com.example.yadav.taskBoard.TaskCardActivity$PlaceholderFragment">
 <RelativeLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -74,13 +74,13 @@
         android:layout_alignTop="@+id/follower"
         android:layout_toRightOf="@+id/follower"
         android:layout_toEndOf="@+id/follower">
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:id="@+id/followers"
-        >
-    </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:id="@+id/followers"
+            >
+        </LinearLayout>
     </HorizontalScrollView>
     <TextView
         android:layout_width="wrap_content"

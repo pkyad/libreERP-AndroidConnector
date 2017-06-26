@@ -31,7 +31,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -309,7 +308,7 @@ public class HomeHomeFragment extends Fragment {
 
                     RecyclerViewItemPosition = Recyclerview.getChildAdapterPosition(ChildView);
 
-                    Intent intent = new Intent(getActivity(), TaskCardFragment.class);
+                    Intent intent = new Intent(getActivity(), TaskCardActivity.class);
                     intent.putExtra("EXTRA_SESSION_ID", RecyclerViewItemPosition);
                     intent.putExtra("PK_TASK",dba.getPK(RecyclerViewItemPosition));
                     startActivity(intent);
@@ -414,7 +413,7 @@ public class HomeHomeFragment extends Fragment {
 
 //    @Override
 //    public void taskcard(View view) {
-//        Intent intent = new Intent(getActivity(), TaskCardFragment.class);
+//        Intent intent = new Intent(getActivity(), TaskCardActivity.class);
 //        startActivity(intent);
 //
 //    }

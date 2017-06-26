@@ -3,7 +3,6 @@ package com.example.yadav.taskBoard;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -664,7 +663,7 @@ public class DBHandler extends SQLiteOpenHelper {
                 subTask.setStatus(cursor.getString(3));
 
                 String name = cursor.getString(2) +"\n"+ cursor.getString(3);
-                TaskCardFragment.arraySubTask.add(name);
+                TaskCardActivity.arraySubTask.add(name);
                 // Adding contact to list
                 subTaskList.add(subTask);
             } while (cursor.moveToNext());
