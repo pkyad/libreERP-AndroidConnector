@@ -1,6 +1,6 @@
 [
     {
-        "outputFile": "/home/yadav/Desktop/libreERP-AndroidConnector/jawampaLib/build/intermediates/res/merged/release/values/values.xml",
+        "outputFile": "/home/cioc/Documents/libreERP-AndroidConnector/jawampaLib/build/intermediates/res/merged/release/values/values.xml",
         "map": [
             {
                 "to": {
@@ -11,7 +11,7 @@
                     "endOffset": 99
                 },
                 "from": {
-                    "file": "/home/yadav/Desktop/libreERP-AndroidConnector/jawampaLib/src/main/res/values/strings.xml",
+                    "file": "/home/cioc/Documents/libreERP-AndroidConnector/jawampaLib/src/main/res/values/strings.xml",
                     "position": {
                         "startLine": 2,
                         "startColumn": 4,
@@ -31,7 +31,7 @@
                     "endOffset": 390
                 },
                 "from": {
-                    "file": "/home/yadav/Desktop/libreERP-AndroidConnector/jawampaLib/src/main/res/values/styles.xml",
+                    "file": "/home/cioc/Documents/libreERP-AndroidConnector/jawampaLib/src/main/res/values/styles.xml",
                     "position": {
                         "startLine": 6,
                         "startColumn": 4,
@@ -52,7 +52,7 @@
                     "endOffset": 550
                 },
                 "from": {
-                    "file": "/home/yadav/Desktop/libreERP-AndroidConnector/jawampaLib/src/main/res/values/styles.xml",
+                    "file": "/home/cioc/Documents/libreERP-AndroidConnector/jawampaLib/src/main/res/values/styles.xml",
                     "position": {
                         "startLine": 15,
                         "startColumn": 4,
