@@ -2,6 +2,7 @@ package com.example.yadav.IM;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -28,16 +29,24 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.libreerp.Helper;
+import com.example.libreerp.User;
 import com.example.libreerp.UserMeta;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.GoogleMap;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.JsonHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.entity.BufferedHttpEntity;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -56,6 +65,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.client.ClientProtocolException;
 import cz.msebera.android.httpclient.client.HttpClient;
 import cz.msebera.android.httpclient.client.methods.HttpGet;
@@ -278,6 +288,7 @@ public class ChatRoomActivity extends AppCompatActivity {
         });
 
         fetchChatThread();*/
+       //fetchChatRooms();
     }
 
     private void sendLocation()  {
@@ -396,8 +407,8 @@ public class ChatRoomActivity extends AppCompatActivity {
             String Fpath = data.getData().getPath();
             String filename=Fpath.substring(Fpath.lastIndexOf("/")+1);
             String extension = Fpath.substring(Fpath.lastIndexOf(".") + 1);
-            Message dummy = new Message("1",filename,"1 am" ,user1);
-
+            Message dummy = new Message("1",Fpath,"1 am" ,user1);
+            extension = "pdf";
             if (extension.equals("pdf") == true || extension.equals("PDF") == true || extension.equals(".pdf") == true ||  extension.equals(".PDF") == true ){
                 dummy.setLocation(5); // 5 is for pdf
             }
@@ -484,6 +495,11 @@ public class ChatRoomActivity extends AppCompatActivity {
         menuOpen = false;
         theMenu.setVisibility(View.INVISIBLE);
     }
+
+
+
+
+
     private void attachFiles(){
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");

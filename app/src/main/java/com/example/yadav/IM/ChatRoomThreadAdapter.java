@@ -82,17 +82,30 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             }
         }
         else { // given message is card message
-            itemView = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.card_location, parent, false);
-            // view type is to identify where to render the chat message
-            // left or right
-            card = (ImageView) itemView.findViewById(R.id.image_location);
-            if (ATTACH == 1)
-            card.setImageResource(R.drawable.ic_location_on_black_24dp);
+           ;
+            if (ATTACH == 1) {
+                itemView = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.card_location, parent, false);
+                // view type is to identify where to render the chat message
+                // left or right
+                card = (ImageView) itemView.findViewById(R.id.image_location);
+
+                card.setImageResource(R.drawable.ic_location_on_black_24dp);
+            }
             else if (ATTACH == 2 || ATTACH == 3 ){
+                itemView = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.card_location, parent, false);
+                // view type is to identify where to render the chat message
+                // left or right
+                card = (ImageView) itemView.findViewById(R.id.image_location);
                 card.setImageBitmap(bm);
             }
             else{ // attachment is file
+                itemView = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.card_files, parent, false);
+                // view type is to identify where to render the chat message
+                // left or right
+                card = (ImageView) itemView.findViewById(R.id.image_location);
                 if (ATTACH == 5){ // file is pdf
                     card.setImageResource(R.drawable.ic_picture_as_pdf_black_24dp);
                 }
@@ -151,8 +164,8 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
 
 
-        String timestamp = getTimeStamp(message.getCreatedAt());
-
+        //String timestamp = getTimeStamp(message.getCreatedAt());
+        String timestamp = "12 am" ;
 
         ((ViewHolder) holder).timestamp.setText(timestamp);
     }
