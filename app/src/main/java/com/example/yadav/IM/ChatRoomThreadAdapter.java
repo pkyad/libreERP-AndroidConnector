@@ -3,6 +3,7 @@ package com.example.yadav.IM;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.support.v7.widget.RecyclerView;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,6 +28,7 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private int SELF = 100;
     private static String today;
     private int ATTACH = 0;
+    private boolean MARGIN = false;
     private Context mContext;
     private ArrayList<Message> messageArrayList;
     private static final int CAMERA_REQUEST = 1 ;
@@ -39,7 +41,7 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         public ViewHolder(View view) {
             super(view);
             message = (TextView) itemView.findViewById(R.id.message);
-            timestamp = (TextView) itemView.findViewById(R.id.timestamp);
+           // timestamp = (TextView) itemView.findViewById(R.id.timestamp);
             location = (ImageView) itemView.findViewById(R.id.image_location);
         }
     }
@@ -60,15 +62,30 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         TextView message ;
         ImageView card ;
         ImageView attachment ;
+        //TextView timestamp ;
+        ATTACH = 0 ;
+
         if (ATTACH == 0) {
             itemView = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.chat_item, parent, false);
+            RelativeLayout relativeLayout = (RelativeLayout) itemView.findViewById(R.id.relativelayout);
             // view type is to identify where to render the chat message
             // left or right
             message = (TextView) itemView.findViewById(R.id.message);
-            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) message.getLayoutParams();
+            //timestamp = (TextView) itemView.findViewById(R.id.timestamp);
+
             if (viewType == SELF) {
                 // self message
+                if (MARGIN == true) {
+                    RelativeLayout.LayoutParams params = new  RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                    int sizeInDP = 40;
+
+                    int marginInDp = (int) TypedValue.applyDimension(
+                            TypedValue.COMPLEX_UNIT_DIP, sizeInDP, mContext.getResources().getDisplayMetrics());
+                    params.setMargins(params.leftMargin, marginInDp, params.rightMargin, params.bottomMargin);
+                    relativeLayout.setLayoutParams(params);
+                    MARGIN = false ;
+                }
 
                 ((RelativeLayout) itemView).setGravity(Gravity.RIGHT);
                 message.setBackgroundResource(R.drawable.bg_bubble_gray);
@@ -77,8 +94,19 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
             } else {
                 // others message
-                itemView = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.chat_item, parent, false);
+                if (MARGIN == true) {
+                    RelativeLayout.LayoutParams params = new  RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                    int sizeInDP = 40;
+
+                    int marginInDp = (int) TypedValue.applyDimension(
+                            TypedValue.COMPLEX_UNIT_DIP, sizeInDP, mContext.getResources().getDisplayMetrics());
+                    params.setMargins(params.leftMargin, marginInDp, params.rightMargin, params.bottomMargin);
+                    relativeLayout.setLayoutParams(params);
+                    MARGIN = false ;
+                }
+                //itemView = LayoutInflater.from(parent.getContext())
+                  //      .inflate(R.layout.chat_item, parent, false);
+               // timestamp.setGravity(Gravity.LEFT);
             }
         }
         else { // given message is card message
@@ -141,6 +169,7 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         Message message = messageArrayList.get(position);
         location_card(position);
         getAttachBitmap(position);
+        margin_text(position);
         if (message.getUser().getPkUser() == userId) {
             return SELF;
         }
@@ -150,6 +179,11 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     public void location_card(int position) {
         Message message = messageArrayList.get(position);
         ATTACH = message.isLocation();
+    }
+    public void margin_text(int position) {
+        Message message = messageArrayList.get(position);
+        MARGIN = message.isMargin();
+
     }
 
     public void getAttachBitmap(int position) {
@@ -165,9 +199,9 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
 
         //String timestamp = getTimeStamp(message.getCreatedAt());
-        String timestamp = "12 am" ;
+       // String timestamp = message.getCreatedAt();
 
-        ((ViewHolder) holder).timestamp.setText(timestamp);
+       // ((ViewHolder) holder).timestamp.setText(timestamp);
     }
 
     @Override

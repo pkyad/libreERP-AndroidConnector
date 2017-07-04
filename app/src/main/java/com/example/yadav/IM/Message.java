@@ -13,6 +13,15 @@ public class Message implements Serializable {
     String id, message, createdAt;
     UserMeta user;
 
+    public boolean isMargin() {
+        return margin;
+    }
+
+    public void setMargin(boolean margin) {
+        this.margin = margin;
+    }
+
+    boolean margin ;
 
 
     Bitmap bm ;
@@ -31,6 +40,7 @@ public class Message implements Serializable {
         this.user = user;
         this.location = 0 ;
         this.bm = null ;
+        this.margin = false ;
 
     }
 

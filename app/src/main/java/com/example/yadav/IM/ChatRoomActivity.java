@@ -6,6 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,6 +20,7 @@ import android.os.Bundle;
 
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -21,6 +29,7 @@ import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -32,6 +41,8 @@ import android.widget.Toast;
 import com.example.libreerp.Helper;
 import com.example.libreerp.User;
 import com.example.libreerp.UserMeta;
+import com.example.libreerp.UserMetaHandler;
+import com.example.libreerp.Users;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.location.places.Place;
@@ -70,6 +81,7 @@ import cz.msebera.android.httpclient.client.ClientProtocolException;
 import cz.msebera.android.httpclient.client.HttpClient;
 import cz.msebera.android.httpclient.client.methods.HttpGet;
 import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
+import de.hdodenhof.circleimageview.CircleImageView;
 
 import static android.R.attr.path;
 
@@ -78,10 +90,10 @@ public class ChatRoomActivity extends AppCompatActivity {
 
     private String TAG = ChatRoomActivity.class.getSimpleName();
 
-    private String chatRoomId;
+    private static  String chatRoomId;
     private RecyclerView recyclerView;
-    private ChatRoomThreadAdapter mAdapter;
-    private ArrayList<Message> messageArrayList;
+    private static ChatRoomThreadAdapter mAdapter;
+    private static ArrayList<Message> messageArrayList;
     private BroadcastReceiver mRegistrationBroadcastReceiver;
     private EditText inputMessage;
     private Button btnSend;
@@ -89,7 +101,7 @@ public class ChatRoomActivity extends AppCompatActivity {
     private GoogleMap mMap;
     private ImageView card_location_image;
     private boolean menuOpen = false;
-
+    private static Context context ;
     private View theMenu;
     private View menu1;
     private View menu2;
@@ -100,15 +112,13 @@ public class ChatRoomActivity extends AppCompatActivity {
     private ImageButton btn_gallery ;
     private ImageButton btn_camera ;
     private ImageButton btn_files ;
+    private TextView title_bar ;
     private static final int IO_BUFFER_SIZE = 4 * 1024;
     private static final int CAMERA_REQUEST = 1024 ;
     private static final int GALLERY_REQUEST = 2134 ;
     private static final int CHOOSE_FILE_REQUESTCODE = 4512 ;
     private static final int PLACE_PICKER_REQUEST = 1000;
-    UserMeta user1 = new UserMeta(1);
 
-
-    UserMeta user2 = new UserMeta(2);
 
     private final TextWatcher mTextEditorWatcher = new TextWatcher() {
         @Override
@@ -152,11 +162,8 @@ public class ChatRoomActivity extends AppCompatActivity {
         btn_camera = (ImageButton) findViewById(R.id.btn_camera);
         btn_files = (ImageButton)findViewById(R.id.btn_files);
         card_location_image = (ImageView) findViewById(R.id.image_location);
-        user1.setFirstName("Chandler");
-        user1.setLastName("Bing");
-
-        user2.setFirstName("Joey");
-        user2.setLastName("tri");
+        title_bar = (TextView) findViewById(R.id.titleText);
+        context = getApplicationContext();
 
         inputMessage.setOnClickListener(new View.OnClickListener() {
 
@@ -234,11 +241,29 @@ public class ChatRoomActivity extends AppCompatActivity {
 
 
         Intent intent = getIntent();
-        chatRoomId = intent.getStringExtra("chat_room_id");
+        chatRoomId = intent.getStringExtra("with_id"); // chat Room id is same as with id here in this case
         String title = intent.getStringExtra("name");
+        byte[] byteArray = getIntent().getByteArrayExtra("dp");
+        Bitmap profile = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
 
         getSupportActionBar().setTitle(title);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+       // Drawable drawable = new BitmapDrawable(getResources(), createCircleBitmap(profile));
+        //Drawable drawable = new BitmapDrawable(getResources(), profile);
+       // getSupportActionBar().setIcon(drawable);
+        /*ActionBar mActionBar = getSupportActionBar();
+        mActionBar.setDisplayShowHomeEnabled(false);
+        mActionBar.setDisplayShowTitleEnabled(false);
+        LayoutInflater mInflater = LayoutInflater.from(this);
+
+        View mCustomView = mInflater.inflate(R.layout.action_bar_chatroom, null);
+
+        title_bar.setText(title);
+        CircleImageView image = (CircleImageView) findViewById(R.id.circularimageView1);
+        image.setImageBitmap(profile);
+        mActionBar.setCustomView(mCustomView);
+        mActionBar.setDisplayShowCustomEnabled(true);*/
 
         if (chatRoomId == null) {
             Toast.makeText(getApplicationContext(), "Chat room not found!", Toast.LENGTH_SHORT).show();
@@ -254,12 +279,16 @@ public class ChatRoomActivity extends AppCompatActivity {
 
         // self user id is to identify the message owner
         // String selfUserId = MyApplication.getInstance().getPrefManager().getUser().getId();
-        int selfUserId = 1;
+
+        User login = User.loadUser(context);
+        int login_pk = login.getPk();
         Bitmap bm = null ;
-        mAdapter = new ChatRoomThreadAdapter(this, messageArrayList ,selfUserId);
+        mAdapter = new ChatRoomThreadAdapter(this, messageArrayList ,login_pk);
         mAdapter.notifyDataSetChanged();
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
+        layoutManager.setStackFromEnd(true);
+        recyclerView.scrollToPosition(mAdapter.getItemCount()-1);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
 
@@ -287,9 +316,263 @@ public class ChatRoomActivity extends AppCompatActivity {
             }
         });
 
-        fetchChatThread();*/
+        */
        //fetchChatRooms();
+        fetchChatThread();
+
+
+        recyclerView.scrollToPosition(mAdapter.getItemCount()-1);
+
+
+        //layoutManager.setStackFromEnd(true);
     }
+    public Bitmap createCircleBitmap(Bitmap bitmapimg){
+        Bitmap output = Bitmap.createBitmap(bitmapimg.getWidth(),
+                bitmapimg.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+
+        final int color = 0xff424242;
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmapimg.getWidth(),
+                bitmapimg.getHeight());
+
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(color);
+        canvas.drawCircle(4*bitmapimg.getWidth() / 10,
+                4*bitmapimg.getHeight() / 10, 4*bitmapimg.getWidth() / 10, paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmapimg, rect, rect, paint);
+        return output;
+    }
+
+    private void fetchChatThread() {
+        load_data_from_database(0);
+        System.out.print("yess");
+
+
+        Helper helper = new Helper(context);
+
+        AsyncHttpClient client = helper.getHTTPClient();
+        Users users = new Users(context);
+        final String[] name = new String[1];
+
+        // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
+
+        users.get(Integer.parseInt(chatRoomId) , new UserMetaHandler(){
+            @Override
+            public void onSuccess(UserMeta user){
+                System.out.println("yes65262626626");
+                name[0] = user.getUsername();
+                // set text in the layout here
+            }
+            @Override
+            public void handleDP(Bitmap dp){
+
+                // set text in the layout here
+            }
+
+        });
+
+        String url = String.format("%s/%s%s", helper.serverURL, "api/PIM/chatMessageBetween/?other=",name[0]); // i have to change it
+
+        client.get(url, new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
+                super.onSuccess(statusCode, headers, response);
+
+                System.out.println("success 001xzc");
+                try {
+//                                JSONArray response = tasks.getJSONArray("results");
+                    int pkMessage;
+                    String message;
+                    String attachement;
+                    int pkOriginator;
+                    String created;
+                    boolean read;
+                    int pkUser;
+
+                    String category;
+                    String text;
+                    int pkCommit;
+                    String commitMessage;
+                    int user;
+                    String CommitDate;
+                    String CommitBranch;
+                    String CommitCode;
+
+                    DBHandler dba = new DBHandler(context, null, null, 1);
+                    User login = User.loadUser(context);
+                    int login_pk = login.getPk();
+
+                    for (int i = 0; i < response.length(); i++) {
+
+                        JSONObject c = response.getJSONObject(i);
+                        pkMessage = c.getInt("pk");
+                        if (!dba.CheckIfMessagePKAlreadyInDBorNot(pkMessage)) { // check in table of Message
+                            message = c.getString("message");
+                            attachement = c.getString("attachment");
+                            pkOriginator = c.getInt("originator");
+                            created =  c.getString("created");
+                            read = c.getBoolean("read");
+                            pkUser = c.getInt("user");
+
+
+                            ChatRoomTable chatRoomTable = new ChatRoomTable();
+                            chatRoomTable.setPrvsMessage(true);
+
+
+                            chatRoomTable.setAttachement(attachement);
+                            chatRoomTable.setCreated(created);
+                            chatRoomTable.setMessage(message);
+                            chatRoomTable.setPkMessage(pkMessage);
+                            chatRoomTable.setPkOriginator(pkOriginator);
+                            chatRoomTable.setPkUser(pkUser);
+
+                            dba.insertTableMessage(chatRoomTable);
+
+                        }
+
+
+
+                        // every messages will be inserted
+
+
+
+
+
+                    }
+                    mAdapter.notifyDataSetChanged();
+
+
+                } catch (final JSONException e) {
+                    Log.e("TAG", "Json parsing error: " + e.getMessage());
+
+                }
+
+
+            }
+
+            @Override
+            public void onFinish() {
+                System.out.println("finished 001cxczdfhgfg");
+                // retrieve all the db entries
+
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+
+                System.out.println("finished failed 001xczxc");
+            }
+        });
+    }
+
+
+
+
+    private static void load_data_from_database(int id) {
+
+        final AsyncTask<Integer, Void, Void> comment = new AsyncTask<Integer, Void, Void>() {
+            @Override
+            protected Void doInBackground(Integer... integers) {
+
+                final DBHandler dba = new DBHandler(context, null, null, 1); // see this
+                //System.out.println("pkTask = "+pkTask);
+                int entries_database_message = dba.getTotalDBEntries_MESSAGE();
+                User login = User.loadUser(context);
+                int login_pk = login.getPk();
+
+                int prvs_originator_pk = login_pk;
+                int margin = 1 ;
+                for (int i = 0; i < entries_database_message ; i++) {
+
+                    final ChatRoomTable data = new ChatRoomTable();
+                    data.setPkOriginator(dba.message_getOriginatorPK(i));
+                    data.setPkUser(dba.message_getUserPk(i));
+                    if (data.getPkOriginator() == Integer.parseInt(chatRoomId) || data.getPkUser() ==  Integer.parseInt(chatRoomId)){
+                        data.setPkMessage(dba.message_getMessagePK(i));
+                        data.setMessage(dba.message_getMessage(i));
+                        data.setAttachement(dba.message_getAttachment(i));
+                        margin = 0 ;
+                        if (i == 0) {
+                            margin = 0;
+                        }
+                        else if(i > 0 && prvs_originator_pk != data.getPkOriginator() ){
+                            margin = 1 ;
+                        }
+                        else {
+                           margin = 0;// previous and same message are not from same user and hence add margin
+                        }
+                        String date = dba.message_getDate(i);
+                        data.setCreated(date);
+                        String messageDate;
+                        //messageDate = new SimpleDateFormat("dd MMM, yyyy").format(date);
+
+
+                        Users users = new Users(context);
+                        final String[] name = new String[1];
+                        final Bitmap[] bp = new Bitmap[1];
+                        // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
+
+
+
+
+                        UserMeta usermeta = new UserMeta(data.getPkOriginator());
+                        Message message = new Message(Integer.toString(data.getPkMessage()),data.getMessage(),data.getCreated(),usermeta);
+                        if (margin == 1){
+                            message.setMargin(true);
+                        }
+                        else {
+                            message.setMargin(false);
+                        }
+                        //chatRoom.setDP(bp[0]);
+                        messageArrayList.add(message);
+                        prvs_originator_pk = data.getPkOriginator();
+                    }
+
+                }
+
+
+                //
+//                    OkHttpClient client = new OkHttpClient();
+//                    Request request = new Request.Builder()
+//                            .url("http://192.168.178.26/test/script.php?id="+integers[0])
+//                            .build();
+//                    try {
+//                        Response response = client.newCall(request).execute();
+//
+//                        JSONArray array = new JSONArray(response.body().string());
+//
+//                        for (int i=0; i<array.length(); i++){
+//
+//                            JSONObject object = array.getJSONObject(i);
+//
+//                            MyData data = new MyData(object.getInt("id"),object.getString("description"),
+//                                    object.getString("image"));
+//
+//                            data_list.add(data);
+//                        }
+//
+//
+//
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    } catch (JSONException e) {
+//                        System.out.println("End of content");
+//                    }
+                return null;
+            }
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                mAdapter.notifyDataSetChanged();
+            }
+        };
+
+        comment.execute(id);
+    }
+
 
     private void sendLocation()  {
 
@@ -357,10 +640,10 @@ public class ChatRoomActivity extends AppCompatActivity {
                 }*/
 
 
-                Message dummy = new Message("1","","1 am" ,user1);
-                dummy.setLocation(1); // 1 is for location
-                messageArrayList.add(dummy) ;
-                mAdapter.notifyDataSetChanged();
+              //  Message dummy = new Message("1","","1 am" ,user1);
+              //  dummy.setLocation(1); // 1 is for location
+              //  messageArrayList.add(dummy) ;
+              //  mAdapter.notifyDataSetChanged();
 
 
 
@@ -374,12 +657,12 @@ public class ChatRoomActivity extends AppCompatActivity {
 
 
 
-            Message dummy = new Message("1","","1 am" ,user1);
-            dummy.setLocation(3);// 3 is for camera
-            dummy.setBm(bm);
-            messageArrayList.add(dummy) ;
-            mAdapter.notifyDataSetChanged();
-            saveImageTOExternalStorage(bm);
+           // Message dummy = new Message("1","","1 am" ,user1);
+           // dummy.setLocation(3);// 3 is for camera
+           // dummy.setBm(bm);
+           // messageArrayList.add(dummy) ;
+           // mAdapter.notifyDataSetChanged();
+           // saveImageTOExternalStorage(bm);
 
         }
         if (requestCode == GALLERY_REQUEST && resultCode == Activity.RESULT_OK) {
@@ -389,10 +672,10 @@ public class ChatRoomActivity extends AppCompatActivity {
                     bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
                     card_location_image.setImageBitmap(bm);
 
-                    Message dummy = new Message("1","","1 am" ,user1);
-                    dummy.setLocation(2); // 2 is for gallery
-                    dummy.setBm(bm);
-                    messageArrayList.add(dummy) ;
+                   // Message dummy = new Message("1","","1 am" ,user1);
+                   // dummy.setLocation(2); // 2 is for gallery
+                  //  dummy.setBm(bm);
+                  //  messageArrayList.add(dummy) ;
                     mAdapter.notifyDataSetChanged();
 
                 } catch (IOException e) {
@@ -407,15 +690,15 @@ public class ChatRoomActivity extends AppCompatActivity {
             String Fpath = data.getData().getPath();
             String filename=Fpath.substring(Fpath.lastIndexOf("/")+1);
             String extension = Fpath.substring(Fpath.lastIndexOf(".") + 1);
-            Message dummy = new Message("1",Fpath,"1 am" ,user1);
+           // Message dummy = new Message("1",Fpath,"1 am" ,user1);
             extension = "pdf";
             if (extension.equals("pdf") == true || extension.equals("PDF") == true || extension.equals(".pdf") == true ||  extension.equals(".PDF") == true ){
-                dummy.setLocation(5); // 5 is for pdf
+           //     dummy.setLocation(5); // 5 is for pdf
             }
             else {
-                dummy.setLocation(6); // 6 is for other document
+          //      dummy.setLocation(6); // 6 is for other document
             }
-            messageArrayList.add(dummy) ;
+         //   messageArrayList.add(dummy) ;
             mAdapter.notifyDataSetChanged();
 
         }

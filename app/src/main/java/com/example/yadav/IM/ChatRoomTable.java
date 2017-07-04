@@ -11,10 +11,20 @@ public class ChatRoomTable {
     private String message ;
     private String attachement ;
     private int pkOriginator;
-    private Date created ;
+    private String created ;
     private int total_unread;
     private int pkUser ;
     private int otherPk ;
+    private boolean prvsMessage ; // true if the prvs is also for same user
+
+    public boolean isPrvsMessage() {
+        return prvsMessage;
+    }
+
+    public void setPrvsMessage(boolean prvsMessage) {
+        this.prvsMessage = prvsMessage;
+    }
+
 
     public int getOtherPk() {
         return otherPk;
@@ -58,11 +68,11 @@ public class ChatRoomTable {
         this.pkOriginator = pkOriginator;
     }
 
-    public Date getCreated() {
+    public String getCreated() {
         return created;
     }
 
-    public void setCreated(Date created) {
+    public void setCreated(String created) {
         this.created = created;
     }
 

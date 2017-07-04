@@ -22,7 +22,7 @@
         android:padding="10dp"
         android:textSize="14dp"
          />
-    <TextView
+    <!--TextView
         android:id="@+id/timestamp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -30,7 +30,7 @@
         android:layout_below="@id/image_location"
         android:layout_marginBottom="25dp"
         android:padding="10dp"
-        android:textSize="10dp" />
+        android:textSize="10dp" /-->
 
     <TextView
         android:id="@+id/message"

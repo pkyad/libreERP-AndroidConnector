@@ -11,14 +11,22 @@ public class ChatRoom implements Serializable {
     String id, name, lastMessage, timestamp;
     int unreadCount;
     Bitmap DP ;
+    int with_pk;
 
+    public int getWith_pk() {
+        return with_pk;
+    }
+
+    public void setWith_pk(int with_pk) {
+        this.with_pk = with_pk;
+    }
 
     public ChatRoom() {
     }
 
-    public ChatRoom(String id, String name, String lastMessage, String timestamp, int unreadCount ) {
+    public ChatRoom(String id, String lastMessage, String timestamp, int unreadCount ) {
         this.id = id;
-        this.name = name;
+
         this.lastMessage = lastMessage;
         this.timestamp = timestamp;
         this.unreadCount = unreadCount;

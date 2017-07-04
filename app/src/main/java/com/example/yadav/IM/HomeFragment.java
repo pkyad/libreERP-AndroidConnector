@@ -10,10 +10,15 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 
 import com.example.libreerp.Helper;
 import com.example.libreerp.User;
@@ -27,6 +32,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -39,7 +45,7 @@ import cz.msebera.android.httpclient.Header;
 public class HomeFragment extends Fragment {
 
     View myView;
-
+    ArrayAdapter<String> searchAdapter ;
     private static ArrayList<ChatRoom> chatRoomArrayList;
     private static ChatRoomsAdapter mAdapter;
     private RecyclerView recyclerView;
@@ -68,8 +74,9 @@ public class HomeFragment extends Fragment {
 
 
         chatRoomArrayList = new ArrayList<>();
-        fetchChatRooms();
-        mAdapter = new ChatRoomsAdapter(this, chatRoomArrayList);
+        context = getActivity().getApplicationContext();
+        mAdapter = new ChatRoomsAdapter(this, chatRoomArrayList,context);
+        int size = chatRoomArrayList.size();
         LinearLayoutManager layoutManager = new LinearLayoutManager( getActivity());
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.addItemDecoration(new SimpleDividerItemDecoration(
@@ -84,13 +91,19 @@ public class HomeFragment extends Fragment {
             public void onClick(View view, int position) {
                 // when chat is clicked, launch full chat thread activity
                 ChatRoom chatRoom = chatRoomArrayList.get(position);
-
+                int pk_select = chatRoom.getWith_pk();
+                String name_select =  chatRoom.getName();
                 Intent intent = new Intent(getActivity(), ChatRoomActivity.class);
 
-                intent.putExtra("chat_room_id", chatRoom.getId());
-                intent.putExtra("name", chatRoom.getName());
+                intent.putExtra("with_id", Integer.toString(pk_select));
+                intent.putExtra("name", name_select);
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                chatRoom.getDP().compress(Bitmap.CompressFormat.PNG, 80, stream);
+                byte[] byteArray = stream.toByteArray();
+                intent.putExtra("dp", byteArray);
                 startActivity(intent);
             }
+
 
             @Override
             public void onLongClick(View view, int position) {
@@ -102,16 +115,38 @@ public class HomeFragment extends Fragment {
         return myView;
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.homefragment_menu,menu);
+        MenuItem item = menu.findItem(R.id.search_chat);
+        SearchView searchview = (SearchView) item.getActionView();
+
+        searchview.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                searchAdapter.getFilter().filter(newText);
+                return false;
+            }
+        });
+
+    }
 
     private void fetchChatRooms() {
         System.out.print("yess");
-        String serverURL = "http://pradeepyadav.net";
-         context = getActivity();
+
+
         Helper helper = new Helper(context);
 
         AsyncHttpClient client = helper.getHTTPClient();
 
-        String url = String.format("%s/%s/", serverURL, "/api/PIM/chatMessage/");
+        String url = String.format("%s/%s/", helper.serverURL, "api/PIM/chatMessage");
 
         client.get(url, new JsonHttpResponseHandler() {
             @Override
@@ -125,7 +160,7 @@ public class HomeFragment extends Fragment {
                     String message;
                     String attachement;
                     int pkOriginator;
-                    Date created;
+                    String created;
                     boolean read;
                     int pkUser;
 
@@ -149,7 +184,7 @@ public class HomeFragment extends Fragment {
                         message = c.getString("message");
                         attachement = c.getString("attachment");
                         pkOriginator = c.getInt("originator");
-                        created = (Date) c.get("created");
+                        created =  c.getString("created");
                         read = c.getBoolean("read");
                         pkUser = c.getInt("user");
 
@@ -201,7 +236,7 @@ public class HomeFragment extends Fragment {
                        }
                        // every messages will be inserted
                         if (!dba.CheckIfMessagePKAlreadyInDBorNot(pkMessage)) { // check in table of Message
-                            dba.insertTableMessage(chatRoomTable);
+                           //dba.insertTableMessage(chatRoomTable);
                         }
 
 
@@ -228,7 +263,7 @@ public class HomeFragment extends Fragment {
             @Override
             public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                load_data_from_database(0);
+
                 System.out.println("finished failed 001xczxc");
             }
         });
@@ -242,6 +277,8 @@ public class HomeFragment extends Fragment {
         }
         return 0 ;
     }
+
+
     private static void load_data_from_database(int id) {
 
         final AsyncTask<Integer, Void, Void> comment = new AsyncTask<Integer, Void, Void>() {
@@ -250,41 +287,31 @@ public class HomeFragment extends Fragment {
 
                 final DBHandler dba = new DBHandler(context, null, null, 1); // see this
                 //System.out.println("pkTask = "+pkTask);
-
-                for (int i = 0; i < dba.getTotalDBEntries_CHATROOM(); i++) {
+                int entries_database_chatRoom = dba.getTotalDBEntries_CHATROOM();
+                for (int i = 0; i < entries_database_chatRoom ; i++) {
                     final ChatRoomTable data = new ChatRoomTable();
                     data.setOtherPk(dba.getWithPK(i));
                     data.setPkMessage(dba.getMessagePK(i));
-
+                    data.setMessage(dba.getLastMessage(i));
                     String date = dba.getDate(i);
+                    data.setCreated(date);
                     data.setRead(dba.getUnRead(i));
                      String messageDate;
-                     messageDate = new SimpleDateFormat("dd MMM, yyyy").format(date);
-                    Date current = new Date();
+                     //messageDate = new SimpleDateFormat("dd MMM, yyyy").format(date);
+
 
                     Users users = new Users(context);
                     final String[] name = new String[1];
                     final Bitmap[] bp = new Bitmap[1];
                     // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
-                    users.get(dba.getWithPK(i) , new UserMetaHandler(){
-                        @Override
-                        public void onSuccess(UserMeta user){
-                            System.out.println("yes65262626626");
-                            name[0] = user.getFirstName() + " " + user.getLastName();
-                            // set text in the layout here
-                        }
-                        @Override
-                        public void handleDP(Bitmap dp){
-                            System.out.println("dp dsda");
-                            bp[0] = dp ;
-                            // set text in the layout here
-                        }
+                    int with_pk = dba.getWithPK(i);
 
-                    });
-                    ChatRoom chatRoom = new ChatRoom(Integer.toString(i+1),name[0],data.getMessage(),date,data.getTotal_unread());
-                    chatRoom.setDP(bp[0]);
+                    ChatRoom chatRoom = new ChatRoom(Integer.toString(i+1),data.getMessage(),date,data.getTotal_unread());
+                    chatRoom.setWith_pk(with_pk);
+                    //chatRoom.setDP(bp[0]);
                     chatRoomArrayList.add(chatRoom);
                 }
+                int size = chatRoomArrayList.size();
 
                 //
 //                    OkHttpClient client = new OkHttpClient();

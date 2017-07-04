@@ -23,19 +23,19 @@ public class DBHandler extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "message.db";
 
     // chat Room table
-    public static final String TABLE_CHATROOM = "chatRoom";
+    public static final String TABLE_CHATROOM = "chatRoomTable";
     //public static final String COLUMN_CHATROOM_PK = "PK";
     public static final String COLUMN_WITH_PK = "PK";
-    public static final String COLUMN_MESSAGE_PK = "MEESAGEPK";
-    public static final String COLUMN_LAST_MESSAGE = "LASTMEESAGE";
+    public static final String COLUMN_MESSAGE_PK = "MESSAGEPK";
+    public static final String COLUMN_LAST_MESSAGE = "LASTMESSAGE";
     public static final String COLUMN_DATE = "DATE";
     public static final String COLUMN_UNREAD = "UNREAD";
 
 
     //    Message table variables
-    public static final String TABLE_MESSAGE = "subTask";
+    public static final String TABLE_MESSAGE = "messageTable";
     public static final String COLUMN_PK_MESSAGE = "PKMESSAGE";
-    public static final String COLUMN_MESSAGE_MESSAGE = "MEESAGE";
+    public static final String COLUMN_MESSAGE_MESSAGE = "MESSAGETEXT";
     public static final String COLUMN_MESSAGE_ATTACHMENT = "ATTACHMENT";
     public static final String COLUMN_MESSAGE_ORIGINATOR = "ORIGINATOR";
     public static final String COLUMN_MESSAGE_CREATED = "CREATED";
@@ -73,15 +73,15 @@ public class DBHandler extends SQLiteOpenHelper {
                 + COLUMN_MESSAGE_PK + " INTEGER,"
                 + COLUMN_LAST_MESSAGE + " TEXT,"
                 + COLUMN_DATE + " TEXT,"
-                + COLUMN_UNREAD + " INTEGER,"
-
+                + COLUMN_UNREAD + " INTEGER"
                 + ");";
 
 
         String queryMessage = "CREATE TABLE " + TABLE_MESSAGE + "(" + COLUMN_PK_MESSAGE + " INTEGER,"
+                + COLUMN_MESSAGE_MESSAGE + " TEXT,"
                 + COLUMN_MESSAGE_ATTACHMENT + " TEXT,"
                 + COLUMN_MESSAGE_ORIGINATOR + " INTEGER,"
-                + COLUMN_MESSAGE_CREATED + " TIMESTAMP,"
+                + COLUMN_MESSAGE_CREATED + " TEXT,"
                 + COLUMN_MESSAGE_USER_PK + "  INTEGER"
                 + ");";
 
@@ -109,7 +109,7 @@ public class DBHandler extends SQLiteOpenHelper {
         initialValues.put(COLUMN_WITH_PK, chatRoomTable.getOtherPk());
         initialValues.put(COLUMN_MESSAGE_PK, chatRoomTable.getPkMessage());
         initialValues.put(COLUMN_LAST_MESSAGE, chatRoomTable.getMessage());
-        initialValues.put(COLUMN_DATE, String.valueOf(chatRoomTable.getCreated()));
+        initialValues.put(COLUMN_DATE, chatRoomTable.getCreated());
         initialValues.put(COLUMN_UNREAD, chatRoomTable.getTotal_unread());
 
         SQLiteDatabase db = getWritableDatabase();
@@ -121,7 +121,8 @@ public class DBHandler extends SQLiteOpenHelper {
         initialValues.put(COLUMN_PK_MESSAGE, chatRoomTable.getPkMessage());
         initialValues.put(COLUMN_MESSAGE_MESSAGE, chatRoomTable.getMessage());
         initialValues.put(COLUMN_MESSAGE_ATTACHMENT, chatRoomTable.getAttachement());
-        initialValues.put(COLUMN_MESSAGE_ORIGINATOR, String.valueOf(chatRoomTable.getCreated()));
+        initialValues.put(COLUMN_MESSAGE_ORIGINATOR, chatRoomTable.getPkOriginator());
+        initialValues.put(COLUMN_MESSAGE_CREATED,chatRoomTable.getCreated());
         initialValues.put(COLUMN_MESSAGE_USER_PK, chatRoomTable.getPkUser());
         SQLiteDatabase db = getWritableDatabase();
 
@@ -168,6 +169,119 @@ public class DBHandler extends SQLiteOpenHelper {
         return dbstring.get(position);
     }
 
+    public int message_getOriginatorPK(int position) {
+        ArrayList<Integer> dbstring = new ArrayList<Integer>();
+        SQLiteDatabase db = getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_MESSAGE + " WHERE 1";
+
+        Cursor c = db.rawQuery(query, null);
+        c.moveToFirst();
+
+        while (!c.isAfterLast()) {
+            if (c.getString(c.getColumnIndex("ORIGINATOR")) != null) {
+                dbstring.add(c.getInt(c.getColumnIndex("ORIGINATOR")));
+            }
+            c.moveToNext();
+        }
+        db.close();
+        return dbstring.get(position);
+    }
+    public String message_getAttachment(int position) {
+        ArrayList<String> dbstring = new ArrayList<String>();
+        SQLiteDatabase db = getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_MESSAGE + " WHERE 1";
+
+        Cursor c = db.rawQuery(query, null);
+        c.moveToFirst();
+
+        while (!c.isAfterLast()) {
+            if (c.getString(c.getColumnIndex("ATTACHMENT")) != null) {
+                dbstring.add(c.getString(c.getColumnIndex("ATTACHMENT")));
+            }
+            c.moveToNext();
+        }
+        db.close();
+        return dbstring.get(position);
+    }
+
+    public int message_getMessagePK(int position) {
+        ArrayList<Integer> dbstring = new ArrayList<Integer>();
+        SQLiteDatabase db = getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_MESSAGE + " WHERE 1";
+        Cursor c = db.rawQuery(query, null);
+        c.moveToFirst();
+
+        while (!c.isAfterLast()) {
+            if (c.getString(c.getColumnIndex("PKMESSAGE")) != null) {
+                dbstring.add(c.getInt(c.getColumnIndex("PKMESSAGE")));
+            }
+            c.moveToNext();
+        }
+        db.close();
+        return dbstring.get(position);
+    }
+
+    public String message_getMessage(int position) {
+        ArrayList<String> dbstring = new ArrayList<String>();
+        SQLiteDatabase db = getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_MESSAGE + " WHERE 1";
+        Cursor c = db.rawQuery(query, null);
+        c.moveToFirst();
+
+        while (!c.isAfterLast()) {
+            if (c.getString(c.getColumnIndex("MESSAGETEXT")) != null) {
+                dbstring.add(c.getString(c.getColumnIndex("MESSAGETEXT")));
+            }
+            c.moveToNext();
+        }
+        db.close();
+        return dbstring.get(position);
+    }
+
+    public String message_getDate(int position) {
+        ArrayList<String> dbstring = new ArrayList<String>();
+        SQLiteDatabase db = getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_MESSAGE + " WHERE 1";
+        Cursor c = db.rawQuery(query, null);
+        c.moveToFirst();
+
+        while (!c.isAfterLast()) {
+            if (c.getString(c.getColumnIndex("CREATED")) != null) {
+                dbstring.add(c.getString(c.getColumnIndex("CREATED")));
+            }
+            c.moveToNext();
+        }
+        db.close();
+        return dbstring.get(position);
+    }
+
+    public int message_getUserPk(int position) {
+        ArrayList<Integer> dbstring = new ArrayList<Integer>();
+        SQLiteDatabase db = getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_MESSAGE + " WHERE 1";
+        Cursor c = db.rawQuery(query, null);
+        c.moveToFirst();
+
+        while (!c.isAfterLast()) {
+            if (c.getString(c.getColumnIndex("USERPK")) != null) {
+                dbstring.add(c.getInt(c.getColumnIndex("USERPK")));
+            }
+            c.moveToNext();
+        }
+        db.close();
+        return dbstring.get(position);
+    }
+
+    public int getTotalDBEntries_CHATROOM() {
+        String countQuery = "SELECT  * FROM " + TABLE_CHATROOM;
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(countQuery, null);
+        int cnt = cursor.getCount();
+        cursor.close();
+        return cnt;
+    }
+
+
     public int getWithPK(int position) {
         ArrayList<Integer> dbstring = new ArrayList<Integer>();
         SQLiteDatabase db = getWritableDatabase();
@@ -194,8 +308,8 @@ public class DBHandler extends SQLiteOpenHelper {
         c.moveToFirst();
 
         while (!c.isAfterLast()) {
-            if (c.getString(c.getColumnIndex("MEESAGEPK")) != null) {
-                dbstring.add(c.getInt(c.getColumnIndex("MEESAGEPK")));
+            if (c.getString(c.getColumnIndex("MESSAGEPK")) != null) {
+                dbstring.add(c.getInt(c.getColumnIndex("MESSAGEPK")));
             }
             c.moveToNext();
         }
@@ -211,8 +325,8 @@ public class DBHandler extends SQLiteOpenHelper {
         c.moveToFirst();
 
         while (!c.isAfterLast()) {
-            if (c.getString(c.getColumnIndex("LASTMEESAGE")) != null) {
-                dbstring.add(c.getString(c.getColumnIndex("LASTMEESAGE")));
+            if (c.getString(c.getColumnIndex("LASTMESSAGE")) != null) {
+                dbstring.add(c.getString(c.getColumnIndex("LASTMESSAGE")));
             }
             c.moveToNext();
         }
@@ -253,16 +367,14 @@ public class DBHandler extends SQLiteOpenHelper {
         db.close();
         return dbstring.get(position);
     }
-
-    public int getTotalDBEntries_CHATROOM() {
-        String countQuery = "SELECT  * FROM " + TABLE_CHATROOM;
+    public int getTotalDBEntries_MESSAGE() {
+        String countQuery = "SELECT  * FROM " + TABLE_MESSAGE;
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(countQuery, null);
         int cnt = cursor.getCount();
         cursor.close();
         return cnt;
     }
-
 
     public String getTitle(int position) {
         ArrayList<String> dbstring = new ArrayList<String>();
@@ -332,7 +444,7 @@ public class DBHandler extends SQLiteOpenHelper {
 
     public boolean CheckIfMessagePKAlreadyInDBorNot(int fieldValue) {
         SQLiteDatabase sqldb = this.getReadableDatabase();
-        String Query = "Select * from " + TABLE_CHATROOM + " where " + COLUMN_MESSAGE_PK + " = " + fieldValue;
+        String Query = "Select * from " + TABLE_MESSAGE + " where " + COLUMN_PK_MESSAGE + " = " + fieldValue;
         Cursor cursor = sqldb.rawQuery(Query, null);
         if (cursor.getCount() <= 0) {
             cursor.close();
