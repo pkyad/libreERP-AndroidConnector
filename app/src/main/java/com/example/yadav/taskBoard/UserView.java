@@ -161,7 +161,7 @@ public class UserView extends AppCompatImageView {
         rect.set(1,1,mBorderRect.centerY()*2+bound.width()+35,mBorderRect.centerY()*2);
         strokerect.set(1,1,mBorderRect.centerY()*2+bound.width()+30,mBorderRect.centerY()*2-1);
         canvas.drawRoundRect(rect,mBorderRect.centerY(),mBorderRect.centerY(),rp);
-        setMinimumWidth((int) mBorderRect.centerY()*2+bound.width()+35);
+        //setMinimumWidth((int) mBorderRect.centerY()*2+bound.width()+35);
         if (mBitmap == null) {
             return;
         }
@@ -303,17 +303,16 @@ public class UserView extends AppCompatImageView {
     }
 
     public void setUser(final int pk){
-        System.out.println("yes");
         Users users = new Users(getContext());
         users.get(pk , new UserMetaHandler(){
             @Override
             public void onSuccess(UserMeta user){
-                System.out.println("yes65262626626");
+
                 name = user.getFirstName() + " " + user.getLastName();
             }
             @Override
             public void handleDP(Bitmap dp){
-                System.out.println("dp dsda");
+
                 setImageBitmap(dp);
             }
 

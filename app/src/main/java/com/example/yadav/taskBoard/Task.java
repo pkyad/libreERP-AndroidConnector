@@ -15,6 +15,7 @@ public class Task {
     private Integer assignee;
     private Integer responsible;
     private int[] followers;
+    private int[] files;
 
     public void setPk(Integer pk) {
         this.pk = pk;
@@ -23,6 +24,10 @@ public class Task {
     public void setDescription(String description) {
         this.description = description;
 
+    }
+
+    public void setFiles(int[] files) {
+        this.files = files;
     }
 
     public void setFollowers(int[] followers) {
@@ -67,6 +72,10 @@ public class Task {
 
     public int[] getFollowers() {
         return followers;
+    }
+
+    public int[] getFiles() {
+        return files;
     }
 
     public String getCreated() {

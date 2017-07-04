@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.example.yadav.taskBoard.UserView android:layout_width="150dp"
+<com.example.yadav.taskBoard.UserView android:layout_width="140dp"
     android:layout_height="20dp"
     android:id="@+id/followerslist"
     xmlns:android="http://schemas.android.com/apk/res/android" />

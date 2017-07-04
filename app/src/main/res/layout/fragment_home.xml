@@ -20,5 +20,9 @@
         app:itemBackground="@color/colorPrimary"
         app:itemIconTint="@color/white"
         app:itemTextColor="@color/white"
+        android:background="@android:color/white"
+        android:clickable="true"
+        app:elevation="8dp"
+
         app:menu="@menu/activity_home_bottom_navigation" />
 </RelativeLayout>

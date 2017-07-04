@@ -33,6 +33,11 @@
             android:label="TODO"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar"/>
+        <activity
+            android:name="com.example.yadav.taskBoard.ProjectCardActivity"
+            android:label="Project"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar"/>
 
     </application>
 

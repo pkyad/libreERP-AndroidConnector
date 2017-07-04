@@ -21,9 +21,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import com.example.libreerp.Helper;
 import com.example.libreerp.UserMeta;
 import com.example.libreerp.UserMetaHandler;
@@ -31,16 +29,13 @@ import com.example.libreerp.Users;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -55,7 +50,6 @@ public class TaskCardActivity extends AppCompatActivity {
     static int assignee = 0;
     static int responsible = 0;
     static View myView;
-    //    private FragmentManager fragmentManager;
     private static RecyclerView recyclerView;
     private static GridLayoutManager gridLayoutManager;
     private static CustomTaskViewAdapterTimeline adapter;
@@ -66,14 +60,11 @@ public class TaskCardActivity extends AppCompatActivity {
     private static String serverURL;
     static AsyncHttpClient client;
     static Context context;
-    private static FragmentManager fragmentManager;
-
-    private FragmentManager userDetailsManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.taskcardfragment);
+        setContentView(R.layout.taskcardactivity);
 
         myPosition = getIntent().getIntExtra("EXTRA_SESSION_ID", myPosition);
         myPK = getIntent().getIntExtra("PK_TASK", myPK);
@@ -164,8 +155,7 @@ public class TaskCardActivity extends AppCompatActivity {
                     CustomSubTaskCardAdapter customSubTaskCardAdapter = new CustomSubTaskCardAdapter(context, R.layout.list_subtask);
 
                     for (int i = 0; i < arraySubTask.size(); i++) {
-                        SubTaskCard card = new SubTaskCard(arraySubTask.get(i));
-                        System.out.println("arraysubtask.get(i)==" + arraySubTask.get(i));
+                        SubTaskCard card = new SubTaskCard(arraySubTask.get(i),null);
                         customSubTaskCardAdapter.add(card);
                         }
 
@@ -344,6 +334,16 @@ public class TaskCardActivity extends AppCompatActivity {
 
                 case 3: {
                     rootView = inflater.inflate(R.layout.fragment_files, container, false);
+                    DBHandler dba = new DBHandler(getActivity(), null, null, 1);
+
+                    List<File> fileList = dba.getAllFiles(myPK);
+                    listView = (ListView) rootView.findViewById(R.id.files);
+                    CustomFileCardAdapter customFileCardAdapter = new CustomFileCardAdapter(context, R.layout.fileview);
+
+                    for (int i = 0; i < fileList.size(); i++) {
+                        customFileCardAdapter.add(fileList.get(i));
+                    }
+                    listView.setAdapter(customFileCardAdapter);
                     break;
                 }
 
@@ -354,6 +354,7 @@ public class TaskCardActivity extends AppCompatActivity {
 
 
     }
+
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
@@ -440,13 +441,13 @@ public class TaskCardActivity extends AppCompatActivity {
                     users.get(dba.getPostUserPK(comment_pk) , new UserMetaHandler(){
                         @Override
                         public void onSuccess(UserMeta user){
-                            System.out.println("yes65262626626");
+
                             data.setUser(user.getFirstName() + " " + user.getLastName());
                             // set text in the layout here
                         }
                         @Override
                         public void handleDP(Bitmap dp){
-                            System.out.println("dp dsda");
+
                             data.setDpUser(dp);
                             // set text in the layout here
                         }

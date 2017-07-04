@@ -10,6 +10,9 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.chauthai.swipereveallayout.SwipeRevealLayout;
+import com.chauthai.swipereveallayout.ViewBinderHelper;
+
 import java.util.List;
 
 /**
@@ -20,7 +23,7 @@ public class CustomTaskViewAdapter extends RecyclerView.Adapter<CustomTaskViewAd
 
     private Context context;
     private List<Task> my_data;
-
+    private final ViewBinderHelper viewBinderHelper = new ViewBinderHelper();
     public CustomTaskViewAdapter(Context context, List<Task> my_data) {
         this.context = context;
         this.my_data = my_data;
@@ -68,8 +71,8 @@ public class CustomTaskViewAdapter extends RecyclerView.Adapter<CustomTaskViewAd
 
         holder.progressBar.getProgressDrawable().setColorFilter(
                 ContextCompat.getColor(context, color), android.graphics.PorterDuff.Mode.SRC_IN);
-
-
+        viewBinderHelper.bind(holder.swipeRevealLayout, my_data.get(position).getTitle());
+        viewBinderHelper.setOpenOnlyOne(true);
         ((CardView) holder.itemView.findViewById(R.id.card_view)).setCardBackgroundColor(ContextCompat.getColor(context, lightColor));
     }
 
@@ -83,14 +86,14 @@ public class CustomTaskViewAdapter extends RecyclerView.Adapter<CustomTaskViewAd
         public TextView description;
         public TextView dueDate;
         public ProgressBar progressBar;
-
+public SwipeRevealLayout swipeRevealLayout;
         public ViewHolder(View itemView) {
             super(itemView);
             title = (TextView) itemView.findViewById(R.id.title);
             dueDate = (TextView) itemView.findViewById(R.id.dueDate);
             progressBar = (ProgressBar) itemView.findViewById(R.id.progressBar);
             description = (TextView) itemView.findViewById(R.id.description);
-
+            swipeRevealLayout = (SwipeRevealLayout) itemView.findViewById(R.id.swipe_layout_2);
         }
     }
 }

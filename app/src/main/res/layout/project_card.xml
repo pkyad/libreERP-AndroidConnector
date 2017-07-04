@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    android:id="@+id/card_view_project"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="1dp"
+    android:layout_margin="1dp"
+    app:cardElevation="2dp"
+    app:cardUseCompatPadding="true"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <TextView
+                android:id="@+id/title_project"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:textColor="@color/cardview_dark_background"
+                android:text="ERP"
+                android:textSize="17sp"
+                android:textStyle="normal"
+                android:typeface="sans"
+                android:layout_alignParentTop="true"
+                 />
+            <TextView
+                android:id="@+id/description_project"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:textColor="@color/cardview_dark_background"
+                android:text="ERP"
+                android:textSize="12sp"
+                android:textStyle="normal"
+                android:typeface="sans"
+                android:paddingBottom="12dp"
+                android:paddingTop="5dp"
+                android:layout_below="@+id/title_project"
+               />
+
+
+            <View
+                android:id="@+id/progressBar_project"
+                android:layout_width="wrap_content"
+                android:layout_height="1dp"
+                android:layout_below="@+id/description_project"
+                android:background="#c0c0c0" />
+
+            <TextView
+                android:id="@+id/team_member_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:textColor="@color/cardview_dark_background"
+                android:text="1 Team Member"
+                android:textSize="12sp"
+                android:textStyle="normal"
+                android:typeface="sans"
+                android:paddingTop="7dp"
+                android:layout_below="@+id/description_project"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true" />
+            <TextView
+                android:id="@+id/numbers_file"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:textColor="@color/cardview_dark_background"
+                android:text="0 Files"
+                android:textSize="12sp"
+                android:textStyle="normal"
+                android:typeface="sans"
+                android:layout_below="@+id/team_member_number"
+                android:paddingTop="7dp" />
+            <TextView
+                android:id="@+id/numbers_repos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:textColor="@color/cardview_dark_background"
+                android:text="3 Repos"
+                android:textSize="12sp"
+                android:textStyle="normal"
+                android:typeface="sans"
+                android:layout_below="@+id/numbers_file"
+                android:paddingBottom="10dp"
+                android:paddingTop="7dp" />
+
+        </RelativeLayout>
+
+    </android.support.v7.widget.CardView>
+
+

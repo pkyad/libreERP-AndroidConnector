@@ -48,6 +48,7 @@ public class CustomTaskViewAdapterTimeline extends RecyclerView.Adapter<CustomTa
     public void onBindViewHolder(ViewHolder holder, int position) {
 
         holder.comment.setText(my_data.get(position).getText());
+
         holder.imageView.setImageBitmap(my_data.get(position).getDpUser());
         holder.username.setText(my_data.get(position).getUser());
         holder.commitbranch.setText(my_data.get(position).getCommitBranch());

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.github.lzyzsd.circleprogress.DonutProgress
+        android:id="@+id/totalprogress"
+        android:layout_width="180dp"
+        android:layout_marginStart="50dp"
+        android:layout_marginLeft="50dp"
+        android:layout_height="180dp"
+        android:layout_centerVertical="true"
+        custom:donut_progress="30"/>
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:layout_width="180dp"
+        android:id="@+id/userImageHome"
+        android:layout_height="180dp"
+        android:layout_alignTop="@+id/totalprogress"
+        android:layout_alignLeft="@+id/totalprogress"
+        android:layout_alignStart="@+id/totalprogress"
+        android:padding="15dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="40sp"
+        android:id="@+id/progressbartext"
+        android:layout_alignLeft="@+id/userImageHome"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="200dp"
+        android:layout_marginStart="200dp" />
+
+</RelativeLayout>
