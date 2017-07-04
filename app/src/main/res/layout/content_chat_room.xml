@@ -8,12 +8,17 @@
     tools:context=".HomeFragment"
     tools:showIn="@layout/activity_chat_room">
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recycler_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="20dp"
-        android:scrollbars="vertical" />
+
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="20dp"
+            android:scrollbars="vertical"
+        />
+
+
     <View
         android:id="@+id/coverView"
         android:layout_width="match_parent"
@@ -24,7 +29,6 @@
         />
 
     <LinearLayout
-
         android:background="@android:color/white"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

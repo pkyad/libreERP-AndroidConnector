@@ -118,7 +118,7 @@ public class ChatRoomActivity extends AppCompatActivity {
     private static final int GALLERY_REQUEST = 2134 ;
     private static final int CHOOSE_FILE_REQUESTCODE = 4512 ;
     private static final int PLACE_PICKER_REQUEST = 1000;
-
+    private static LinearLayoutManager layoutManager ;
 
     private final TextWatcher mTextEditorWatcher = new TextWatcher() {
         @Override
@@ -162,7 +162,7 @@ public class ChatRoomActivity extends AppCompatActivity {
         btn_camera = (ImageButton) findViewById(R.id.btn_camera);
         btn_files = (ImageButton)findViewById(R.id.btn_files);
         card_location_image = (ImageView) findViewById(R.id.image_location);
-        title_bar = (TextView) findViewById(R.id.titleText);
+
         context = getApplicationContext();
 
         inputMessage.setOnClickListener(new View.OnClickListener() {
@@ -249,21 +249,22 @@ public class ChatRoomActivity extends AppCompatActivity {
         getSupportActionBar().setTitle(title);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-       // Drawable drawable = new BitmapDrawable(getResources(), createCircleBitmap(profile));
+
+        //Drawable drawable = new BitmapDrawable(getResources(), createCircleBitmap(profile));
         //Drawable drawable = new BitmapDrawable(getResources(), profile);
-       // getSupportActionBar().setIcon(drawable);
-        /*ActionBar mActionBar = getSupportActionBar();
+        //getSupportActionBar().setIcon(drawable);
+        ActionBar mActionBar = getSupportActionBar();
         mActionBar.setDisplayShowHomeEnabled(false);
         mActionBar.setDisplayShowTitleEnabled(false);
         LayoutInflater mInflater = LayoutInflater.from(this);
 
         View mCustomView = mInflater.inflate(R.layout.action_bar_chatroom, null);
-
+        title_bar = (TextView) mCustomView.findViewById(R.id.titleText);
         title_bar.setText(title);
-        CircleImageView image = (CircleImageView) findViewById(R.id.circularimageView1);
+        CircleImageView image = (CircleImageView) mCustomView.findViewById(R.id.circularimageView1);
         image.setImageBitmap(profile);
         mActionBar.setCustomView(mCustomView);
-        mActionBar.setDisplayShowCustomEnabled(true);*/
+        mActionBar.setDisplayShowCustomEnabled(true);
 
         if (chatRoomId == null) {
             Toast.makeText(getApplicationContext(), "Chat room not found!", Toast.LENGTH_SHORT).show();
@@ -285,7 +286,7 @@ public class ChatRoomActivity extends AppCompatActivity {
         Bitmap bm = null ;
         mAdapter = new ChatRoomThreadAdapter(this, messageArrayList ,login_pk);
         mAdapter.notifyDataSetChanged();
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
         layoutManager.setStackFromEnd(true);
         recyclerView.scrollToPosition(mAdapter.getItemCount()-1);
@@ -307,6 +308,7 @@ public class ChatRoomActivity extends AppCompatActivity {
 
             }
         }));
+        recyclerView.scrollToPosition(messageArrayList.size() - 1);
 
 
        /* btnSend.setOnClickListener(new View.OnClickListener() {
@@ -348,7 +350,9 @@ public class ChatRoomActivity extends AppCompatActivity {
 
     private void fetchChatThread() {
         load_data_from_database(0);
-        System.out.print("yess");
+        //recyclerView.scrollToPosition(messageArrayList.size() - 1);
+        layoutManager.setStackFromEnd(true);
+
 
 
         Helper helper = new Helper(context);
@@ -443,7 +447,8 @@ public class ChatRoomActivity extends AppCompatActivity {
 
                     }
                     mAdapter.notifyDataSetChanged();
-
+                    //recyclerView.scrollToPosition(messageArrayList.size() - 1);
+                    layoutManager.setStackFromEnd(true);
 
                 } catch (final JSONException e) {
                     Log.e("TAG", "Json parsing error: " + e.getMessage());
@@ -463,7 +468,7 @@ public class ChatRoomActivity extends AppCompatActivity {
             @Override
             public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-
+                load_data_from_database(0);
                 System.out.println("finished failed 001xczxc");
             }
         });
@@ -485,6 +490,7 @@ public class ChatRoomActivity extends AppCompatActivity {
                 int login_pk = login.getPk();
 
                 int prvs_originator_pk = login_pk;
+                boolean firstMessage = false ;
                 int margin = 1 ;
                 for (int i = 0; i < entries_database_message ; i++) {
 
@@ -495,11 +501,11 @@ public class ChatRoomActivity extends AppCompatActivity {
                         data.setPkMessage(dba.message_getMessagePK(i));
                         data.setMessage(dba.message_getMessage(i));
                         data.setAttachement(dba.message_getAttachment(i));
-                        margin = 0 ;
-                        if (i == 0) {
+                        if (firstMessage == false) {
                             margin = 0;
+                            firstMessage = true ;
                         }
-                        else if(i > 0 && prvs_originator_pk != data.getPkOriginator() ){
+                        if(firstMessage == true && (prvs_originator_pk != data.getPkOriginator()) ){
                             margin = 1 ;
                         }
                         else {

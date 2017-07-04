@@ -83,7 +83,7 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                     int marginInDp = (int) TypedValue.applyDimension(
                             TypedValue.COMPLEX_UNIT_DIP, sizeInDP, mContext.getResources().getDisplayMetrics());
                     params.setMargins(params.leftMargin, marginInDp, params.rightMargin, params.bottomMargin);
-                    relativeLayout.setLayoutParams(params);
+                   // relativeLayout.setLayoutParams(params);
                     MARGIN = false ;
                 }
 
@@ -101,7 +101,7 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                     int marginInDp = (int) TypedValue.applyDimension(
                             TypedValue.COMPLEX_UNIT_DIP, sizeInDP, mContext.getResources().getDisplayMetrics());
                     params.setMargins(params.leftMargin, marginInDp, params.rightMargin, params.bottomMargin);
-                    relativeLayout.setLayoutParams(params);
+                   // relativeLayout.setLayoutParams(params);
                     MARGIN = false ;
                 }
                 //itemView = LayoutInflater.from(parent.getContext())

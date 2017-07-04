@@ -50,6 +50,7 @@ public class HomeFragment extends Fragment {
     private static ChatRoomsAdapter mAdapter;
     private RecyclerView recyclerView;
     private static Context context ;
+    private static  HomeFragment mContext ;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -75,7 +76,8 @@ public class HomeFragment extends Fragment {
 
         chatRoomArrayList = new ArrayList<>();
         context = getActivity().getApplicationContext();
-        mAdapter = new ChatRoomsAdapter(this, chatRoomArrayList,context);
+        mContext = this ;
+        mAdapter = new ChatRoomsAdapter(mContext, chatRoomArrayList,context);
         int size = chatRoomArrayList.size();
         LinearLayoutManager layoutManager = new LinearLayoutManager( getActivity());
         recyclerView.setLayoutManager(layoutManager);
@@ -125,13 +127,39 @@ public class HomeFragment extends Fragment {
         searchview.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-
+                query = query.toLowerCase();
+                ArrayList<ChatRoom>  filterData = new ArrayList<ChatRoom>();
+                for (int i = 0 ; i < chatRoomArrayList.size() ; i++){
+                    String chatRoomName = chatRoomArrayList.get(i).getName();
+                    if (chatRoomName.contains(query)){
+                        filterData.add(chatRoomArrayList.get(i));
+                    }
+                }
+                recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+                mAdapter = new ChatRoomsAdapter(mContext,filterData,context);
+                recyclerView.setAdapter(mAdapter);
+                mAdapter.notifyDataSetChanged();
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                searchAdapter.getFilter().filter(newText);
+
+                    String query = newText.toLowerCase();
+                    System.out.print(query);
+                    ArrayList<ChatRoom> filterData = new ArrayList<ChatRoom>();
+                    for (int i = 0; i < chatRoomArrayList.size(); i++) {
+                        String chatRoomName = chatRoomArrayList.get(i).getName();
+                        if (chatRoomName.toLowerCase().contains(query)) {
+                            System.out.print("query is  " + chatRoomName + " \n");
+                            filterData.add(chatRoomArrayList.get(i));
+                        }
+                    }
+                    recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+                    mAdapter = new ChatRoomsAdapter(mContext, filterData, context);
+                    recyclerView.setAdapter(mAdapter);
+                    mAdapter.notifyDataSetChanged();
+
                 return false;
             }
         });
@@ -263,7 +291,7 @@ public class HomeFragment extends Fragment {
             @Override
             public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-
+                load_data_from_database(0);
                 System.out.println("finished failed 001xczxc");
             }
         });

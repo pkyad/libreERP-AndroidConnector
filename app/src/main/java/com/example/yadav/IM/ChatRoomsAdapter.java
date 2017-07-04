@@ -86,6 +86,7 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
         });
         holder.name.setText(name[0]);
         chatRoom.setName(name[0]);
+        chatRoomArrayList.get(position).setName(name[0]);
         holder.chatRoomDP.setImageBitmap(bp[0]);
         chatRoom.setDP(bp[0]);
 
