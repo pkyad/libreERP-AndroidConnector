@@ -8,7 +8,8 @@ import java.io.Serializable;
  * Created by Lincoln on 07/01/16.
  */
 public class ChatRoom implements Serializable {
-    String id, name, lastMessage, timestamp;
+    int id ;
+    String name, lastMessage, timestamp, username;
     int unreadCount;
     Bitmap DP ;
     int with_pk;
@@ -24,8 +25,7 @@ public class ChatRoom implements Serializable {
     public ChatRoom() {
     }
 
-    public ChatRoom(String id, String lastMessage, String timestamp, int unreadCount ) {
-        this.id = id;
+    public ChatRoom( String lastMessage, String timestamp, int unreadCount ) {
 
         this.lastMessage = lastMessage;
         this.timestamp = timestamp;
@@ -33,11 +33,11 @@ public class ChatRoom implements Serializable {
 
     }
 
-    public String getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -53,6 +53,16 @@ public class ChatRoom implements Serializable {
     public void setName(String name) {
         this.name = name;
     }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getUsername() {
+        return this.username;
+    }
+
+
 
     public String getLastMessage() {
         return lastMessage;

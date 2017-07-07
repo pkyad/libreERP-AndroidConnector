@@ -28,6 +28,10 @@ import com.example.libreerp.User;
 import com.example.libreerp.UserMeta;
 import com.example.libreerp.UserMetaHandler;
 import com.example.libreerp.Users;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
+import org.json.JSONArray;
 
 import java.io.File;
 import java.util.concurrent.TimeUnit;
@@ -106,13 +110,26 @@ public class HomeActivity extends AppCompatActivity
                     if (t1 == WampClient.Status.Connected) {
                         Log.d("info","Connected");
 
-                        procSubscription = client.makeSubscription("service.chat.deepak").subscribe(new Action1<PubSubData>() {
+                        procSubscription = client.makeSubscription("service.chat.admin").subscribe(new Action1<PubSubData>() {
                             @Override
                             public void call(PubSubData pubSubData) {
                                 String message = pubSubData.toString();
+                                ArrayNode c  = pubSubData.arguments();
+                                String type = c.get(0).textValue();
+                                String new_message = c.get(0).textValue();
+                                String type_user = c.get(2).textValue();
+
+                                int a = 1;
+                                Intent intent = new Intent();
+                                intent.setAction("com.libreERP.TYPING");
+                                intent.putExtra("type",type);
+                                intent.putExtra("new_message",new_message);
+                                intent.putExtra("type_user",type_user);
+                                sendBroadcast(intent);
+
                             }
                         });
-                        client.publish("service.chat.admin", "{'key': 'some text messag'}");
+//                        client.publish("service.chat.admin", "{'key': 'some text messag'}");
                     }
                 }
 

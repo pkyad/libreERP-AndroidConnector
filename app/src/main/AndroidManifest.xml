@@ -30,20 +30,14 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name="com.example.yadav.IM.KeyLoginActivity" />
 
-        <receiver android:name="com.example.yadav.IM.RestartReceiver" >
-            <intent-filter>
-                <action android:name="com.libreERP.RESTART_APP">
-                </action>
-            </intent-filter>
-        </receiver>
 
         <activity
             android:name="com.example.yadav.IM.ChatRoomActivity"
             android:label="activity_chat_room_discussion"
             android:parentActivityName="com.example.yadav.IM.HomeActivity"
             android:theme="@style/AppTheme.NoActionBar">
-
         </activity>
+
         <meta-data android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_place_api"></meta-data>
     </application>

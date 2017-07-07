@@ -24,7 +24,7 @@ public class DBHandler extends SQLiteOpenHelper {
 
     // chat Room table
     public static final String TABLE_CHATROOM = "chatRoomTable";
-    //public static final String COLUMN_CHATROOM_PK = "PK";
+    public static final String COLUMN_CHATROOM_PK = "CHATROOMPK";
     public static final String COLUMN_WITH_PK = "PK";
     public static final String COLUMN_MESSAGE_PK = "MESSAGEPK";
     public static final String COLUMN_LAST_MESSAGE = "LASTMESSAGE";
@@ -34,13 +34,15 @@ public class DBHandler extends SQLiteOpenHelper {
 
     //    Message table variables
     public static final String TABLE_MESSAGE = "messageTable";
+
     public static final String COLUMN_PK_MESSAGE = "PKMESSAGE";
+    public static final String COLUMN_CHATROOMID = "CHATROOMID";
     public static final String COLUMN_MESSAGE_MESSAGE = "MESSAGETEXT";
     public static final String COLUMN_MESSAGE_ATTACHMENT = "ATTACHMENT";
     public static final String COLUMN_MESSAGE_ORIGINATOR = "ORIGINATOR";
     public static final String COLUMN_MESSAGE_CREATED = "CREATED";
     public static final String COLUMN_MESSAGE_USER_PK = "USERPK";
-
+    public static final String COLUMN_MESSAGE_SENDER_CHANGE = "SENDERC";
     //     comments and commit table
     public static final String TABLE_COMMENTS = "comment";
     public static final String COLUMN_PK_COMMENT = "PK_COMMENT";
@@ -70,6 +72,7 @@ public class DBHandler extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         String queryChat = "CREATE TABLE " + TABLE_CHATROOM + "(" + COLUMN_WITH_PK + " INTEGER,"
+                + COLUMN_CHATROOM_PK + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + COLUMN_MESSAGE_PK + " INTEGER,"
                 + COLUMN_LAST_MESSAGE + " TEXT,"
                 + COLUMN_DATE + " TEXT,"
@@ -79,10 +82,12 @@ public class DBHandler extends SQLiteOpenHelper {
 
         String queryMessage = "CREATE TABLE " + TABLE_MESSAGE + "(" + COLUMN_PK_MESSAGE + " INTEGER,"
                 + COLUMN_MESSAGE_MESSAGE + " TEXT,"
+                + COLUMN_CHATROOMID + " INTEGER,"
                 + COLUMN_MESSAGE_ATTACHMENT + " TEXT,"
                 + COLUMN_MESSAGE_ORIGINATOR + " INTEGER,"
                 + COLUMN_MESSAGE_CREATED + " TEXT,"
-                + COLUMN_MESSAGE_USER_PK + "  INTEGER"
+                + COLUMN_MESSAGE_USER_PK + "  INTEGER,"
+                + COLUMN_MESSAGE_SENDER_CHANGE + "  INTEGER"
                 + ");";
 
 
@@ -119,11 +124,13 @@ public class DBHandler extends SQLiteOpenHelper {
     public long insertTableMessage(ChatRoomTable chatRoomTable) {
         ContentValues initialValues = new ContentValues();
         initialValues.put(COLUMN_PK_MESSAGE, chatRoomTable.getPkMessage());
+        initialValues.put(COLUMN_CHATROOMID, chatRoomTable.getChatRoomID());
         initialValues.put(COLUMN_MESSAGE_MESSAGE, chatRoomTable.getMessage());
         initialValues.put(COLUMN_MESSAGE_ATTACHMENT, chatRoomTable.getAttachement());
         initialValues.put(COLUMN_MESSAGE_ORIGINATOR, chatRoomTable.getPkOriginator());
         initialValues.put(COLUMN_MESSAGE_CREATED,chatRoomTable.getCreated());
         initialValues.put(COLUMN_MESSAGE_USER_PK, chatRoomTable.getPkUser());
+        initialValues.put(COLUMN_MESSAGE_SENDER_CHANGE, chatRoomTable.isSender_change());
         SQLiteDatabase db = getWritableDatabase();
 
         return db.insert(TABLE_MESSAGE, null, initialValues);
@@ -133,25 +140,10 @@ public class DBHandler extends SQLiteOpenHelper {
     // retrive data from table tasks
 
 
-    public String databasetostring(int position) {
-        ArrayList<String> dbstring = new ArrayList<String>();
-        SQLiteDatabase db = getWritableDatabase();
-        String query = "SELECT * FROM " + TABLE_CHATROOM + " WHERE 1";
 
-        Cursor c = db.rawQuery(query, null);
-        c.moveToFirst();
 
-        while (!c.isAfterLast()) {
-            if (c.getString(c.getColumnIndex("DESCRIPTION")) != null) {
-                dbstring.add(c.getString(c.getColumnIndex("DESCRIPTION")));
-            }
-            c.moveToNext();
-        }
-        db.close();
-        return dbstring.get(position);
-    }
 
-    public int getcompletion(int position) {
+    public int getID(int position) {
         ArrayList<Integer> dbstring = new ArrayList<Integer>();
         SQLiteDatabase db = getWritableDatabase();
         String query = "SELECT * FROM " + TABLE_CHATROOM + " WHERE 1";
@@ -160,8 +152,8 @@ public class DBHandler extends SQLiteOpenHelper {
         c.moveToFirst();
 
         while (!c.isAfterLast()) {
-            if (c.getString(c.getColumnIndex("COMPLETION")) != null) {
-                dbstring.add(c.getInt(c.getColumnIndex("COMPLETION")));
+            if (c.getString(c.getColumnIndex("CHATROOMPK")) != null) {
+                dbstring.add(c.getInt(c.getColumnIndex("CHATROOMPK")));
             }
             c.moveToNext();
         }
@@ -272,6 +264,24 @@ public class DBHandler extends SQLiteOpenHelper {
         return dbstring.get(position);
     }
 
+    public int message_getSenderChange(int position) {
+        ArrayList<Integer> dbstring = new ArrayList<Integer>();
+        SQLiteDatabase db = getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_MESSAGE + " WHERE 1";
+
+        Cursor c = db.rawQuery(query, null);
+        c.moveToFirst();
+
+        while (!c.isAfterLast()) {
+            if (c.getString(c.getColumnIndex("SENDERC")) != null) {
+                dbstring.add(c.getInt(c.getColumnIndex("SENDERC")));
+            }
+            c.moveToNext();
+        }
+        db.close();
+        return dbstring.get(position);
+    }
+
     public int getTotalDBEntries_CHATROOM() {
         String countQuery = "SELECT  * FROM " + TABLE_CHATROOM;
         SQLiteDatabase db = this.getReadableDatabase();
@@ -309,6 +319,7 @@ public class DBHandler extends SQLiteOpenHelper {
 
         while (!c.isAfterLast()) {
             if (c.getString(c.getColumnIndex("MESSAGEPK")) != null) {
+
                 dbstring.add(c.getInt(c.getColumnIndex("MESSAGEPK")));
             }
             c.moveToNext();
@@ -316,6 +327,42 @@ public class DBHandler extends SQLiteOpenHelper {
         db.close();
         return dbstring.get(position);
     }
+    public ArrayList<ChatRoomTable> getData(int chatRoomId ) {
+        ArrayList<ChatRoomTable> dbstring = new ArrayList<ChatRoomTable>();
+        SQLiteDatabase db = getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_MESSAGE + " WHERE " + COLUMN_CHATROOMID + " = " +chatRoomId;
+        Cursor c = db.rawQuery(query, null);
+        c.moveToFirst();
+
+        while (!c.isAfterLast()) {
+            ChatRoomTable chatRoomTable = new ChatRoomTable();
+            if (c.getString(c.getColumnIndex("MESSAGETEXT")) != null) {
+
+                chatRoomTable.setMessage(c.getString(c.getColumnIndex("MESSAGETEXT")));
+            }
+
+            if (c.getString(c.getColumnIndex("ATTACHMENT")) != null) {
+                chatRoomTable.setAttachement(c.getString(c.getColumnIndex("ATTACHMENT")));
+            }
+            if (c.getString(c.getColumnIndex("ORIGINATOR")) != null) {
+                chatRoomTable.setPkOriginator(c.getInt(c.getColumnIndex("ORIGINATOR")));
+            }
+            if (c.getString(c.getColumnIndex("CREATED")) != null) {
+                chatRoomTable.setCreated(c.getString(c.getColumnIndex("CREATED")));
+            }
+            if (c.getString(c.getColumnIndex("USERPK")) != null) {
+                chatRoomTable.setPkUser(c.getInt(c.getColumnIndex("USERPK")));
+            }
+            if (c.getString(c.getColumnIndex("SENDERC")) != null) {
+                chatRoomTable.setSender_change(c.getInt(c.getColumnIndex("SENDERC")));
+            }
+            dbstring.add(chatRoomTable);
+            c.moveToNext();
+        }
+        db.close();
+        return dbstring ;
+    }
+
 
     public String getLastMessage(int position) {
         ArrayList<String> dbstring = new ArrayList<String>();

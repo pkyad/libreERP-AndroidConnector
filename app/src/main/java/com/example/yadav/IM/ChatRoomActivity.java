@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -20,6 +21,7 @@ import android.os.Bundle;
 
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -28,9 +30,12 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Config;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -43,12 +48,14 @@ import com.example.libreerp.User;
 import com.example.libreerp.UserMeta;
 import com.example.libreerp.UserMetaHandler;
 import com.example.libreerp.Users;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.GoogleMap;
 import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.FileAsyncHttpResponseHandler;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
@@ -74,7 +81,9 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.client.ClientProtocolException;
@@ -82,15 +91,20 @@ import cz.msebera.android.httpclient.client.HttpClient;
 import cz.msebera.android.httpclient.client.methods.HttpGet;
 import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
 import de.hdodenhof.circleimageview.CircleImageView;
+import rx.Subscription;
+import rx.functions.Action1;
+import ws.wamp.jawampa.PubSubData;
+import ws.wamp.jawampa.WampClient;
+import ws.wamp.jawampa.WampClientBuilder;
 
 import static android.R.attr.path;
 
 
-public class ChatRoomActivity extends AppCompatActivity {
+public class ChatRoomActivity extends AppCompatActivity  {
 
     private String TAG = ChatRoomActivity.class.getSimpleName();
 
-    private static  String chatRoomId;
+    private static  String with_id;
     private RecyclerView recyclerView;
     private static ChatRoomThreadAdapter mAdapter;
     private static ArrayList<Message> messageArrayList;
@@ -119,6 +133,20 @@ public class ChatRoomActivity extends AppCompatActivity {
     private static final int CHOOSE_FILE_REQUESTCODE = 4512 ;
     private static final int PLACE_PICKER_REQUEST = 1000;
     private static LinearLayoutManager layoutManager ;
+    private ImageView back_button ;
+    private static int chatRoomId;
+    private TextView typing ;
+    private boolean isType = false ;
+    private int typing_id ;
+    private String username ;
+    private View mCustomView;
+    private WampClient client;
+    private Boolean connected;
+    private String chennel;
+    private User login;
+    private AsyncHttpClient httpClient;
+    DBHandler dba;
+    private BroadcastReceiver mReceiver;
 
     private final TextWatcher mTextEditorWatcher = new TextWatcher() {
         @Override
@@ -128,6 +156,13 @@ public class ChatRoomActivity extends AppCompatActivity {
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
+            // send the RTC notification
+
+            if (connected){
+                String rtcMsg = String.format("%s||%s||%s" , "T" , s.toString(), login.getUsername());
+                client.publish(chennel , rtcMsg);
+            }
+
             if (menuOpen == true){
                 hideMenu();
             }
@@ -138,14 +173,121 @@ public class ChatRoomActivity extends AppCompatActivity {
         public void afterTextChanged(Editable s) {
 
         }
+
     };
+
+    TextView.OnEditorActionListener exampleListener = new TextView.OnEditorActionListener() {
+
+        @Override
+        public boolean onEditorAction(TextView textView, int actionId, KeyEvent event) {
+            if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
+                    (event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                btnSend.performClick();//match this behavior to your 'Send' (or Confirm) button
+            }
+            return true;
+        }
+    };
+
+        @Override
+    protected void onResume() {
+        // TODO Auto-generated method stub
+        super.onResume();
+
+        IntentFilter intentFilter = new IntentFilter("com.libreERP.TYPING");
+
+        mReceiver = new BroadcastReceiver() {
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                //extract our message from intent
+//                String msg_for_me = intent.getStringExtra("some_msg");
+                //log our message value
+                String is_typing = intent.getStringExtra("type");
+                String message = intent.getStringExtra("new_message");
+                String type_user = intent.getStringExtra("type_user");
+
+                if (is_typing.equals("T") && type_user.equals(username)) {
+
+                    typing.setVisibility(mCustomView.VISIBLE);
+                    new android.os.Handler().postDelayed(
+                    new Runnable() {
+                        public void run() {
+                            typing.setVisibility(mCustomView.GONE);
+                        }
+                    },
+                    1000);
+
+
+                }
+
+            }
+        };
+        //registering our receiver
+        this.registerReceiver(mReceiver, intentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        // TODO Auto-generated method stub
+        super.onPause();
+        //unregister our receiver
+        this.unregisterReceiver(this.mReceiver);
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        connected = false;
+
+
+
+        WampClientBuilder builder = new WampClientBuilder();
+
+
+        try{
+            builder.withUri("ws://pradeepyadav.net:8080/ws")
+                    .withRealm("default")
+                    .withInfiniteReconnects()
+                    .withReconnectInterval(10, TimeUnit.SECONDS);
+
+            client = builder.build();
+
+            client.open();
+
+            String done = "ok";
+
+            client.statusChanged().subscribe(new Action1<WampClient.Status>() {
+                private Subscription procSubscription;
+
+                public void call(WampClient.Status t1) {
+                    Log.d("info","Session status changed to " + t1);
+
+                    if (t1 == WampClient.Status.Connected) {
+                        Log.d("info","Connected");
+                        connected = true;
+//
+                    }
+                }
+
+            });
+
+            client.open();
+
+
+        }catch (ws.wamp.jawampa.ApplicationError e){
+            String done = "ok";
+        }
+
+
+
         setContentView(R.layout.activity_chat_room);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+
+
 
         inputMessage = (EditText) findViewById(R.id.message_text);
         inputMessage.addTextChangedListener(mTextEditorWatcher);
@@ -162,8 +304,19 @@ public class ChatRoomActivity extends AppCompatActivity {
         btn_camera = (ImageButton) findViewById(R.id.btn_camera);
         btn_files = (ImageButton)findViewById(R.id.btn_files);
         card_location_image = (ImageView) findViewById(R.id.image_location);
+        inputMessage.setOnEditorActionListener(exampleListener);
+
+
 
         context = getApplicationContext();
+
+        final Helper helper = new Helper(context);
+
+        httpClient = helper.getHTTPClient();
+
+        login = User.loadUser(context);
+
+
 
         inputMessage.setOnClickListener(new View.OnClickListener() {
 
@@ -174,7 +327,7 @@ public class ChatRoomActivity extends AppCompatActivity {
                 if(menuOpen ==  true){
                     hideMenu();;
                 }
-                coverView.setVisibility(View.INVISIBLE);
+                coverView.setVisibility(View.GONE);
             }
         });
         btnAttach.setOnClickListener(new View.OnClickListener() {
@@ -191,12 +344,94 @@ public class ChatRoomActivity extends AppCompatActivity {
 
 
         });
+        dba = new DBHandler(context, null, null, 1);
         btnSend.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View v) {
                 // Do something in response to button click
                 if (menuOpen == true)
                     hideMenu();
+
+                long currentTime=System.currentTimeMillis(); //getting current time in millis
+                //converting it into user readable format
+                Calendar cal= Calendar.getInstance();
+                cal.setTimeInMillis(currentTime);
+                String showTime=String.format("%1$tI:%1$tM:%1$tS %1$Tp",cal);
+                final String content = inputMessage.getText().toString();
+
+
+                RequestParams params = new RequestParams();
+
+                params.put("message", content);
+                params.put("user",with_id);
+                params.put("read",false);
+
+                String url = String.format("%s/%s/" , helper.serverURL, "api/PIM/chatMessage");
+
+                httpClient.post(url, params, new JsonHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+
+                        try {
+                            String message;
+                            String attachement;
+                            int pkOriginator;
+                            String created;
+                            boolean read;
+                            int pkUser;
+
+                            int msgPk = response.getInt("pk");
+                            String rtcMsg = String.format("%s||%s||%s||%s", "M", content, login.getUsername(), msgPk);
+                            client.publish(chennel, rtcMsg);
+
+                            inputMessage.setText("");
+                            if (!dba.CheckIfMessagePKAlreadyInDBorNot(msgPk)) { // check in table of Message
+                                message = response.getString("message");
+                                attachement = response.getString("attachment");
+                                pkOriginator = response.getInt("originator");
+                                created = response.getString("created").replace("Z", "").replace("T", " ");
+                                read = response.getBoolean("read");
+                                pkUser = response.getInt("user");
+                                ChatRoomTable chatRoomTable = new ChatRoomTable();
+                                chatRoomTable.setSender_change(0);
+
+
+
+                                chatRoomTable.setAttachement(attachement);
+                                chatRoomTable.setCreated(created);
+                                chatRoomTable.setMessage(message);
+                                chatRoomTable.setPkMessage(msgPk);
+                                chatRoomTable.setPkOriginator(pkOriginator);
+                                chatRoomTable.setPkUser(pkUser);
+                                chatRoomTable.setChatRoomID(chatRoomId);
+                                dba.insertTableMessage(chatRoomTable);
+
+
+                            }
+                        } catch (JSONException e) {
+
+                        }
+                        mAdapter.notifyDataSetChanged();
+                       // recyclerView.scrollToPosition(messageArrayList.size()-1);
+
+                       // layoutManager.setStackFromEnd(true);
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, Throwable error, JSONObject response) {
+                        // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                        System.out.println("failure");
+                        System.out.println(statusCode);
+                    }
+                });;
+
+
+
+                UserMeta usermeta = new UserMeta(login.getPk());
+                Message message = new Message("1000",content,showTime,usermeta);
+                messageArrayList.add(message);
+
+
 
             }
 
@@ -240,15 +475,19 @@ public class ChatRoomActivity extends AppCompatActivity {
         });
 
 
-        Intent intent = getIntent();
-        chatRoomId = intent.getStringExtra("with_id"); // chat Room id is same as with id here in this case
+        final Intent intent = getIntent();
+        chatRoomId = Integer.parseInt(intent.getStringExtra("chatID"));
+        with_id = intent.getStringExtra("with_id"); // chat Room id is same as with id here in this case
         String title = intent.getStringExtra("name");
+        username = intent.getStringExtra("userName");
+
+        chennel = String.format("service.chat.%s" , username);
+
         byte[] byteArray = getIntent().getByteArrayExtra("dp");
         Bitmap profile = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
 
         getSupportActionBar().setTitle(title);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+
 
         //Drawable drawable = new BitmapDrawable(getResources(), createCircleBitmap(profile));
         //Drawable drawable = new BitmapDrawable(getResources(), profile);
@@ -258,15 +497,36 @@ public class ChatRoomActivity extends AppCompatActivity {
         mActionBar.setDisplayShowTitleEnabled(false);
         LayoutInflater mInflater = LayoutInflater.from(this);
 
-        View mCustomView = mInflater.inflate(R.layout.action_bar_chatroom, null);
+
+        mCustomView = mInflater.inflate(R.layout.action_bar_chatroom, null);
+
         title_bar = (TextView) mCustomView.findViewById(R.id.titleText);
         title_bar.setText(title);
+        back_button =  (ImageView) mCustomView.findViewById(R.id.back_button);
+        typing = (TextView) mCustomView.findViewById(R.id.typing);
+
+        typing.setVisibility(mCustomView.GONE);
+
+
+//        if (isType == true){
+//            //typing.setVisibility(mCustomView.GONE);
+//            typing.setVisibility(mCustomView.VISIBLE);
+//        }
+//        else {
+//            typing.setVisibility(mCustomView.GONE);
+//        }
         CircleImageView image = (CircleImageView) mCustomView.findViewById(R.id.circularimageView1);
         image.setImageBitmap(profile);
         mActionBar.setCustomView(mCustomView);
         mActionBar.setDisplayShowCustomEnabled(true);
 
-        if (chatRoomId == null) {
+        back_button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent intent1 = new Intent(context, HomeActivity.class);
+                startActivity(intent1);
+            }
+        });
+        if (with_id == null) {
             Toast.makeText(getApplicationContext(), "Chat room not found!", Toast.LENGTH_SHORT).show();
             finish();
         }
@@ -293,6 +553,49 @@ public class ChatRoomActivity extends AppCompatActivity {
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
 
+
+//        mRegistrationBroadcastReceiver = new BroadcastReceiver() {
+//            @Override
+//            public void onReceive(Context context, Intent intent) {
+//                if (intent.getAction().equals("com.libreERP.TYPING")) {
+//                    // new push message is received
+//                   // handlePushNotification(intent);
+//                    String message =  intent.getStringExtra("new_message");
+//                    String Typing = intent.getStringExtra("type");
+//                    String user_name = intent.getStringExtra("type_user");
+//                    typing_id = Integer.parseInt(with_id);
+//                    if (Typing.compareTo("T") == 0 && typing_id ==  Integer.parseInt(with_id)){
+//                        isType = true ;
+//                    }
+//
+//                }
+//            }
+//
+//        };
+
+       /* Intent sendIntent = getIntent();
+            if (sendIntent.getAction().equals("MY_NOTIFICATION")) {
+                String message =  intent.getStringExtra("new_message");
+                String Typing = intent.getStringExtra("type");
+                String user_name = intent.getStringExtra("type_user");
+                typing_id = Integer.parseInt(with_id);
+               if ( intent.getStringExtra("type").compareTo("T") == 0 && typing_id ==  Integer.parseInt(with_id)){
+                   isType = true ;
+               }
+            }*/
+
+        recyclerView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+
+            public void onLayoutChange(View v, int left, int top, int right,int bottom, int oldLeft, int oldTop,int oldRight, int oldBottom)
+            {
+
+
+                recyclerView.scrollToPosition(mAdapter.getItemCount());
+
+            }
+        });
+
         recyclerView.addOnItemTouchListener(new ChatRoomsAdapter.RecyclerTouchListener(this, recyclerView, new ChatRoomsAdapter.ClickListener() {
             @Override
             public void onClick(View view, int position) {
@@ -309,6 +612,7 @@ public class ChatRoomActivity extends AppCompatActivity {
             }
         }));
         recyclerView.scrollToPosition(messageArrayList.size() - 1);
+
 
 
        /* btnSend.setOnClickListener(new View.OnClickListener() {
@@ -328,6 +632,23 @@ public class ChatRoomActivity extends AppCompatActivity {
 
         //layoutManager.setStackFromEnd(true);
     }
+    private void handlePushNotification(Intent intent) {
+        String message =  intent.getStringExtra("new_message");
+        String Typing = intent.getStringExtra("type");
+        String user_name = intent.getStringExtra("type_user");
+
+
+
+
+       /* if (message != null && chatRoomId != null) {
+           // messageArrayList.add(message);
+            mAdapter.notifyDataSetChanged();
+            if (mAdapter.getItemCount() > 1) {
+                recyclerView.getLayoutManager().smoothScrollToPosition(recyclerView, null, mAdapter.getItemCount() - 1);
+            }
+        }*/
+    }
+
     public Bitmap createCircleBitmap(Bitmap bitmapimg){
         Bitmap output = Bitmap.createBitmap(bitmapimg.getWidth(),
                 bitmapimg.getHeight(), Bitmap.Config.ARGB_8888);
@@ -363,7 +684,7 @@ public class ChatRoomActivity extends AppCompatActivity {
 
         // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
 
-        users.get(Integer.parseInt(chatRoomId) , new UserMetaHandler(){
+        users.get(Integer.parseInt(with_id) , new UserMetaHandler(){
             @Override
             public void onSuccess(UserMeta user){
                 System.out.println("yes65262626626");
@@ -404,11 +725,11 @@ public class ChatRoomActivity extends AppCompatActivity {
                     String CommitDate;
                     String CommitBranch;
                     String CommitCode;
+                    int nextpkOriginator;
 
-                    DBHandler dba = new DBHandler(context, null, null, 1);
                     User login = User.loadUser(context);
                     int login_pk = login.getPk();
-
+                    int responseLength = response.length();
                     for (int i = 0; i < response.length(); i++) {
 
                         JSONObject c = response.getJSONObject(i);
@@ -417,13 +738,23 @@ public class ChatRoomActivity extends AppCompatActivity {
                             message = c.getString("message");
                             attachement = c.getString("attachment");
                             pkOriginator = c.getInt("originator");
-                            created =  c.getString("created");
+                            created =  c.getString("created").replace("Z","").replace("T"," ");
                             read = c.getBoolean("read");
                             pkUser = c.getInt("user");
-
-
                             ChatRoomTable chatRoomTable = new ChatRoomTable();
-                            chatRoomTable.setPrvsMessage(true);
+                            if (i + 1 < response.length()) {
+                                JSONObject d = response.getJSONObject(i + 1);
+                                nextpkOriginator = d.getInt("originator");
+                                if (pkOriginator != nextpkOriginator ){
+                                    chatRoomTable.setSender_change(1);
+                                }
+                                else {
+                                    chatRoomTable.setSender_change(0);
+                                }
+                            }
+
+
+
 
 
                             chatRoomTable.setAttachement(attachement);
@@ -432,7 +763,7 @@ public class ChatRoomActivity extends AppCompatActivity {
                             chatRoomTable.setPkMessage(pkMessage);
                             chatRoomTable.setPkOriginator(pkOriginator);
                             chatRoomTable.setPkUser(pkUser);
-
+                            chatRoomTable.setChatRoomID(chatRoomId);
                             dba.insertTableMessage(chatRoomTable);
 
                         }
@@ -446,6 +777,7 @@ public class ChatRoomActivity extends AppCompatActivity {
 
 
                     }
+                    //load_data_from_database(0);
                     mAdapter.notifyDataSetChanged();
                     //recyclerView.scrollToPosition(messageArrayList.size() - 1);
                     layoutManager.setStackFromEnd(true);
@@ -485,32 +817,24 @@ public class ChatRoomActivity extends AppCompatActivity {
 
                 final DBHandler dba = new DBHandler(context, null, null, 1); // see this
                 //System.out.println("pkTask = "+pkTask);
-                int entries_database_message = dba.getTotalDBEntries_MESSAGE();
+                ArrayList<ChatRoomTable> message_table = dba.getData(chatRoomId);
+                int size = message_table.size();
                 User login = User.loadUser(context);
                 int login_pk = login.getPk();
 
-                int prvs_originator_pk = login_pk;
-                boolean firstMessage = false ;
-                int margin = 1 ;
-                for (int i = 0; i < entries_database_message ; i++) {
 
-                    final ChatRoomTable data = new ChatRoomTable();
+                boolean firstMessage = false ;
+                int sender_change = 1 ;
+                for (int i = 0; i < message_table.size() ; i++) {
+
+                   /* final ChatRoomTable data = new ChatRoomTable();
                     data.setPkOriginator(dba.message_getOriginatorPK(i));
                     data.setPkUser(dba.message_getUserPk(i));
-                    if (data.getPkOriginator() == Integer.parseInt(chatRoomId) || data.getPkUser() ==  Integer.parseInt(chatRoomId)){
+                    if (data.getPkOriginator() == Integer.parseInt(with_id) || data.getPkUser() ==  Integer.parseInt(with_id)){
                         data.setPkMessage(dba.message_getMessagePK(i));
                         data.setMessage(dba.message_getMessage(i));
                         data.setAttachement(dba.message_getAttachment(i));
-                        if (firstMessage == false) {
-                            margin = 0;
-                            firstMessage = true ;
-                        }
-                        if(firstMessage == true && (prvs_originator_pk != data.getPkOriginator()) ){
-                            margin = 1 ;
-                        }
-                        else {
-                           margin = 0;// previous and same message are not from same user and hence add margin
-                        }
+                        data.setSender_change(dba.message_getSenderChange(i));
                         String date = dba.message_getDate(i);
                         data.setCreated(date);
                         String messageDate;
@@ -522,23 +846,24 @@ public class ChatRoomActivity extends AppCompatActivity {
                         final Bitmap[] bp = new Bitmap[1];
                         // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
 
+                        */
 
-
-
-                        UserMeta usermeta = new UserMeta(data.getPkOriginator());
-                        Message message = new Message(Integer.toString(data.getPkMessage()),data.getMessage(),data.getCreated(),usermeta);
-                        if (margin == 1){
+                        UserMeta usermeta = new UserMeta(message_table.get(i).getPkOriginator());
+                        Message message = new Message(Integer.toString(message_table.get(i).getPkMessage()),message_table.get(i).getMessage(),message_table.get(i).getCreated(),usermeta);
+                        if (message_table.get(i).isSender_change() == 1){
                             message.setMargin(true);
                         }
                         else {
                             message.setMargin(false);
                         }
-                        //chatRoom.setDP(bp[0]);
+
+
                         messageArrayList.add(message);
-                        prvs_originator_pk = data.getPkOriginator();
-                    }
+
+                        //)
 
                 }
+               // mAdapter.notifyDataSetChanged();
 
 
                 //
@@ -782,7 +1107,7 @@ public class ChatRoomActivity extends AppCompatActivity {
 
     private void hideMenu(){
         menuOpen = false;
-        theMenu.setVisibility(View.INVISIBLE);
+        theMenu.setVisibility(View.GONE);
     }
 
 

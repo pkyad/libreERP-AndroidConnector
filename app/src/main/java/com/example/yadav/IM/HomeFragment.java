@@ -1,5 +1,6 @@
 package com.example.yadav.IM;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -88,6 +89,7 @@ public class HomeFragment extends Fragment {
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
 
+
         recyclerView.addOnItemTouchListener(new ChatRoomsAdapter.RecyclerTouchListener(getActivity(), recyclerView, new ChatRoomsAdapter.ClickListener() {
             @Override
             public void onClick(View view, int position) {
@@ -96,9 +98,11 @@ public class HomeFragment extends Fragment {
                 int pk_select = chatRoom.getWith_pk();
                 String name_select =  chatRoom.getName();
                 Intent intent = new Intent(getActivity(), ChatRoomActivity.class);
-
+                intent.putExtra("chatID", Integer.toString(chatRoom.getId()));
                 intent.putExtra("with_id", Integer.toString(pk_select));
                 intent.putExtra("name", name_select);
+                intent.putExtra("userName" , chatRoom.getUsername());
+
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 chatRoom.getDP().compress(Bitmap.CompressFormat.PNG, 80, stream);
                 byte[] byteArray = stream.toByteArray();
@@ -212,7 +216,7 @@ public class HomeFragment extends Fragment {
                         message = c.getString("message");
                         attachement = c.getString("attachment");
                         pkOriginator = c.getInt("originator");
-                        created =  c.getString("created");
+                        created =  c.getString("created").replace("Z","").replace("T"," ");
                         read = c.getBoolean("read");
                         pkUser = c.getInt("user");
 
@@ -229,7 +233,6 @@ public class HomeFragment extends Fragment {
                         chatRoomTable.setPkOriginator(pkOriginator);
                         chatRoomTable.setPkUser(pkUser);
                         chatRoomTable.setOtherPk(other_pk);
-
 
                        if (searchInIgnoreIdArray(ignore_id,other_pk) == 0 ) {
                            // if not found in database insert it otherwise update it
@@ -264,13 +267,17 @@ public class HomeFragment extends Fragment {
                        }
                        // every messages will be inserted
                         if (!dba.CheckIfMessagePKAlreadyInDBorNot(pkMessage)) { // check in table of Message
-                           //dba.insertTableMessage(chatRoomTable);
+                           dba.insertTableMessage(chatRoomTable);
                         }
 
 
 
                         ignore_id.add(other_pk);
                     }
+                    mAdapter.notifyDataSetChanged();
+                    //recyclerView.scrollToPosition(messageArrayList.size() - 1);
+
+
 
                     load_data_from_database(0);
                 } catch (final JSONException e) {
@@ -324,19 +331,18 @@ public class HomeFragment extends Fragment {
                     String date = dba.getDate(i);
                     data.setCreated(date);
                     data.setRead(dba.getUnRead(i));
+                    data.setChatRoomID(dba.getID(i));
                      String messageDate;
                      //messageDate = new SimpleDateFormat("dd MMM, yyyy").format(date);
 
-
-                    Users users = new Users(context);
                     final String[] name = new String[1];
                     final Bitmap[] bp = new Bitmap[1];
-                    // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
                     int with_pk = dba.getWithPK(i);
 
-                    ChatRoom chatRoom = new ChatRoom(Integer.toString(i+1),data.getMessage(),date,data.getTotal_unread());
+                    ChatRoom chatRoom = new ChatRoom(data.getMessage(),date,data.getTotal_unread());
+                    chatRoom.setId(data.getChatRoomID());
                     chatRoom.setWith_pk(with_pk);
-                    //chatRoom.setDP(bp[0]);
+
                     chatRoomArrayList.add(chatRoom);
                 }
                 int size = chatRoomArrayList.size();

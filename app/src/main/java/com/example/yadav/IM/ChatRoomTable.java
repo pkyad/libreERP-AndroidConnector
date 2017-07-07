@@ -7,6 +7,15 @@ import java.util.Date;
  */
 
 public class ChatRoomTable {
+    public int getChatRoomID() {
+        return chatRoomID;
+    }
+
+    public void setChatRoomID(int chatRoomID) {
+        this.chatRoomID = chatRoomID;
+    }
+
+    private int chatRoomID;
     private int pkMessage;
     private String message ;
     private String attachement ;
@@ -15,16 +24,20 @@ public class ChatRoomTable {
     private int total_unread;
     private int pkUser ;
     private int otherPk ;
-    private boolean prvsMessage ; // true if the prvs is also for same user
 
-    public boolean isPrvsMessage() {
-        return prvsMessage;
+    private int sender_change;
+
+    public ChatRoomTable(){
+        this.sender_change = 0 ;
     }
 
-    public void setPrvsMessage(boolean prvsMessage) {
-        this.prvsMessage = prvsMessage;
+    public int isSender_change() {
+        return sender_change;
     }
 
+    public void setSender_change(int sender_change) {
+        this.sender_change = sender_change;
+    }
 
     public int getOtherPk() {
         return otherPk;

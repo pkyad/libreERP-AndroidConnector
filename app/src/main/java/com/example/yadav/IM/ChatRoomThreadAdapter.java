@@ -1,8 +1,10 @@
 package com.example.yadav.IM;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -41,7 +43,7 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         public ViewHolder(View view) {
             super(view);
             message = (TextView) itemView.findViewById(R.id.message);
-           // timestamp = (TextView) itemView.findViewById(R.id.timestamp);
+            timestamp = (TextView) itemView.findViewById(R.id.time);
             location = (ImageView) itemView.findViewById(R.id.image_location);
         }
     }
@@ -62,7 +64,7 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         TextView message ;
         ImageView card ;
         ImageView attachment ;
-        //TextView timestamp ;
+        TextView timestamp ;
         ATTACH = 0 ;
 
         if (ATTACH == 0) {
@@ -72,7 +74,7 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             // view type is to identify where to render the chat message
             // left or right
             message = (TextView) itemView.findViewById(R.id.message);
-            //timestamp = (TextView) itemView.findViewById(R.id.timestamp);
+            timestamp = (TextView) itemView.findViewById(R.id.time);
 
             if (viewType == SELF) {
                 // self message
@@ -89,6 +91,17 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
                 ((RelativeLayout) itemView).setGravity(Gravity.RIGHT);
                 message.setBackgroundResource(R.drawable.bg_bubble_gray);
+                RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)message.getLayoutParams();
+                params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+
+
+                message.setLayoutParams(params);
+
+                RelativeLayout.LayoutParams params1 = (RelativeLayout.LayoutParams)timestamp.getLayoutParams();
+                params.addRule(RelativeLayout.RIGHT_OF, R.id.message);
+
+
+                timestamp.setLayoutParams(params1);
                 // we can change margina and align parent right by adding in params
 
 
@@ -162,6 +175,17 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
         return new ViewHolder(itemView);
     }
+   /* public void onReceive(Context context, Intent intent) {
+        String action = intent.getAction();
+
+        Log.i("Receiver", "Broadcast received: " + action);
+
+        if(action.equals("com.example.broadcast.MY_NOTIFICATION")){
+            char isType = intent.getExtras().getChar("isTyping");
+            String type_user = intent.getExtras().getString("type_user");
+
+        }
+    }*/
 
 
     @Override
@@ -199,15 +223,36 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
 
         //String timestamp = getTimeStamp(message.getCreatedAt());
-       // String timestamp = message.getCreatedAt();
+        String timestamp = getCommitDate(message.getCreatedAt());
+        ((ViewHolder) holder).timestamp.setText(timestamp);
+        if (MARGIN == false){
+            ((ViewHolder) holder).timestamp.setVisibility(View.GONE);
+        }
+        else{
+            ((ViewHolder) holder).timestamp.setVisibility(View.VISIBLE);
+        }
 
-       // ((ViewHolder) holder).timestamp.setText(timestamp);
     }
 
     @Override
     public int getItemCount() {
         return messageArrayList.size();
     }
+
+    public String getCommitDate(String timestamp) {
+        String dbstring ;
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("dd MMM, yyyy HH:mm:ss");
+        try {
+
+            date = formatter.parse(timestamp);
+        } catch (ParseException e) {
+            System.out.println("error while parsing");
+        }
+        dbstring = (date).toString();
+        return dbstring ;
+    }
+
 
     public static String getTimeStamp(String dateStr) {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

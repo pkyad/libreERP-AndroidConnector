@@ -27,7 +27,8 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
     private HomeFragment mContext;
     private ArrayList<ChatRoom> chatRoomArrayList;
     private static String today;
-    private  Context context ;
+    private Context context;
+
     public class ViewHolder extends RecyclerView.ViewHolder {
         public TextView name, message, timestamp, count;
         public CircleImageView chatRoomDP;
@@ -43,10 +44,10 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
     }
 
 
-    public ChatRoomsAdapter(HomeFragment mContext, ArrayList<ChatRoom> chatRoomArrayList , Context context) {
+    public ChatRoomsAdapter(HomeFragment mContext, ArrayList<ChatRoom> chatRoomArrayList, Context context) {
         this.mContext = mContext;
         this.chatRoomArrayList = chatRoomArrayList;
-        this.context = context ;
+        this.context = context;
         // Calendar calendar = Calendar.getInstance();
         // today = String.valueOf(calendar.get(Calendar.DAY_OF_MONTH));
     }
@@ -63,29 +64,33 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
     public void onBindViewHolder(ViewHolder holder, int position) {
         ChatRoom chatRoom = chatRoomArrayList.get(position);
         int size = chatRoomArrayList.size();
-        int with_pk =  chatRoom.getWith_pk();
+        int with_pk = chatRoom.getWith_pk();
         Users users = new Users(context);
         final String[] name = new String[1];
+        final String[] username = new String[1];
         final Bitmap[] bp = new Bitmap[1];
         // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
 
-        users.get(with_pk , new UserMetaHandler(){
+        users.get(with_pk, new UserMetaHandler() {
             @Override
-            public void onSuccess(UserMeta user){
+            public void onSuccess(UserMeta user) {
                 System.out.println("yes65262626626");
                 name[0] = user.getFirstName() + " " + user.getLastName();
-                // set text in the layout here
+                // set text in the layout here'
+                username[0] = user.getUsername();
             }
+
             @Override
-            public void handleDP(Bitmap dp){
+            public void handleDP(Bitmap dp) {
                 System.out.println("dp dsda");
-                bp[0] = dp ;
+                bp[0] = dp;
                 // set text in the layout here
             }
 
         });
         holder.name.setText(name[0]);
         chatRoom.setName(name[0]);
+        chatRoom.setUsername(username[0]);
         chatRoomArrayList.get(position).setName(name[0]);
         holder.chatRoomDP.setImageBitmap(bp[0]);
         chatRoom.setDP(bp[0]);
@@ -94,7 +99,7 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
 
 
         holder.message.setText(chatRoom.getLastMessage());
-        holder.timestamp.setText(chatRoom.getTimestamp());
+        holder.timestamp.setText(getCommitDate(chatRoom.getTimestamp()));
         if (chatRoom.getUnreadCount() > 0) {
             holder.count.setText(String.valueOf(chatRoom.getUnreadCount()));
             holder.count.setVisibility(View.VISIBLE);
@@ -110,25 +115,7 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
         return chatRoomArrayList.size();
     }
 
-    public static String getTimeStamp(String dateStr) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String timestamp = "";
 
-        today = today.length() < 2 ? "0" + today : today;
-
-        try {
-            Date date = format.parse(dateStr);
-            SimpleDateFormat todayFormat = new SimpleDateFormat("dd");
-            String dateToday = todayFormat.format(date);
-            format = dateToday.equals(today) ? new SimpleDateFormat("hh:mm a") : new SimpleDateFormat("dd LLL, hh:mm a");
-            String date1 = format.format(date);
-            timestamp = date1.toString();
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
-        return timestamp;
-    }
 
     public interface ClickListener {
         void onClick(View view, int position);
@@ -178,5 +165,19 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
         public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
 
         }
+    }
+
+    public String getCommitDate(String timestamp) {
+        String dbstring ;
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("dd MMM, yyyy HH:mm:ss");
+        try {
+
+            date = formatter.parse(timestamp);
+        } catch (ParseException e) {
+            System.out.println("error while parsing");
+        }
+        dbstring = (date).toString();
+        return dbstring ;
     }
 }

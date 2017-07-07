@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
+
     android:paddingTop="5dp"
     android:paddingLeft="16dp"
     android:paddingRight="16dp">
@@ -12,21 +13,19 @@
         android:id="@+id/message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="10dp"
+
         android:textIsSelectable="true"
         android:background="@drawable/bg_bubble_white"
         android:textSize="14dp" />
 
-     <!--TextView
-        android:id="@+id/timestamp"
+     <TextView
+        android:id="@+id/time"
         android:layout_width="wrap_content"
-        android:layout_height="1dp"
-        android:layout_alignRight="@id/message"
+        android:layout_height="40dp"
         android:layout_below="@id/message"
         android:layout_marginBottom="10dp"
         android:padding="10dp"
-        android:textSize="10dp" /-->
+        android:textSize="10dp"/>
 
     <ImageView
         android:id="@+id/image_location"
