@@ -105,7 +105,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
     private String TAG = ChatRoomActivity.class.getSimpleName();
 
     private static  String with_id;
-    private RecyclerView recyclerView;
+    private static RecyclerView recyclerView;
     private static ChatRoomThreadAdapter mAdapter;
     private static ArrayList<Message> messageArrayList;
     private BroadcastReceiver mRegistrationBroadcastReceiver;
@@ -147,6 +147,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
     private AsyncHttpClient httpClient;
     DBHandler dba;
     private BroadcastReceiver mReceiver;
+    private Helper helper;
 
     private final TextWatcher mTextEditorWatcher = new TextWatcher() {
         @Override
@@ -216,6 +217,76 @@ public class ChatRoomActivity extends AppCompatActivity  {
                         }
                     },
                     1000);
+
+
+                }
+                else if (is_typing.equals("M") && type_user.equals(username)){
+                    int msgPK = Integer.parseInt(intent.getStringExtra("msgPK"));
+
+                    String url = String.format("%s/%s/%s/?mode=" , helper.serverURL, "api/PIM/chatMessage" , msgPK );
+
+
+
+
+                    httpClient.get(url,  new JsonHttpResponseHandler() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+
+                            String message;
+                            try {
+
+                                String attachement;
+                                int pkOriginator;
+                                String created;
+                                boolean read;
+                                int pkUser;
+
+                                int msgPk = response.getInt("pk");
+
+                                inputMessage.setText("");
+                                if (!dba.CheckIfMessagePKAlreadyInDBorNot(msgPk)) { // check in table of Message
+                                    message = response.getString("message");
+                                    attachement = response.getString("attachment");
+                                    pkOriginator = response.getInt("originator");
+                                    created = response.getString("created").replace("Z", "").replace("T", " ");
+                                    read = response.getBoolean("read");
+                                    pkUser = response.getInt("user");
+                                    ChatRoomTable chatRoomTable = new ChatRoomTable();
+                                    chatRoomTable.setSender_change(0);
+
+
+
+                                    chatRoomTable.setAttachement(attachement);
+                                    chatRoomTable.setCreated(created);
+                                    chatRoomTable.setMessage(message);
+                                    chatRoomTable.setPkMessage(msgPk);
+                                    chatRoomTable.setPkOriginator(pkOriginator);
+                                    chatRoomTable.setPkUser(pkUser);
+                                    chatRoomTable.setChatRoomID(chatRoomId);
+                                    dba.insertTableMessage(chatRoomTable);
+                                    UserMeta usermeta = new UserMeta(pkOriginator);
+                                    Message messageAfterType = new Message(Integer.toString(msgPk),message,created,usermeta);
+                                    messageArrayList.add(messageAfterType);
+                                    mAdapter.notifyDataSetChanged();
+                                }
+                            } catch (JSONException e) {
+
+                            }
+                           // load_data_from_database(0);
+
+                            // recyclerView.scrollToPosition(messageArrayList.size()-1);
+
+                            // layoutManager.setStackFromEnd(true);
+                        }
+
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, Throwable error, JSONObject response) {
+                            // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                            System.out.println("failure");
+                            System.out.println(statusCode);
+                        }
+                    });;
+
 
 
                 }
@@ -310,7 +381,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
         context = getApplicationContext();
 
-        final Helper helper = new Helper(context);
+        helper = new Helper(context);
 
         httpClient = helper.getHTTPClient();
 
@@ -411,7 +482,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
                         } catch (JSONException e) {
 
                         }
-                        mAdapter.notifyDataSetChanged();
+                       // mAdapter.notifyDataSetChanged();
                        // recyclerView.scrollToPosition(messageArrayList.size()-1);
 
                        // layoutManager.setStackFromEnd(true);
@@ -670,7 +741,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
     }
 
     private void fetchChatThread() {
-        load_data_from_database(0);
+        //load_data_from_database(0);
         //recyclerView.scrollToPosition(messageArrayList.size() - 1);
         layoutManager.setStackFromEnd(true);
 
@@ -777,9 +848,9 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
 
                     }
-                    //load_data_from_database(0);
+                    load_data_from_database(0);
                     mAdapter.notifyDataSetChanged();
-                    //recyclerView.scrollToPosition(messageArrayList.size() - 1);
+                    recyclerView.scrollToPosition(messageArrayList.size() - 1);
                     layoutManager.setStackFromEnd(true);
 
                 } catch (final JSONException e) {
@@ -801,6 +872,9 @@ public class ChatRoomActivity extends AppCompatActivity  {
             public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
                 load_data_from_database(0);
+                recyclerView.scrollToPosition(messageArrayList.size() - 1);
+
+                layoutManager.setStackFromEnd(true);
                 System.out.println("finished failed 001xczxc");
             }
         });
@@ -898,6 +972,9 @@ public class ChatRoomActivity extends AppCompatActivity  {
             @Override
             protected void onPostExecute(Void aVoid) {
                 mAdapter.notifyDataSetChanged();
+                recyclerView.scrollToPosition(messageArrayList.size() - 1);
+
+                layoutManager.setStackFromEnd(true);
             }
         };
 

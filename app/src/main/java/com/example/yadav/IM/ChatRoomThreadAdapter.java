@@ -97,11 +97,11 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
                 message.setLayoutParams(params);
 
-                RelativeLayout.LayoutParams params1 = (RelativeLayout.LayoutParams)timestamp.getLayoutParams();
-                params.addRule(RelativeLayout.RIGHT_OF, R.id.message);
+                RelativeLayout.LayoutParams params_time = (RelativeLayout.LayoutParams)timestamp.getLayoutParams();
+                params_time.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
 
 
-                timestamp.setLayoutParams(params1);
+                timestamp.setLayoutParams(params_time);
                 // we can change margina and align parent right by adding in params
 
 
@@ -239,39 +239,32 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         return messageArrayList.size();
     }
 
+
     public String getCommitDate(String timestamp) {
-        String dbstring ;
+
         Date date = new Date();
-        SimpleDateFormat formatter = new SimpleDateFormat("dd MMM, yyyy HH:mm:ss");
+        Date currentDate = new Date() ;
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String targetDate = date.toString() ;
         try {
 
             date = formatter.parse(timestamp);
+            targetDate = (date).toString();
+            if (date.getYear() == currentDate.getYear()){
+                SimpleDateFormat formatter_yr = new SimpleDateFormat("dd MMM, HH:mm");
+                targetDate = formatter_yr.format(date);
+
+                if (date.getDate() == currentDate.getDate()){
+                    SimpleDateFormat formatter_day = new SimpleDateFormat("HH:mm");
+                    targetDate = formatter_day.format(date);
+
+                }
+            }
         } catch (ParseException e) {
-            System.out.println("error while parsing");
-        }
-        dbstring = (date).toString();
-        return dbstring ;
-    }
-
-
-    public static String getTimeStamp(String dateStr) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String timestamp = "";
-
-        today = today.length() < 2 ? "0" + today : today;
-
-        try {
-            Date date = format.parse(dateStr);
-            SimpleDateFormat todayFormat = new SimpleDateFormat("dd");
-            String dateToday = todayFormat.format(date);
-            format = dateToday.equals(today) ? new SimpleDateFormat("hh:mm a") : new SimpleDateFormat("dd LLL, hh:mm a");
-            String date1 = format.format(date);
-            timestamp = date1.toString();
-        } catch (ParseException e) {
-            e.printStackTrace();
+            System.out.println("error while parsing date chat");
         }
 
-        return timestamp;
+        return targetDate ;
     }
 }
 

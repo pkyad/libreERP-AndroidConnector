@@ -168,16 +168,29 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
     }
 
     public String getCommitDate(String timestamp) {
-        String dbstring ;
+
         Date date = new Date();
-        SimpleDateFormat formatter = new SimpleDateFormat("dd MMM, yyyy HH:mm:ss");
+        Date currentDate = new Date() ;
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String targetDate = date.toString() ;
         try {
 
             date = formatter.parse(timestamp);
+            targetDate = (date).toString();
+            if (date.getYear() == currentDate.getYear()){
+                SimpleDateFormat formatter_yr = new SimpleDateFormat("dd MMM, HH:mm");
+                targetDate = formatter_yr.format(date);
+
+                if (date.getDate() == currentDate.getDate()){
+                    SimpleDateFormat formatter_day = new SimpleDateFormat("HH:mm");
+                    targetDate = formatter_day.format(date);
+
+                }
+            }
         } catch (ParseException e) {
-            System.out.println("error while parsing");
+            System.out.println("error while parsing date");
         }
-        dbstring = (date).toString();
-        return dbstring ;
+
+        return targetDate ;
     }
 }

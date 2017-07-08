@@ -93,7 +93,7 @@ public class ChatRoomTable {
         return total_unread;
     }
 
-    public void setRead(int total_unread) {
+    public void setTotal_Read(int total_unread) {
         this.total_unread = total_unread;
     }
 

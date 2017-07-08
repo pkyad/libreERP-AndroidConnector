@@ -3,6 +3,7 @@ package com.example.yadav.IM;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -20,6 +21,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.TextView;
 
 import com.example.libreerp.Helper;
 import com.example.libreerp.User;
@@ -39,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import cz.msebera.android.httpclient.Header;
+import ws.wamp.jawampa.WampClient;
 
 /**
  * Created by yadav on 19/2/17.
@@ -52,6 +55,165 @@ public class HomeFragment extends Fragment {
     private RecyclerView recyclerView;
     private static Context context ;
     private static  HomeFragment mContext ;
+    private Boolean connected;
+    private String chennel;
+    private User login;
+    private AsyncHttpClient httpClient;
+    DBHandler dba;
+    private BroadcastReceiver mReceiver;
+    private Helper helper;
+    private BroadcastReceiver mRegistrationBroadcastReceiver;
+    private TextView typing ;
+    private boolean isType = false ;
+    private int typing_id ;
+    private String username ;
+    private View mCustomView;
+    private WampClient client;
+    private static LinearLayoutManager layoutManager ;
+    private ArrayList<Integer> ignore_id = new ArrayList<Integer>();;
+
+
+    @Override
+    public void onResume() {
+        // TODO Auto-generated method stub
+        super.onResume();
+
+        IntentFilter intentFilter = new IntentFilter("com.libreERP.TYPING");
+
+        mReceiver = new BroadcastReceiver() {
+
+            @Override
+            public void onReceive(final Context context, Intent intent) {
+                //extract our message from intent
+//                String msg_for_me = intent.getStringExtra("some_msg");
+                //log our message value
+                String is_typing = intent.getStringExtra("type");
+                String message = intent.getStringExtra("new_message");
+                final String type_user = intent.getStringExtra("type_user");
+
+                Helper helper = new Helper(context);
+                httpClient = helper.getHTTPClient();
+                 if (is_typing.equals("M")){
+                    int msgPK = Integer.parseInt(intent.getStringExtra("msgPK"));
+
+                    String url = String.format("%s/%s/%s/?mode=" , helper.serverURL, "api/PIM/chatMessage" , msgPK );
+
+
+                    // if the username is not prsent in chatroom then create new chatRoom else update the last Messsage;
+
+
+                    httpClient.get(url,  new JsonHttpResponseHandler() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+
+                            String message;
+                            try {
+
+                                String attachement;
+                                int pkOriginator;
+                                String created;
+                                boolean read;
+                                int pkUser;
+                                int with_pk ;
+                                int msgPk = response.getInt("pk");
+                                message = response.getString("message");
+                                attachement = response.getString("attachment");
+                                pkOriginator = response.getInt("originator");
+                                created = response.getString("created").replace("Z", "").replace("T", " ");
+                                read = response.getBoolean("read");
+                                pkUser = response.getInt("user");
+                                login = User.loadUser(context);
+                                with_pk = pkOriginator ;
+                                if (login.getPk() == pkOriginator){
+                                    with_pk = pkUser ;
+                                }
+
+                                if (!dba.CheckIfPKAlreadyInDBorNot(with_pk)) { // check in table of Message
+                                    ChatRoomTable chatRoomTable = new ChatRoomTable();
+
+
+
+
+                                    chatRoomTable.setAttachement(attachement);
+                                    chatRoomTable.setCreated(created);
+                                    chatRoomTable.setMessage(message);
+                                    chatRoomTable.setPkMessage(msgPk);
+                                    chatRoomTable.setPkOriginator(pkOriginator);
+                                    chatRoomTable.setPkUser(pkUser);
+                                    chatRoomTable.setOtherPk(with_pk);
+                                    chatRoomTable.setTotal_Read(1);
+                                    dba.insertTableChatRoom(chatRoomTable);
+                                    ignore_id.add(with_pk);
+                                    ChatRoom chatRoom = new ChatRoom(chatRoomTable.getMessage(),chatRoomTable.getCreated(),chatRoomTable.getTotal_unread());
+                                    chatRoom.setWith_pk(with_pk);
+
+                                    chatRoomArrayList.add(chatRoom);
+                                    mAdapter.notifyDataSetChanged();
+                                }
+                                else { // just update last message and total unread
+                                    for (int i = 0 ; i < chatRoomArrayList.size() ; i++){
+                                        if (chatRoomArrayList.get(i).getUsername().equals(type_user)){
+                                            dba.updateMessageTableChatRoom(chatRoomArrayList.get(i).getWith_pk() ,message ,chatRoomArrayList.get(i).getUnreadCount() + 1,created);
+                                            chatRoomArrayList.get(i).setLastMessage(message);
+                                            chatRoomArrayList.get(i).setUnreadCount(chatRoomArrayList.get(i).getUnreadCount() + 1);
+                                            chatRoomArrayList.get(i).setTimestamp(created);
+                                            mAdapter.notifyDataSetChanged();
+                                            ignore_id.add(with_pk); // also update in db ;
+                                            break ;
+                                        }
+
+
+                                    }
+                                }
+                            } catch (JSONException e) {
+
+                            }
+                            // load_data_from_database(0);
+
+                            // recyclerView.scrollToPosition(messageArrayList.size()-1);
+
+                            // layoutManager.setStackFromEnd(true);
+                        }
+
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, Throwable error, JSONObject response) {
+                            // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                            System.out.println("failure");
+                            System.out.println(statusCode);
+                        }
+                    });;
+
+
+
+                }
+
+            }
+        };
+        //registering our receiver
+        context.registerReceiver(mReceiver, intentFilter);
+    }
+
+    @Override
+    public void onPause() {
+        // TODO Auto-generated method stub
+        super.onPause();
+        //unregister our receiver
+        context.unregisterReceiver(this.mReceiver);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -80,7 +242,7 @@ public class HomeFragment extends Fragment {
         mContext = this ;
         mAdapter = new ChatRoomsAdapter(mContext, chatRoomArrayList,context);
         int size = chatRoomArrayList.size();
-        LinearLayoutManager layoutManager = new LinearLayoutManager( getActivity());
+        layoutManager = new LinearLayoutManager( getActivity());
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.addItemDecoration(new SimpleDividerItemDecoration(
                 getActivity()
@@ -94,7 +256,12 @@ public class HomeFragment extends Fragment {
             @Override
             public void onClick(View view, int position) {
                 // when chat is clicked, launch full chat thread activity
+
+                chatRoomArrayList.get(position).setUnreadCount(0);
+                dba.updateUnreadChatRoom(chatRoomArrayList.get(position).getWith_pk(),0);
                 ChatRoom chatRoom = chatRoomArrayList.get(position);
+
+                mAdapter.notifyDataSetChanged();
                 int pk_select = chatRoom.getWith_pk();
                 String name_select =  chatRoom.getName();
                 Intent intent = new Intent(getActivity(), ChatRoomActivity.class);
@@ -205,10 +372,10 @@ public class HomeFragment extends Fragment {
                     String CommitBranch;
                     String CommitCode;
 
-                    DBHandler dba = new DBHandler(context, null, null, 1);
-                    User login = User.loadUser(context);
+                    dba = new DBHandler(context, null, null, 1);
+                    login = User.loadUser(context);
                     int login_pk = login.getPk();
-                    ArrayList<Integer> ignore_id = new ArrayList<Integer>();
+
                     for (int i = 0; i < response.length(); i++) {
 
                         JSONObject c = response.getJSONObject(i);
@@ -257,11 +424,11 @@ public class HomeFragment extends Fragment {
 
                            }
 
-                           chatRoomTable.setRead(total_unread);
+                           chatRoomTable.setTotal_Read(total_unread);
                            if (!dba.CheckIfPKAlreadyInDBorNot(other_pk)) { // check in table for chatroom
                                dba.insertTableChatRoom(chatRoomTable);
                            } else { // update it
-                                // update query
+                               dba.updateMessageTableChatRoom(chatRoomTable.getOtherPk() ,chatRoomTable.getMessage() ,0,chatRoomTable.getCreated());
                            }
 
                        }
@@ -274,12 +441,10 @@ public class HomeFragment extends Fragment {
 
                         ignore_id.add(other_pk);
                     }
-                    mAdapter.notifyDataSetChanged();
-                    //recyclerView.scrollToPosition(messageArrayList.size() - 1);
-
-
-
                     load_data_from_database(0);
+                    mAdapter.notifyDataSetChanged();
+                    recyclerView.scrollToPosition(chatRoomArrayList.size() - 1);
+                   // layoutManager.setStackFromEnd(true);
                 } catch (final JSONException e) {
                     Log.e("TAG", "Json parsing error: " + e.getMessage());
 
@@ -330,7 +495,7 @@ public class HomeFragment extends Fragment {
                     data.setMessage(dba.getLastMessage(i));
                     String date = dba.getDate(i);
                     data.setCreated(date);
-                    data.setRead(dba.getUnRead(i));
+                    data.setTotal_Read(dba.getUnRead(i));
                     data.setChatRoomID(dba.getID(i));
                      String messageDate;
                      //messageDate = new SimpleDateFormat("dd MMM, yyyy").format(date);

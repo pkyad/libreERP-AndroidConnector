@@ -116,15 +116,19 @@ public class HomeActivity extends AppCompatActivity
                                 String message = pubSubData.toString();
                                 ArrayNode c  = pubSubData.arguments();
                                 String type = c.get(0).textValue();
-                                String new_message = c.get(0).textValue();
+                                String new_message = c.get(1).textValue();
                                 String type_user = c.get(2).textValue();
 
-                                int a = 1;
                                 Intent intent = new Intent();
                                 intent.setAction("com.libreERP.TYPING");
                                 intent.putExtra("type",type);
                                 intent.putExtra("new_message",new_message);
                                 intent.putExtra("type_user",type_user);
+
+                                if (type.equals("M") ){
+                                    intent.putExtra("msgPK" , c.get(3).toString());
+                                }
+
                                 sendBroadcast(intent);
 
                             }

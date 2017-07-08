@@ -137,6 +137,26 @@ public class DBHandler extends SQLiteOpenHelper {
     }
 
 
+    public long  updateMessageTableChatRoom(int with_pk , String lastMessage , int unread , String timestamp) {
+        ContentValues updateValues = new ContentValues();
+        updateValues.put(COLUMN_LAST_MESSAGE,lastMessage);
+        updateValues.put(COLUMN_UNREAD, unread);
+        updateValues.put(COLUMN_DATE, timestamp);
+        SQLiteDatabase db = getWritableDatabase();
+
+        return db.update(TABLE_CHATROOM, updateValues, COLUMN_WITH_PK + " = ?",new String[]{String.valueOf(with_pk)});
+    }
+
+    public long  updateUnreadChatRoom(int with_pk ,int unread) {
+        ContentValues updateValues = new ContentValues();
+
+        updateValues.put(COLUMN_UNREAD, unread);
+
+        SQLiteDatabase db = getWritableDatabase();
+
+        return db.update(TABLE_CHATROOM, updateValues, COLUMN_WITH_PK + " = ?",new String[]{String.valueOf(with_pk)});
+    }
+
     // retrive data from table tasks
 
 
