@@ -1,5 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="8dp"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    android:paddingTop="8dp">
+
+    <ImageView
+        android:id="@+id/notificationDp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:id="@+id/notificationText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#444444"
+        android:textStyle="bold"
+        android:textSize="16dp"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/displayPic"
+        android:layout_marginLeft="70dp"
+        android:layout_marginStart="70dp"
+        android:layout_toLeftOf="@+id/notificationTime"
+        android:layout_toStartOf="@+id/notificationTime" />
+
+    <TextView android:id="@+id/notificationTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/notificationText"
+        android:textColor="#888888"
+        android:layout_marginTop="5dp"
+        android:text="Seems gcm will take some time"
+        android:layout_alignRight="@+id/notificationText"
+        android:layout_alignEnd="@+id/notificationText"
+        android:layout_alignLeft="@+id/notificationText"
+        android:layout_alignStart="@+id/notificationText" />
+
+    <TextView android:id="@+id/notificationTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:textSize="10dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"/>
 
 </RelativeLayout>

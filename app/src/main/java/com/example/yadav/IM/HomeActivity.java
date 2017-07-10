@@ -1,12 +1,17 @@
 package com.example.yadav.IM;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.support.design.widget.NavigationView;
@@ -18,6 +23,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
+import android.widget.RemoteViews;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -126,7 +132,9 @@ public class HomeActivity extends AppCompatActivity
                                 intent.putExtra("type_user",type_user);
 
                                 if (type.equals("M") ){
+                                    addNotification(new_message);
                                     intent.putExtra("msgPK" , c.get(3).toString());
+
                                 }
 
                                 sendBroadcast(intent);
@@ -160,6 +168,42 @@ public class HomeActivity extends AppCompatActivity
         fragmentManager.beginTransaction()
                 .replace(R.id.content_frame, new HomeFragment())
                 .commit();
+    }
+    private void addNotification(String message) {
+        int icon = R.drawable.ic_action_home;
+        long when = System.currentTimeMillis();
+
+
+        RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification);
+
+
+        contentView.setImageViewResource(R.id.notificationDp, R.drawable.ic_action_gear);
+
+        contentView.setTextViewText(R.id.notificationTitle, message);
+        contentView.setTextViewText(R.id.notificationText, "LIBREERP-CHAT");
+        contentView.setTextViewText(R.id.notificationTime, Long.toString(when));
+        NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(icon)
+                        .setContent(contentView);
+
+
+        Intent notificationIntent = new Intent(this, HomeActivity.class);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.setContentIntent(contentIntent);
+        builder.getNotification().defaults |= Notification.DEFAULT_LIGHTS; // LED
+        builder.getNotification().defaults |= Notification.DEFAULT_VIBRATE; //Vibration
+        builder.getNotification().defaults |= Notification.DEFAULT_SOUND; // Sound
+        builder.setAutoCancel(true);
+        builder.getNotification().flags |= Notification.FLAG_AUTO_CANCEL;
+
+        // Add as notification
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.notify(0, builder.build());
+
+        // Add as notification
+
     }
 
 
@@ -201,6 +245,7 @@ public class HomeActivity extends AppCompatActivity
         startActivity(intent);
         finish(); // finish activity
     }
+
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Override

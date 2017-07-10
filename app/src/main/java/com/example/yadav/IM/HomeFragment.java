@@ -150,10 +150,11 @@ public class HomeFragment extends Fragment {
                                     chatRoomArrayList.add(chatRoom);
                                     mAdapter.notifyDataSetChanged();
                                 }
-                                else { // just update last message and total unread
+                                else { // just update last message and total unread and timestamp of last message
                                     for (int i = 0 ; i < chatRoomArrayList.size() ; i++){
                                         if (chatRoomArrayList.get(i).getUsername().equals(type_user)){
                                             dba.updateMessageTableChatRoom(chatRoomArrayList.get(i).getWith_pk() ,message ,chatRoomArrayList.get(i).getUnreadCount() + 1,created);
+                                            //dba.updateMessageTableChatRoom(chatRoomArrayList.get(i).getWith_pk() ,message ,0,created);
                                             chatRoomArrayList.get(i).setLastMessage(message);
                                             chatRoomArrayList.get(i).setUnreadCount(chatRoomArrayList.get(i).getUnreadCount() + 1);
                                             chatRoomArrayList.get(i).setTimestamp(created);
