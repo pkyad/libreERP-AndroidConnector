@@ -10,6 +10,7 @@ public class Comment {
 
     private int PkTask;
     private int PkComment;
+    private int PkProject;
     private String Created;
     private String Category;
     private String Text;
@@ -32,6 +33,10 @@ public class Comment {
     public void setCommitMessage(String CommitMessage){this.CommitMessage = CommitMessage;}
     public void setUser(String  user){this.user = user;}
     public void setCommitDate(String CommitDate){this.CommitDate = CommitDate;}
+
+    public void setPkProject(int pkProject) {
+        PkProject = pkProject;
+    }
 
     public void setUserPK(int userPK) {
         this.userPK = userPK;
@@ -59,6 +64,10 @@ public class Comment {
 
     public String getCommitBranch() {
         return CommitBranch;
+    }
+
+    public int getPkProject() {
+        return PkProject;
     }
 
     public int getUserPK() {

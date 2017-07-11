@@ -11,14 +11,23 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="bottomSheet">
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/userimage"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:paddingBottom="@dimen/nav_header_bottom_spacing"
 
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/userimage"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:paddingBottom="@dimen/nav_header_bottom_spacing"
-            android:paddingTop="@dimen/nav_header_vertical_spacing" />
-
+                    android:paddingTop="@dimen/nav_header_vertical_spacing" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:id="@+id/pk_user111"/>
+        </RelativeLayout>
         <TextView
             android:id="@+id/username"
             android:layout_width="wrap_content"

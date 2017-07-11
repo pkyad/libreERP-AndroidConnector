@@ -5,15 +5,17 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:screenOrientation="portrait"
         android:supportsRtl="true"
-        tools:replace="android:icon"
         android:theme="@style/AppTheme"
-        android:screenOrientation="portrait">
-        <activity android:name="com.example.yadav.taskBoard.LoginActivity"
+        tools:replace="android:icon">
+        <activity
+            android:name=".LoginActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,23 +24,29 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.example.yadav.taskBoard.HomeActivity"
+            android:name=".HomeActivity"
             android:label="@string/title_activity_home"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name="com.example.yadav.taskBoard.KeyLoginActivity"
-            android:screenOrientation="portrait"/>
         <activity
-            android:name="com.example.yadav.taskBoard.TaskCardActivity"
+            android:name=".KeyLoginActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".TaskCardActivity"
             android:label="TODO"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar"/>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name="com.example.yadav.taskBoard.ProjectCardActivity"
+            android:name=".ProjectCardActivity"
             android:label="Project"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar"/>
-
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".EditTask"
+            android:label="@string/title_activity_edit_task"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme"
+            />
     </application>
 
 </manifest>

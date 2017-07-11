@@ -7,6 +7,7 @@ package com.example.yadav.taskBoard;
 public class File {
     private Integer filePk;
     private String fileLink;
+    private int project_pk;
     private String  attachment;
     private String mediaType;
     private String name;
@@ -16,6 +17,10 @@ public class File {
 
     public Integer getFilePk() {
         return filePk;
+    }
+
+    public int getProject_pk() {
+        return project_pk;
     }
 
     public int getPostedUser() {
@@ -56,6 +61,10 @@ public class File {
 
     public void setFilePk(Integer filePk) {
         this.filePk = filePk;
+    }
+
+    public void setProject_pk(int project_pk) {
+        this.project_pk = project_pk;
     }
 
     public void setFileLink(String fileLink) {

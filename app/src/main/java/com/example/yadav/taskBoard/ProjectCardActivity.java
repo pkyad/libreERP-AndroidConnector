@@ -1,15 +1,19 @@
 package com.example.yadav.taskBoard;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.provider.MediaStore;
 import android.support.design.widget.BottomSheetDialogFragment;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -25,12 +29,15 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.libreerp.Helper;
 import com.example.libreerp.UserMeta;
 import com.example.libreerp.UserMetaHandler;
 import com.example.libreerp.UserViewBS;
 import com.example.libreerp.Users;
+import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
@@ -57,7 +64,7 @@ public class ProjectCardActivity extends AppCompatActivity {
     public static List<String> arraySubTask = new ArrayList<>();
     private static ListView listView;
     static int myPosition = 0;
-    static int myPK = 0;
+    static Projects projects;
     static View myView;
     private static RecyclerView recyclerView;
     private static GridLayoutManager gridLayoutManager;
@@ -69,6 +76,10 @@ public class ProjectCardActivity extends AppCompatActivity {
     private static String serverURL;
     static AsyncHttpClient client;
     static Context context;
+    static SwipeRefreshLayout mSwipeRefreshLayout;
+    private static final int CAMERA_REQUEST = 1024;
+    private static final int GALLERY_REQUEST = 2134;
+    private static final int CHOOSE_FILE_REQUESTCODE = 4512;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +87,7 @@ public class ProjectCardActivity extends AppCompatActivity {
         setContentView(R.layout.projectcardactivity);
 
         myPosition = getIntent().getIntExtra("EXTRA_SESSION_ID", myPosition);
-        myPK = getIntent().getIntExtra("PK_TASK", myPK);
+        projects = getIntent().getParcelableExtra("PROJECT");
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -112,8 +123,8 @@ public class ProjectCardActivity extends AppCompatActivity {
             View layoutList = inflater.inflate(R.layout.teamtwomembers, container, false);
             LinearLayout layout  =(LinearLayout) layoutList.findViewById(R.id.team);
 
-            int i=0;
-            for (i=0;i<usersList.size();i++) {
+
+            for (int i=0;i<usersList.size();i++) {
                 View layout1 = inflater.inflate(R.layout.team_view, container, false);
                 final CircleImageView userImage = (CircleImageView) layout1.findViewById(R.id.userImageProject);
                 final TextView userName = (TextView) layout1.findViewById(R.id.userNameProject);
@@ -147,45 +158,25 @@ public class ProjectCardActivity extends AppCompatActivity {
             switch (getArguments().getInt(ARG_SECTION_NUMBER)) {
                 case 1: {
                     arraySubTask.clear();
-                    final DBHandler db = new DBHandler(getActivity(), null, null, 1);
+                    final DBHandler db = new DBHandler(getActivity(), null, null, 2);
                     rootView = inflater.inflate(R.layout.fragment_info_project, container, false);
                     context = getActivity().getApplicationContext();
 
                     TextView description = (TextView) rootView.findViewById(R.id.description2);
-                    description.setText(db.getDescriptionProject(myPosition));
+                    description.setText(projects.getDescription());
 
                     TextView title = (TextView) rootView.findViewById(R.id.title);
-                    title.setText(db.getTitleProject(myPosition));
+                    title.setText(projects.getTitle());
 
                     TextView created = (TextView) rootView.findViewById(R.id.createdDate);
-
-                    Date dateCreated = db.getCreatedProject(myPosition);
-                    Date current = new Date();
-                    String formattedCreatedDate;
-                    if(dateCreated.getYear() == current.getYear()) {
-                        formattedCreatedDate = new SimpleDateFormat("dd MMM").format(dateCreated);
-                    }
-                    else {
-                        formattedCreatedDate = new SimpleDateFormat("dd MMM, yyyy").format(dateCreated);
-                    }
-
-                    created.setText(formattedCreatedDate);
+                    created.setText(projects.getCreated());
 
                     TextView dueDate = (TextView) rootView.findViewById(R.id.dueDateDate);
-                    Date dateDueDate = db.getDueDateProject(myPosition);
-                    String formattedDueDate;
-                    if(dateDueDate.getYear() == current.getYear()) {
-                        formattedDueDate = new SimpleDateFormat("dd MMM").format(dateDueDate);
-                    }
-                    else {
-                        formattedDueDate = new SimpleDateFormat("dd MMM, yyyy").format(dateDueDate);
-                    }
-                    dueDate.setText(formattedDueDate);
+                    dueDate.setText(projects.getDueDate());
 
+                    int team[] = projects.getTeam();
 
-                    List<Integer> team = db.getTeamProject(myPosition);
-
-                    int run = team.size();
+                    int run = team.length;
                     LinearLayout view = (LinearLayout) rootView.findViewById(R.id.layout222);
 
                         if (run == 0) {
@@ -199,13 +190,22 @@ public class ProjectCardActivity extends AppCompatActivity {
                                     u2 = k+1;
 
                                 final List<Integer> usersList = new ArrayList<>();
-                                usersList.add(team.get(u1));
+                                usersList.add(team[u1]);
                                 if(u1 != run-1)
-                                    usersList.add(team.get(u2));
+                                    usersList.add(team[u2]);
                                 view.addView(getUsersRowView(inflater,container,usersList));
 
                             }
                         }
+
+                        rootView.findViewById(R.id.showTasksProject).setOnClickListener(new View.OnClickListener() {
+                            public void onClick(View v) {
+
+                                Intent intent = new Intent(getActivity(), HomeActivity.class);
+                                intent.putExtra("PK_PROJECT",projects.getPk());
+                                startActivity(intent);
+                            }
+                        });
 
                     break;
                     }
@@ -223,15 +223,15 @@ public class ProjectCardActivity extends AppCompatActivity {
 
                     adapter = new CustomTaskViewAdapterTimeline(mainContext, data_list);
                     recyclerView.setAdapter(adapter);
-
+                    mSwipeRefreshLayout = (SwipeRefreshLayout) myView.findViewById(R.id.swipeRefreshTaskBoard);
                     ///////////////////
                     context = getActivity().getApplicationContext();
                     Helper helper = new Helper(context);
-
+                    serverURL = helper.serverURL;
                     client = helper.getHTTPClient();
                     RequestParams params = new RequestParams();
-                    params.put("task", myPK);
-                    String url = String.format("%s/%s/", serverURL, "/api/taskBoard/timelineItem");
+                    params.put("task", projects.getPk());
+                    String url = String.format("%s/%s/", serverURL, "/api/projects/timelineItem");
                     client.get(url,params, new JsonHttpResponseHandler() {
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
@@ -241,18 +241,13 @@ public class ProjectCardActivity extends AppCompatActivity {
                             try {
 //                                JSONArray response = tasks.getJSONArray("results");
                                 int pkComment;
-                                int pkTask;
+                                int pkProject;
                                 String created;
                                 String category;
-                                String text;
-                                int pkCommit;
-                                String commitMessage;
+                                String text=null;
                                 int user;
-                                String CommitDate;
-                                String CommitBranch;
-                                String CommitCode;
 
-                                DBHandler dba = new DBHandler(getActivity(), null, null, 1);
+                                DBHandler dba = new DBHandler(getActivity(), null, null, 2);
                                 for (int i = 0; i < response.length(); i++) {
 
                                     JSONObject c = response.getJSONObject(i);
@@ -263,34 +258,15 @@ public class ProjectCardActivity extends AppCompatActivity {
                                         category = c.getString("category");
                                         if (category.equals("message")) {
                                             text = c.getString("text");
-                                            pkCommit = 0;
-                                            commitMessage = null;
-                                            CommitDate = null;
-                                            CommitBranch = null;
-                                            CommitCode = null;
-                                        } else {
-                                            text = null;
-                                            JSONObject commit = c.getJSONObject("commit");
-                                            JSONObject repo = commit.getJSONObject("repo");
-                                            pkCommit = commit.getInt("pk");
-                                            commitMessage = commit.getString("message");
-                                            CommitBranch = repo.getString("name") + "/" + commit.getString("branch");
-                                            CommitCode = commit.getString("sha");
-                                            CommitDate = commit.getString("created").replace("Z","").replace("T"," ");
                                         }
-                                        pkTask = c.getInt("task");
+                                        pkProject = c.getInt("project");
                                         Comment comment = new Comment(pkComment);
                                         comment.setPkComment(pkComment);
-                                        comment.setPkTask(pkTask);
+                                        comment.setPkProject(pkProject);
                                         comment.setUserPK(user);
                                         comment.setCategory(category);
                                         comment.setCreated(created);
                                         comment.setText(text);
-                                        comment.setCommitPK(pkCommit);
-                                        comment.setCommitMessage(commitMessage);
-                                        comment.setCommitBranch(CommitBranch);
-                                        comment.setCommitCode(CommitCode);
-                                        comment.setCommitDate(CommitDate);
                                         dba.insertTableComment(comment);
                                     }
                                 }
@@ -318,7 +294,13 @@ public class ProjectCardActivity extends AppCompatActivity {
                         }
                     });
 
-
+                    mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                        @Override
+                        public void onRefresh() {
+                            // Refresh items
+                            refreshItems();
+                        }
+                    });
                     //////////////////////
                     recyclerView.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
 
@@ -365,15 +347,45 @@ public class ProjectCardActivity extends AppCompatActivity {
 
                 case 3: {
                     rootView = inflater.inflate(R.layout.fragment_files, container, false);
-                    DBHandler dba = new DBHandler(getActivity(), null, null, 1);
+                    DBHandler dba = new DBHandler(getActivity(), null, null, 2);
 
-                    List<File> fileList = dba.getAllFiles(myPK);
+                    List<File> fileList = dba.getProjectFiles(projects.getPk());
                     listView = (ListView) rootView.findViewById(R.id.files);
                     CustomFileCardAdapter customFileCardAdapter = new CustomFileCardAdapter(context, R.layout.fileview);
 
                     for (int i = 0; i < fileList.size(); i++) {
                         customFileCardAdapter.add(fileList.get(i));
                     }
+
+                    FloatingActionMenu menuRed;
+                    List<FloatingActionMenu> menus = new ArrayList<>();
+                    Handler mUiHandler = new Handler();
+
+                    menuRed = (FloatingActionMenu) rootView.findViewById(R.id.fab_attach_files);
+                    FloatingActionButton fab1 = (FloatingActionButton) rootView.findViewById(R.id.fab_camera);
+                    FloatingActionButton fab2 = (FloatingActionButton) rootView.findViewById(R.id.fab_gallery);
+                    FloatingActionButton fab3 = (FloatingActionButton) rootView.findViewById(R.id.fab_files);
+
+                    menuRed.setClosedOnTouchOutside(true);
+                    menuRed.hideMenuButton(false);
+                    menus.add(menuRed);
+
+
+                    int delay = 400;
+                    for (final FloatingActionMenu menu : menus) {
+                        mUiHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                menu.showMenuButton(true);
+                            }
+                        }, delay);
+                        delay += 150;
+                    }
+                    fab1.setOnClickListener(clickListener);
+                    fab2.setOnClickListener(clickListener);
+                    fab3.setOnClickListener(clickListener);
+                    listView.setAdapter(customFileCardAdapter);
+
                     listView.setAdapter(customFileCardAdapter);
                     break;
                 }
@@ -382,7 +394,59 @@ public class ProjectCardActivity extends AppCompatActivity {
             }
             return rootView;
         }
+        View.OnClickListener clickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()) {
+                    case R.id.fab_camera:
+                        sendPhoto();
+                        break;
+                    case R.id.fab_gallery:
+                        sendGallery();
+                        break;
+                    case R.id.fab_files:
+                        attachFiles();
+                        break;
+                }
+            }
+        };
+        private void sendGallery()  {
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            startActivityForResult(intent, GALLERY_REQUEST);
+        }
 
+        private void sendPhoto()  {
+            Intent cameraintent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            startActivityForResult(cameraintent, CAMERA_REQUEST);
+        }
+        private void attachFiles(){
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("*/*");
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+            // special intent for Samsung file manager
+            Intent sIntent = new Intent("com.sec.android.app.myfiles.PICK_DATA");
+            // if you want any file type, you can skip next line
+
+            sIntent.addCategory(Intent.CATEGORY_DEFAULT);
+
+            Intent chooserIntent;
+            if (getContext().getPackageManager().resolveActivity(sIntent, 0) != null){
+                // it is device with samsung file manager
+                chooserIntent = Intent.createChooser(sIntent, "Open file");
+                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] { intent});
+            }
+            else {
+                chooserIntent = Intent.createChooser(intent, "Open file");
+            }
+
+            try {
+                startActivityForResult(chooserIntent, CHOOSE_FILE_REQUESTCODE);
+            } catch (android.content.ActivityNotFoundException ex) {
+                Toast.makeText(getContext(), "No suitable File Manager was found.", Toast.LENGTH_SHORT).show();
+            }
+
+        }
 
     }
 
@@ -424,6 +488,89 @@ public class ProjectCardActivity extends AppCompatActivity {
         }
     }
 
+    static void refreshItems() {
+
+        context = myView.getContext();
+        final DBHandler dba = new DBHandler(context, null, null, 2);
+        Helper helper = new Helper(context);
+        serverURL = helper.serverURL;
+        client = helper.getHTTPClient();
+        RequestParams params = new RequestParams();
+        params.put("task", projects.getPk());
+        String url = String.format("%s/%s/", serverURL, "/api/projects/timelineItem");
+        client.get(url,params, new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
+                super.onSuccess(statusCode, headers,response);
+
+                System.out.println("success 001xzc");
+                try {
+//                                JSONArray response = tasks.getJSONArray("results");
+                    int pkComment;
+                    int pkProject;
+                    String created;
+                    String category;
+                    String text=null;
+                    int user;
+
+
+                    for (int i = 0; i < response.length(); i++) {
+
+                        JSONObject c = response.getJSONObject(i);
+                        pkComment = c.getInt("pk");
+                        user = c.getInt("user");
+                        if (!dba.CheckIfCOMMENT_PKAlreadyInDBorNot(pkComment)) {
+                            created = c.getString("created").replace("Z","").replace("T"," ");
+                            category = c.getString("category");
+                            if (category.equals("message")) {
+                                text = c.getString("text");
+                            }
+                            pkProject = c.getInt("project");
+                            Comment comment = new Comment(pkComment);
+                            comment.setPkComment(pkComment);
+                            comment.setPkProject(pkProject);
+                            comment.setUserPK(user);
+                            comment.setCategory(category);
+                            comment.setCreated(created);
+                            comment.setText(text);
+                            dba.insertTableComment(comment);
+                        }
+                    }
+                    adapter.clearData();
+                    load_data_from_database(0);
+                    onItemsLoadComplete();
+                } catch (final JSONException e) {
+                    Log.e("TAG", "Json parsing error: " + e.getMessage());
+
+                }
+
+
+            }
+
+            @Override
+            public void onFinish() {
+                System.out.println("finished 001cxczdfhgfg");
+                // retrieve all the db entries
+
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                adapter.clearData();
+                load_data_from_database(0);
+                onItemsLoadComplete();
+                System.out.println("finished failed 001xczxc");
+            }
+        });
+
+
+    }
+
+    static void onItemsLoadComplete() {
+        mSwipeRefreshLayout.setRefreshing(false);
+    }
+
 
     private static void load_data_from_database(int id) {
 
@@ -431,13 +578,15 @@ public class ProjectCardActivity extends AppCompatActivity {
             @Override
             protected Void doInBackground(Integer... integers) {
 
-                final DBHandler dba = new DBHandler(mainContext, null, null, 1);
+                final DBHandler dba = new DBHandler(mainContext, null, null, 2);
                 //System.out.println("pkTask = "+pkTask);
 
-                for (int i = 0; i < dba.getTotalDBEntries_COMMENT(myPK); i++) {
+                for (int i = 0; i < dba.getTotalDBEntries_COMMENT_Project(projects.getPk()); i++) {
                     final Comment data = new Comment(i);
-                    data.setCategory(dba.getCategory(i,myPK));
-                    int comment_pk = dba.getCommentPK(i,myPK);
+
+                    data.setCategory(dba.getCategory_COMMENT_Project(i,projects.getPk()));
+                    int comment_pk = dba.getCommentPK_Project_Comment(i,projects.getPk());
+                    data.setUserPK(dba.getPostUserPK(comment_pk));
                     Date commentDate = dba.getCommentDate(comment_pk);
                     String formattedCommitDate;
                     Date current = new Date();
@@ -450,25 +599,10 @@ public class ProjectCardActivity extends AppCompatActivity {
 
                     data.setCreated(formattedCommitDate);
 
-                    if(dba.getCategory(i,myPK).equals("message")) {
-                        data.setText(dba.getMessage(comment_pk));
-                    }
-                    else {
-                        data.setText(dba.getCommitMessage(comment_pk));
-                        data.setCommitBranch(dba.getCommitBranch(comment_pk));
 
-                        Date commitDate = dba.getCommitDate(comment_pk);
-                        if(commitDate.getYear() == current.getYear()) {
-                            formattedCommitDate = new SimpleDateFormat("dd MMM").format(commitDate);
-                        }
-                        else {
-                            formattedCommitDate = new SimpleDateFormat("dd MMM, yyyy").format(commitDate);
-                        }
-                        data.setCommitDate(formattedCommitDate);
-                        data.setCommitCode(dba.getCommitCode(comment_pk));
-                    }
+                        data.setText(dba.getMessage(comment_pk));
+
                     Users users = new Users(context);
-                    // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
                     users.get(dba.getPostUserPK(comment_pk) , new UserMetaHandler(){
                         @Override
                         public void onSuccess(UserMeta user){

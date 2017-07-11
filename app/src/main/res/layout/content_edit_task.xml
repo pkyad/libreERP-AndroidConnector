@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="#ffffff"
+    android:clickable="true"
+    tools:context=".EditTask"
+    android:windowSoftInputMode="adjustPan">
+
+
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            >
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Title"
+                android:id="@+id/title_task"
+                android:layout_marginTop="40dp"
+                android:layout_alignRight="@+id/description_task"
+                android:layout_alignEnd="@+id/description_task" />
+
+            <EditText
+                android:layout_width="270dp"
+                android:padding="5dp"
+                android:layout_height="wrap_content"
+                android:gravity="top"
+                android:id="@+id/description_task_edit"
+                android:inputType="textMultiLine"
+                android:lines="5"
+                android:layout_marginTop="37dp"
+                android:background="@drawable/border_editdescription"
+                android:layout_below="@+id/dueDate_task_edit"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true">
+            </EditText>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Description"
+                android:id="@+id/description_task"
+                android:layout_marginTop="134dp"
+                android:layout_below="@+id/title_task"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_marginLeft="13dp"
+                android:layout_marginStart="13dp" />
+            <EditText
+                android:layout_width="270dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/title_task_edit"
+                android:inputType="textMultiLine"
+                android:lines="1"
+                android:padding="5dp"
+                android:background="@drawable/border_editdescription"
+                android:layout_above="@+id/description_task"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DueDate"
+                android:id="@+id/dueDate_task"
+                android:layout_alignBottom="@+id/dueDate_task_edit"
+                android:layout_alignRight="@+id/description_task"
+                android:layout_alignEnd="@+id/description_task" />
+
+            <Button
+                android:layout_width="130dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/dueDate_task_edit"
+                android:minLines="1"
+                android:layout_marginTop="48dp"
+                android:background="@drawable/border_editdescription"
+                android:layout_below="@+id/title_task_edit"
+                android:onClick="showTimePickerDialog"
+                android:layout_alignLeft="@+id/title_task_edit"
+                android:layout_alignStart="@+id/title_task_edit" />
+
+            <Button
+                android:layout_width="130dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/dueDate_time_task_edit"
+                android:minLines="1"
+                android:background="@drawable/border_editdescription"
+                android:onClick="sh"
+                android:inputType="time"
+                android:layout_alignBaseline="@+id/dueDate_task_edit"
+                android:layout_alignBottom="@+id/dueDate_task_edit"
+                android:layout_toRightOf="@+id/dueDate_task_edit"
+                android:layout_toEndOf="@+id/dueDate_task_edit" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_below="@+id/description_task_edit"
+                android:layout_marginTop="20dp"
+                android:text="Save"
+                android:id="@+id/save" />
+
+        </RelativeLayout>
+</ScrollView>
+</RelativeLayout>

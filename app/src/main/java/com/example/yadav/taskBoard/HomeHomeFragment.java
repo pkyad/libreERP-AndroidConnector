@@ -3,6 +3,7 @@ package com.example.yadav.taskBoard;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -14,6 +15,7 @@ import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -23,8 +25,10 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.libreerp.Helper;
 import com.example.libreerp.User;
@@ -34,6 +38,7 @@ import com.example.libreerp.Users;
 import com.github.lzyzsd.circleprogress.CircleProgress;
 import com.github.lzyzsd.circleprogress.DonutProgress;
 import com.github.mikephil.charting.animation.Easing;
+import com.github.mikephil.charting.charts.Chart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.Legend;
@@ -41,8 +46,15 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.JsonHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
 import com.synnapps.carouselview.CarouselView;
 import com.synnapps.carouselview.ViewListener;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,18 +62,34 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import cz.msebera.android.httpclient.Header;
 import de.hdodenhof.circleimageview.CircleImageView;
 
 /**
  * Created by yadav on 10/3/17.
  */
 public class HomeHomeFragment extends Fragment {
-    float data1[] = {10f,2f,29.5f,23f};
 
+    String serverURL;
+    int pk;
+    String title = new String();
+    String description = new String();
+    String created = new String();
     View myView;
     Context mainContext;
+    DBHandler dba;
     CarouselView customCarouselView;
+    private User user;
     int NUMBER_OF_PAGES = 2;
+    int totalCompleted = 0;
+    int totalStuck = 0;
+    int totalInProgress = 0;
+    int totalNotStarted = 0;
+    int total = 0;
+    float[] data1 = new float[4];
+    RecyclerView listView;
+    ArrayList<String> data2 = new ArrayList<>();
+    List<SubTask> data_list = new ArrayList<>();
     private CustomSubTaskCardAdapter adapter;
     @Nullable
     @Override
@@ -69,38 +97,62 @@ public class HomeHomeFragment extends Fragment {
 
 
         myView = inflater.inflate(R.layout.fragment_home_sub_home, container, false);
-
+        mainContext = myView.getContext();
+        dba=new DBHandler(getActivity(),null,null,2);
+        user = User.loadUser(mainContext);
+        setHasOptionsMenu(true);
+        listView = (RecyclerView) myView.findViewById(R.id.recent_subtask_view);
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(mainContext, 1);
+        listView.setLayoutManager(gridLayoutManager);
+        adapter = new CustomSubTaskCardAdapter(mainContext, data_list);
+        listView.setAdapter(adapter);
+        setSubtaskHome();
         customCarouselView = (CarouselView) myView.findViewById(R.id.carouselView);
         customCarouselView.setPageCount(NUMBER_OF_PAGES);
-        // set ViewListener for custom view
         customCarouselView.setViewListener(viewListener);
-        final DBHandler dba=new DBHandler(getActivity(),null,null,1);
-        mainContext = myView.getContext();
-        setHasOptionsMenu(true);
-        ListView listView = (ListView) myView.findViewById(R.id.recent_subtask_view);
-        List<SubTask> subtasks = dba.getAllSubtasksList();
-        adapter = new CustomSubTaskCardAdapter(mainContext, R.layout.list_subtask);
-
-        for (int i = 0; i < subtasks.size(); i++) {
-            if(subtasks.get(i).getStatus().equals("stuck") || subtasks.get(i).getStatus().equals("inProgress")) {
-                SubTaskCard card = new SubTaskCard(subtasks.get(i).getTitle() + "\n" + subtasks.get(i).getStatus(),dba.getTitleFromPk(subtasks.get(i).getPkTask()));
-                adapter.add(card);
-            }
-        }
-        listView.setAdapter(adapter);
         return myView;
     }
+
+    public void setSubtaskHome(){
+        dba=new DBHandler(getActivity(),null,null,2);
+        List<SubTask> subtasks = dba.getAllSubtasksList();
+        for (int i = 0; i < subtasks.size(); i++) {
+            if (user.getPk() == dba.getResponsible(subtasks.get(i).getPkTask())) {
+                if (subtasks.get(i).getStatus().equals("stuck") || subtasks.get(i).getStatus().equals("inProgress")) {
+                    data_list.add(subtasks.get(i));
+                }
+                if (subtasks.get(i).getStatus().equals("stuck")) {
+                    totalStuck++;
+                }
+                if (subtasks.get(i).getStatus().equals("inProgress")) {
+                    totalInProgress++;
+                }
+                if (subtasks.get(i).getStatus().equals("complete")) {
+                    totalCompleted++;
+                }
+                if (subtasks.get(i).getStatus().equals("notStarted")) {
+                    totalNotStarted++;
+                }
+            }
+        }
+        adapter.notifyDataSetChanged();
+    }
+
     ViewListener viewListener = new ViewListener() {
 
         @Override
         public View setViewForPosition(int position) {
             View customView;
+            TextView progress;
+
             if(position == 0) {
                 customView = getActivity().getLayoutInflater().inflate(R.layout.homecard1, null);
                 final ImageView userImage = (ImageView) customView.findViewById(R.id.userImageHome);
-                TextView progress = (TextView) customView.findViewById(R.id.progressbartext);
+                progress = (TextView) customView.findViewById(R.id.progressbartext);
                 DonutProgress circleProgress = (DonutProgress) customView.findViewById(R.id.totalprogress);
-                progress.setText(((int) circleProgress.getProgress()) + "%");
+                circleProgress.setDonut_progress(100*totalCompleted/(totalCompleted + totalInProgress + totalNotStarted + totalStuck) + "");
+                progress.setText(100*totalCompleted/(totalCompleted + totalInProgress + totalNotStarted + totalStuck) + "%");
+                customView.invalidate();
                 Users users = new Users(getContext());
                 User user = User.loadUser(getContext());
                 users.get(user.getPk() , new UserMetaHandler(){
@@ -119,6 +171,15 @@ public class HomeHomeFragment extends Fragment {
             }
             else {
                 customView = getActivity().getLayoutInflater().inflate(R.layout.homecard2,null);
+                total = totalCompleted + totalInProgress + totalNotStarted + totalStuck;
+                data1[0] = ((float)totalStuck*100/total);
+                data1[1] = ((float)totalNotStarted*100/total);
+                data1[2] = ((float)totalInProgress*100/total);
+                data1[3] = ((float)totalCompleted*100/total);
+                data2.add("Stuck");
+                data2.add("Not Started");
+                data2.add("In Progress");
+                data2.add("Completed");
                 setupPieChart(customView);
             }
             return customView;
@@ -126,15 +187,18 @@ public class HomeHomeFragment extends Fragment {
     };
 
     private void setupPieChart(View view) {
-        List<PieEntry> pieEntries = new ArrayList<>();
+        List<PieEntry> pieEntriesX = new ArrayList<>();
         for(int i=0;i<data1.length;i++){
-            pieEntries.add(new PieEntry(data1[i]));
+            pieEntriesX.add(new PieEntry(data1[i]));
+
         }
-        PieDataSet dataSet = new PieDataSet(pieEntries,"Random Pie Chart");
+        PieDataSet dataSet = new PieDataSet(pieEntriesX,"Random Pie Chart");
         dataSet.setColors(ColorTemplate.COLORFUL_COLORS);
+        dataSet.setValueTextSize(15);
         PieData data = new PieData(dataSet);
         PieChart chart = (PieChart) view.findViewById(R.id.chart1);
         chart.setRotationEnabled(false);
+
         Legend legend = chart.getLegend();
         Description des = chart.getDescription();
         des.setEnabled(false);
@@ -142,6 +206,7 @@ public class HomeHomeFragment extends Fragment {
         chart.setData(data);
         chart.invalidate();
     }
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         // Do something that differs the Activity's menu here
@@ -153,5 +218,6 @@ public class HomeHomeFragment extends Fragment {
         itemFilter.setVisible(false);
         super.onCreateOptionsMenu(menu, inflater);
     }
+
 }
 

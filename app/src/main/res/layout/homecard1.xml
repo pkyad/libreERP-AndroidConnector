@@ -12,7 +12,7 @@
         android:layout_marginLeft="50dp"
         android:layout_height="180dp"
         android:layout_centerVertical="true"
-        custom:donut_progress="30"/>
+        custom:donut_progress="0"/>
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:layout_width="180dp"

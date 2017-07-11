@@ -32,7 +32,6 @@ import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static com.example.yadav.taskBoard.TaskCardActivity.myPosition;
 
 /**
  * Created by cioc on 29/6/17.

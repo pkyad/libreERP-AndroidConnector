@@ -10,7 +10,13 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-
+<RelativeLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_toLeftOf="@+id/line4"
+    android:layout_toStartOf="@+id/line4"
+    android:onClick="bottomSheet"
+    android:id="@+id/asasas">
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/userimage"
             android:layout_width="40dp"
@@ -18,10 +24,15 @@
             android:paddingBottom="@dimen/nav_header_bottom_spacing"
             android:paddingTop="@dimen/nav_header_vertical_spacing"
             android:layout_alignParentTop="true"
-            android:layout_toLeftOf="@+id/line4"
-            android:layout_toStartOf="@+id/line4"
             android:layout_marginRight="13dp"
+
             android:layout_marginEnd="13dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:id="@+id/pk_user111"/>
+</RelativeLayout>
         <TextView
             android:id="@+id/username"
             android:layout_width="70dp"
@@ -34,7 +45,7 @@
             android:textSize="11sp"
             android:textStyle="normal"
             android:typeface="sans"
-            android:layout_below="@+id/userimage"/>
+            android:layout_below="@+id/asasas"/>
         <View
             android:layout_width="2dp"
             android:layout_height="80dp"

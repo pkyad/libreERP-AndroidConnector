@@ -2,6 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
 
     tools:context="com.example.yadav.taskBoard.TaskCardActivity$PlaceholderFragment">
 
@@ -14,5 +15,44 @@
         android:layout_alignParentStart="true"
         >
     </ListView>
+    <com.github.clans.fab.FloatingActionMenu
+        android:id="@+id/fab_attach_files"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:paddingRight="10dp"
+        android:paddingBottom="10dp"
+        android:paddingLeft="10dp"
+        fab:menu_labels_ellipsize="end"
+        fab:menu_labels_singleLine="true"
+        fab:menu_backgroundColor="#ccffffff"
+        fab:menu_fab_label="Cancel">
+
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/fab_camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_action_camera"
+            fab:fab_size="mini"
+            fab:fab_label="Take Photo" />
+
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/fab_gallery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_action_gallery"
+            fab:fab_size="mini"
+            fab:fab_label="Select From Gallery" />
+
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/fab_files"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_action_attach_file"
+            fab:fab_size="mini"
+            fab:fab_label="Attach File" />
+
+    </com.github.clans.fab.FloatingActionMenu>
 
 </RelativeLayout>

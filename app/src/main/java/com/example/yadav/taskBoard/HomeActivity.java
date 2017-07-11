@@ -45,6 +45,8 @@ public class HomeActivity extends AppCompatActivity
     private Context context;
     private FragmentManager fragmentManager;
     private WampClient client;
+    int PK_Project;
+    boolean fromEditTask = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +56,8 @@ public class HomeActivity extends AppCompatActivity
         setContentView(R.layout.activity_home);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        PK_Project = getIntent().getIntExtra("PK_PROJECT",PK_Project);
+        fromEditTask = getIntent().getBooleanExtra("GotoTODO",fromEditTask);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -106,7 +110,7 @@ public class HomeActivity extends AppCompatActivity
                     if (t1 == WampClient.Status.Connected) {
                         Log.d("info","Connected");
 
-                        procSubscription = client.makeSubscription("service.chat.deepak").subscribe(new Action1<PubSubData>() {
+                        procSubscription = client.makeSubscription("service.updates.admin").subscribe(new Action1<PubSubData>() {
                             @Override
                             public void call(PubSubData pubSubData) {
                                 String message = pubSubData.toString();
@@ -135,6 +139,12 @@ public class HomeActivity extends AppCompatActivity
             image.setImageBitmap(usr.getProfilePicture());
             name.setText(usr.getName());
         }
+
+        Bundle bundle = new Bundle();
+        bundle.putInt("PK_PROJECT", PK_Project);
+        bundle.putBoolean("GotoTODO",fromEditTask);
+        HomeToDoFragment homeToDoFragment = new HomeToDoFragment();
+        homeToDoFragment.setArguments(bundle);
         fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction()
                 .replace(R.id.content_frame, new HomeFragment())
@@ -157,6 +167,8 @@ public class HomeActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
+
+
         if (id == R.id.action_home) {
             fragmentManager.beginTransaction()
                     .replace(R.id.content_frame, new HomeFragment())
@@ -253,6 +265,5 @@ public class HomeActivity extends AppCompatActivity
         }
 
     }
-
 
 }

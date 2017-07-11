@@ -48,13 +48,13 @@ public class CustomTaskViewAdapterTimeline extends RecyclerView.Adapter<CustomTa
     public void onBindViewHolder(ViewHolder holder, int position) {
 
         holder.comment.setText(my_data.get(position).getText());
-
         holder.imageView.setImageBitmap(my_data.get(position).getDpUser());
         holder.username.setText(my_data.get(position).getUser());
         holder.commitbranch.setText(my_data.get(position).getCommitBranch());
         holder.commitdate.setText(my_data.get(position).getCommitDate());
         holder.commitcode.setText(my_data.get(position).getCommitCode());
         holder.createdComment.setText(my_data.get(position).getCreated());
+        holder.pk_comment_user.setText( Integer.toString(my_data.get(position).getUserPK()));
     }
 
     @Override
@@ -72,6 +72,7 @@ public class CustomTaskViewAdapterTimeline extends RecyclerView.Adapter<CustomTa
         public TextView commitcode;
         public TextView commitbranch;
         public TextView createdComment;
+        public TextView pk_comment_user;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -82,6 +83,7 @@ public class CustomTaskViewAdapterTimeline extends RecyclerView.Adapter<CustomTa
             commitdate = (TextView) itemView.findViewById(R.id.commitdate);
             commitcode = (TextView) itemView.findViewById(R.id.commitcode);
             createdComment = (TextView) itemView.findViewById(R.id.commentdate);
+            pk_comment_user = (TextView) itemView.findViewById(R.id.pk_user111);
         }
     }
 
@@ -96,5 +98,8 @@ public class CustomTaskViewAdapterTimeline extends RecyclerView.Adapter<CustomTa
         }
         else return category = 1;
     }
-
+    public void clearData() {
+        my_data.clear();
+        notifyDataSetChanged();
+    }
 }
