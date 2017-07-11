@@ -36,6 +36,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -71,7 +72,7 @@ public class HomeFragment extends Fragment {
     private WampClient client;
     private static LinearLayoutManager layoutManager ;
     private ArrayList<Integer> ignore_id = new ArrayList<Integer>();;
-
+    private ArrayList<ChatRoomTable> storeUnreadList = new ArrayList<ChatRoomTable>();
 
     @Override
     public void onResume() {
@@ -127,22 +128,22 @@ public class HomeFragment extends Fragment {
                                 if (login.getPk() == pkOriginator){
                                     with_pk = pkUser ;
                                 }
+                                ChatRoomTable chatRoomTable = new ChatRoomTable();
+
+                                chatRoomTable.setAttachement(attachement);
+                                chatRoomTable.setCreated(created);
+                                chatRoomTable.setMessage(message);
+                                chatRoomTable.setPkMessage(msgPk);
+                                chatRoomTable.setPkOriginator(pkOriginator);
+                                chatRoomTable.setPkUser(pkUser);
+                                chatRoomTable.setOtherPk(with_pk);
+                                chatRoomTable.setTotal_Read(1);
+                                //storeUnreadList.add(chatRoomTable);
+
 
                                 if (!dba.CheckIfPKAlreadyInDBorNot(with_pk)) { // check in table of Message
-                                    ChatRoomTable chatRoomTable = new ChatRoomTable();
-
-
-
-
-                                    chatRoomTable.setAttachement(attachement);
-                                    chatRoomTable.setCreated(created);
-                                    chatRoomTable.setMessage(message);
-                                    chatRoomTable.setPkMessage(msgPk);
-                                    chatRoomTable.setPkOriginator(pkOriginator);
-                                    chatRoomTable.setPkUser(pkUser);
-                                    chatRoomTable.setOtherPk(with_pk);
-                                    chatRoomTable.setTotal_Read(1);
                                     dba.insertTableChatRoom(chatRoomTable);
+
                                     ignore_id.add(with_pk);
                                     ChatRoom chatRoom = new ChatRoom(chatRoomTable.getMessage(),chatRoomTable.getCreated(),chatRoomTable.getTotal_unread());
                                     chatRoom.setWith_pk(with_pk);
@@ -151,12 +152,25 @@ public class HomeFragment extends Fragment {
                                     mAdapter.notifyDataSetChanged();
                                 }
                                 else { // just update last message and total unread and timestamp of last message
+
+
                                     for (int i = 0 ; i < chatRoomArrayList.size() ; i++){
-                                        if (chatRoomArrayList.get(i).getUsername().equals(type_user)){
-                                            dba.updateMessageTableChatRoom(chatRoomArrayList.get(i).getWith_pk() ,message ,chatRoomArrayList.get(i).getUnreadCount() + 1,created);
+                                        if (chatRoomArrayList.get(i).getUsername().equals(type_user) || (chatRoomArrayList.get(i).getWith_pk() == with_pk)){
+                                            int initial_unread = dba.getUnREADFromWithPk(with_pk);
+
+                                            if (login.getUsername().equals(type_user)){
+                                                dba.updateMessageTableChatRoom(chatRoomArrayList.get(i).getWith_pk() ,message ,initial_unread,created);
+                                                chatRoomArrayList.get(i).setUnreadCount(initial_unread);
+                                            }
+                                            else {
+                                                dba.updateMessageTableChatRoom(chatRoomArrayList.get(i).getWith_pk() ,message ,initial_unread + 1,created);
+                                                chatRoomArrayList.get(i).setUnreadCount(initial_unread+ 1);
+                                            }
+
                                             //dba.updateMessageTableChatRoom(chatRoomArrayList.get(i).getWith_pk() ,message ,0,created);
                                             chatRoomArrayList.get(i).setLastMessage(message);
-                                            chatRoomArrayList.get(i).setUnreadCount(chatRoomArrayList.get(i).getUnreadCount() + 1);
+                                            int unreadCount = chatRoomArrayList.get(i).getUnreadCount() ;
+
                                             chatRoomArrayList.get(i).setTimestamp(created);
                                             mAdapter.notifyDataSetChanged();
                                             ignore_id.add(with_pk); // also update in db ;
@@ -166,6 +180,23 @@ public class HomeFragment extends Fragment {
 
                                     }
                                 }
+
+                                // now insert that new messge in database
+                                if (!dba.CheckIfMessagePKAlreadyInDBorNot(msgPk)) { // check in table of Message
+                                    // search for chatRoomID
+                                    for (int i = 0 ; i < chatRoomArrayList.size() ; i++){
+                                        if (chatRoomArrayList.get(i).getWith_pk() == with_pk){
+                                            int a = 1;
+                                            chatRoomTable.setChatRoomID(dba.getIDFromWithPk(with_pk));
+                                            break ;
+                                        }
+                                    }
+
+
+                                    dba.insertTableMessage(chatRoomTable);
+                                }
+
+
                             } catch (JSONException e) {
 
                             }
@@ -258,11 +289,9 @@ public class HomeFragment extends Fragment {
             public void onClick(View view, int position) {
                 // when chat is clicked, launch full chat thread activity
 
-                chatRoomArrayList.get(position).setUnreadCount(0);
-                dba.updateUnreadChatRoom(chatRoomArrayList.get(position).getWith_pk(),0);
+
                 ChatRoom chatRoom = chatRoomArrayList.get(position);
 
-                mAdapter.notifyDataSetChanged();
                 int pk_select = chatRoom.getWith_pk();
                 String name_select =  chatRoom.getName();
                 Intent intent = new Intent(getActivity(), ChatRoomActivity.class);
@@ -270,6 +299,11 @@ public class HomeFragment extends Fragment {
                 intent.putExtra("with_id", Integer.toString(pk_select));
                 intent.putExtra("name", name_select);
                 intent.putExtra("userName" , chatRoom.getUsername());
+               /* intent.putExtra("UnreadMessages", storeUnreadList);
+
+                for (int i = storeUnreadList.size() - 1 ; i >= 0 ; i++){
+                    storeUnreadList.remove(i);
+                }*/
 
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 chatRoom.getDP().compress(Bitmap.CompressFormat.PNG, 80, stream);
@@ -425,7 +459,7 @@ public class HomeFragment extends Fragment {
 
                            }
 
-                           chatRoomTable.setTotal_Read(total_unread);
+                           chatRoomTable.setTotal_Read(0);
                            if (!dba.CheckIfPKAlreadyInDBorNot(other_pk)) { // check in table for chatroom
                                dba.insertTableChatRoom(chatRoomTable);
                            } else { // update it

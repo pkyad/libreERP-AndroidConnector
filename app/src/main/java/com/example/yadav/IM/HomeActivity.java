@@ -3,6 +3,7 @@ package com.example.yadav.IM;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -10,6 +11,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AlertDialog;
@@ -29,6 +31,7 @@ import android.widget.Toast;
 
 import com.example.libreerp.AboutFragment;
 import com.example.libreerp.ChangePasswordFragment;
+import com.example.libreerp.Helper;
 import com.example.libreerp.ProfileFragment;
 import com.example.libreerp.User;
 import com.example.libreerp.UserMeta;
@@ -36,12 +39,18 @@ import com.example.libreerp.UserMetaHandler;
 import com.example.libreerp.Users;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.JsonHttpResponseHandler;
 
 import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
+import cz.msebera.android.httpclient.Header;
 import rx.Subscription;
 import rx.functions.Action1;
 import ws.wamp.jawampa.PubSubData;
@@ -55,7 +64,13 @@ public class HomeActivity extends AppCompatActivity
     private Context context;
     private FragmentManager fragmentManager;
     private WampClient client;
-
+    private User login;
+    private AsyncHttpClient httpClient;
+    DBHandler dba;
+    private BroadcastReceiver mReceiver;
+    private Helper helper;
+    private ArrayList<NotificationMessage> unreadNotification = new ArrayList<NotificationMessage>();
+    private boolean firstTime = true ;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -132,8 +147,44 @@ public class HomeActivity extends AppCompatActivity
                                 intent.putExtra("type_user",type_user);
 
                                 if (type.equals("M") ){
-                                    addNotification(new_message);
+
                                     intent.putExtra("msgPK" , c.get(3).toString());
+
+
+                                    final int msgPK =  Integer.parseInt(c.get(3).toString());
+
+
+                                    // if the username is not prsent in chatroom then create new chatRoom else update the last Messsage;
+
+                                   try{
+                                       Thread thread = new Thread() {
+                                           public void run() {
+                                               Looper.prepare();
+
+                                               final Handler handler = new Handler();
+                                               handler.postDelayed(new Runnable() {
+                                                   @Override
+                                                   public void run() {
+                                                       fetchNotificationData(msgPK);
+                                                       handler.removeCallbacks(this);
+                                                       //Looper.myLooper().quit();
+                                                   }
+                                               }, 2000);
+
+                                               Looper.loop();
+                                           }
+                                       };
+                                       thread.start();
+
+                                   }catch (rx.exceptions.OnErrorNotImplementedException e){
+                                       System.out.println("failure");
+                                   }
+
+
+
+
+
+
 
                                 }
 
@@ -169,39 +220,144 @@ public class HomeActivity extends AppCompatActivity
                 .replace(R.id.content_frame, new HomeFragment())
                 .commit();
     }
-    private void addNotification(String message) {
+
+    private void fetchNotificationData(int msgPK){
+
+        Helper helper = new Helper(context);
+        httpClient = helper.getHTTPClient();
+        String url = String.format("%s/%s/%s/?mode=" , helper.serverURL, "api/PIM/chatMessage" ,msgPK );
+
+        httpClient.get(url,  new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                try {
+
+                    String attachement;
+                    int pkOriginator;
+                    final String created = response.getString("created").replace("Z", "").replace("T", " ");;
+                    boolean read;
+                    int pkUser;
+
+                    System.out.println("FETCHED NEW MSG");
+
+                    int msgPk = response.getInt("pk");
+                    final String message = response.getString("message");
+
+                    attachement = response.getString("attachment");
+                    pkOriginator = response.getInt("originator");
+                    read = response.getBoolean("read");
+                    pkUser = response.getInt("user");
+                    login = User.loadUser(context);
+                    final int with_pk;
+                    if (login.getPk() == pkOriginator){
+                        with_pk = pkUser ;
+                    }else{
+                        with_pk = pkOriginator ;
+                    }
+
+
+                    Users users = new Users(context);
+                    final String[] name = new String[1];
+                    final String[] username = new String[1];
+                    final Bitmap[] bp = new Bitmap[1];
+                    // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
+
+                    users.get(with_pk, new UserMetaHandler() {
+                        @Override
+                        public void onSuccess(UserMeta user) {
+                            System.out.println("yes65262626626");
+                            name[0] = user.getFirstName() + " " + user.getLastName();
+                            // set text in the layout here'
+                            username[0] = user.getUsername();
+                            addNotification(message,with_pk, user.getFirstName() + " " + user.getLastName() ,created);
+
+                        }
+
+                        @Override
+                        public void handleDP(Bitmap dp) {
+                            System.out.println("dp dsda");
+                            bp[0] = dp;
+                            // set text in the layout here
+                        }
+
+                    });
+
+
+                } catch (JSONException e) {
+
+                }
+                // load_data_from_database(0);
+
+                // recyclerView.scrollToPosition(messageArrayList.size()-1);
+
+                // layoutManager.setStackFromEnd(true);
+            }
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
+                System.out.println("failure");
+            }
+
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable error, JSONObject response) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                System.out.println("failure");
+                System.out.println(statusCode);
+            }
+        });;
+
+
+
+
+
+    }
+
+
+    private void addNotification(String message ,int withPK ,String name , String time) {
         int icon = R.drawable.ic_action_home;
         long when = System.currentTimeMillis();
+        int notifyID = 1;
+        NotificationCompat.Builder builder ;
+        NotificationManager manager;
+        if (firstTime) {
+            RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification);
 
 
-        RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification);
+            contentView.setImageViewResource(R.id.notificationDp, R.drawable.ic_action_gear);
+
+            contentView.setTextViewText(R.id.notificationTitle, message);
+            contentView.setTextViewText(R.id.notificationText, name);
+            contentView.setTextViewText(R.id.notificationTime, time);
+            builder =
+                    new NotificationCompat.Builder(this)
+                            .setSmallIcon(icon)
+                            .setContent(contentView);
 
 
-        contentView.setImageViewResource(R.id.notificationDp, R.drawable.ic_action_gear);
+            dba = new DBHandler(context, null, null, 1);
+            int chatId = dba.getIDFromWithPk(withPK);
+            Intent notificationIntent = new Intent(this, ChatRoomActivity.class);
 
-        contentView.setTextViewText(R.id.notificationTitle, message);
-        contentView.setTextViewText(R.id.notificationText, "LIBREERP-CHAT");
-        contentView.setTextViewText(R.id.notificationTime, Long.toString(when));
-        NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(icon)
-                        .setContent(contentView);
+            notificationIntent.putExtra("with_id",Integer.toString(withPK));
+            notificationIntent.putExtra("chatID",Integer.toString(chatId));
+            notificationIntent.putExtra("name",name);
 
 
-        Intent notificationIntent = new Intent(this, HomeActivity.class);
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
-        builder.setContentIntent(contentIntent);
-        builder.getNotification().defaults |= Notification.DEFAULT_LIGHTS; // LED
-        builder.getNotification().defaults |= Notification.DEFAULT_VIBRATE; //Vibration
-        builder.getNotification().defaults |= Notification.DEFAULT_SOUND; // Sound
-        builder.setAutoCancel(true);
-        builder.getNotification().flags |= Notification.FLAG_AUTO_CANCEL;
+            PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT);
+            builder.setContentIntent(contentIntent);
+            builder.getNotification().defaults |= Notification.DEFAULT_LIGHTS; // LED
+            builder.getNotification().defaults |= Notification.DEFAULT_VIBRATE; //Vibration
+            builder.getNotification().defaults |= Notification.DEFAULT_SOUND; // Sound
+            builder.setAutoCancel(true);
+            builder.getNotification().flags |= Notification.FLAG_AUTO_CANCEL;
 
-        // Add as notification
-        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.notify(0, builder.build());
-
+            // Add as notification
+            manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            manager.notify(notifyID, builder.build());
+            firstTime = false ;
+        }
         // Add as notification
 
     }

@@ -178,14 +178,18 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
             date = formatter.parse(timestamp);
             targetDate = (date).toString();
             if (date.getYear() == currentDate.getYear()){
-                SimpleDateFormat formatter_yr = new SimpleDateFormat("dd MMM, HH:mm");
+                SimpleDateFormat formatter_yr = new SimpleDateFormat("hh:mm a , dd MMM");
                 targetDate = formatter_yr.format(date);
 
                 if (date.getDate() == currentDate.getDate()){
-                    SimpleDateFormat formatter_day = new SimpleDateFormat("HH:mm");
+                    SimpleDateFormat formatter_day = new SimpleDateFormat("hh:mm a");
                     targetDate = formatter_day.format(date);
 
                 }
+            }
+            else {
+                SimpleDateFormat formatter_yr = new SimpleDateFormat("hh:mm a , dd|MM|yy");
+                targetDate = formatter_yr.format(date);
             }
         } catch (ParseException e) {
             System.out.println("error while parsing date");

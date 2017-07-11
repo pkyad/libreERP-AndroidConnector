@@ -181,6 +181,43 @@ public class DBHandler extends SQLiteOpenHelper {
         return dbstring.get(position);
     }
 
+    public int getIDFromWithPk(int withPk) {
+        int chatRoomId = -1 ;
+        SQLiteDatabase db = getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_CHATROOM + " WHERE " +COLUMN_WITH_PK +" = '" +Integer.toString(withPk).trim() + "'" ;
+
+        Cursor c = db.rawQuery(query, null);
+        int k =3 ;
+        c.moveToFirst();
+
+        while (!c.isAfterLast()) {
+            if (c.getString(c.getColumnIndex("CHATROOMPK")) != null) {
+               chatRoomId = (c.getInt(c.getColumnIndex("CHATROOMPK")));
+            }
+            c.moveToNext();
+        }
+        db.close();
+        return chatRoomId;
+    }
+    public int getUnREADFromWithPk(int withPk) {
+        int unRead = -1 ;
+        SQLiteDatabase db = getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_CHATROOM + " WHERE " +COLUMN_WITH_PK +" = '" +Integer.toString(withPk).trim() + "'" ;
+
+        Cursor c = db.rawQuery(query, null);
+        int k =3 ;
+        c.moveToFirst();
+
+        while (!c.isAfterLast()) {
+            if (c.getString(c.getColumnIndex("UNREAD")) != null) {
+                unRead = (c.getInt(c.getColumnIndex("UNREAD")));
+            }
+            c.moveToNext();
+        }
+        db.close();
+        return unRead;
+    }
+
     public int message_getOriginatorPK(int position) {
         ArrayList<Integer> dbstring = new ArrayList<Integer>();
         SQLiteDatabase db = getWritableDatabase();

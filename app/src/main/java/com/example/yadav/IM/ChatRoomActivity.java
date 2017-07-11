@@ -207,7 +207,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
                 String message = intent.getStringExtra("new_message");
                 String type_user = intent.getStringExtra("type_user");
 
-                if (is_typing.equals("T") && type_user.equals(username)) {
+                if (is_typing.equals("T") && (type_user.equals(username))) {
 
                     typing.setVisibility(mCustomView.VISIBLE);
                     new android.os.Handler().postDelayed(
@@ -220,7 +220,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
 
                 }
-                else if (is_typing.equals("M") && type_user.equals(username)){
+                else if (is_typing.equals("M") && (type_user.equals(username)  || type_user.equals(login.getUsername()) )){
                     int msgPK = Integer.parseInt(intent.getStringExtra("msgPK"));
 
                     String url = String.format("%s/%s/%s/?mode=" , helper.serverURL, "api/PIM/chatMessage" , msgPK );
@@ -477,8 +477,11 @@ public class ChatRoomActivity extends AppCompatActivity  {
                                 chatRoomTable.setChatRoomID(chatRoomId);
                                 dba.insertTableMessage(chatRoomTable);
 
+                                dba.updateMessageTableChatRoom(pkUser ,message ,0 ,created);
 
                             }
+                            // now to update last message of chatRoomTable from db
+
                         } catch (JSONException e) {
 
                         }
@@ -550,9 +553,21 @@ public class ChatRoomActivity extends AppCompatActivity  {
         chatRoomId = Integer.parseInt(intent.getStringExtra("chatID"));
         with_id = intent.getStringExtra("with_id"); // chat Room id is same as with id here in this case
         String title = intent.getStringExtra("name");
+        // read all messages
+        int unreadTotal1 = dba.getUnREADFromWithPk(Integer.parseInt(with_id));
+        dba.updateUnreadChatRoom(Integer.parseInt(with_id) , 0);
+        int unreadTotal = dba.getUnREADFromWithPk(Integer.parseInt(with_id));
         username = intent.getStringExtra("userName");
-
+        int number = dba.getTotalDBEntries_MESSAGE();
+        load_data_from_database(0);
         chennel = String.format("service.chat.%s" , username);
+        //ChatRoomTable unReadList = intent.getParcelableExtra("UnreadMessages");
+        /*for (int i = 0 ; i < unReadList ; i++){
+            messageArrayList.add(unReadList.get(i));
+        }
+        for (int i = 0 ; i < unReadList.size() ; i++){
+            unReadList.remove(i);
+        }*/
 
         byte[] byteArray = getIntent().getByteArrayExtra("dp");
         Bitmap profile = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
@@ -921,7 +936,8 @@ public class ChatRoomActivity extends AppCompatActivity  {
                         // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
 
                         */
-
+                    String s = message_table.get(message_table.size()-1).getMessage();
+                        //System.out.print(message_table.get(message_table.size()-1).getMessage());
                         UserMeta usermeta = new UserMeta(message_table.get(i).getPkOriginator());
                         Message message = new Message(Integer.toString(message_table.get(i).getPkMessage()),message_table.get(i).getMessage(),message_table.get(i).getCreated(),usermeta);
                         if (message_table.get(i).isSender_change() == 1){

@@ -1,7 +1,10 @@
 package com.example.yadav.IM;
 
 import android.graphics.Bitmap;
+import android.os.Parcel;
+import android.os.Parcelable;
 
+import com.example.libreerp.User;
 import com.example.libreerp.UserMeta;
 
 import java.io.Serializable;
@@ -9,7 +12,7 @@ import java.io.Serializable;
 /**
  * Created by Lincoln on 07/01/16.
  */
-public class Message implements Serializable {
+public class Message  {
     String id, message, createdAt;
     UserMeta user;
 
@@ -90,4 +93,7 @@ public class Message implements Serializable {
     public void setBm(Bitmap bm) {
         this.bm = bm;
     }
+
+
+
 }
