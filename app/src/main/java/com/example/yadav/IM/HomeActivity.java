@@ -46,8 +46,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import cz.msebera.android.httpclient.Header;
@@ -256,31 +260,11 @@ public class HomeActivity extends AppCompatActivity
                     }
 
 
-                    Users users = new Users(context);
-                    final String[] name = new String[1];
-                    final String[] username = new String[1];
-                    final Bitmap[] bp = new Bitmap[1];
+
                     // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
 
-                    users.get(with_pk, new UserMetaHandler() {
-                        @Override
-                        public void onSuccess(UserMeta user) {
-                            System.out.println("yes65262626626");
-                            name[0] = user.getFirstName() + " " + user.getLastName();
-                            // set text in the layout here'
-                            username[0] = user.getUsername();
-                            addNotification(message,with_pk, user.getFirstName() + " " + user.getLastName() ,created);
+                    addNotification(message,with_pk ,getCommitDate(created));
 
-                        }
-
-                        @Override
-                        public void handleDP(Bitmap dp) {
-                            System.out.println("dp dsda");
-                            bp[0] = dp;
-                            // set text in the layout here
-                        }
-
-                    });
 
 
                 } catch (JSONException e) {
@@ -313,35 +297,100 @@ public class HomeActivity extends AppCompatActivity
 
     }
 
+    public String getCommitDate(String timestamp) {
 
-    private void addNotification(String message ,int withPK ,String name , String time) {
+        Date date = new Date();
+        Date currentDate = new Date() ;
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String targetDate = date.toString() ;
+        try {
+
+            date = formatter.parse(timestamp);
+            targetDate = (date).toString();
+            if (date.getYear() == currentDate.getYear()){
+                SimpleDateFormat formatter_yr = new SimpleDateFormat("hh:mm a , dd MMM");
+                targetDate = formatter_yr.format(date);
+
+                if (date.getDate() == currentDate.getDate()){
+                    SimpleDateFormat formatter_day = new SimpleDateFormat("hh:mm a");
+                    targetDate = formatter_day.format(date);
+
+                }
+            }
+            else {
+                SimpleDateFormat formatter_yr = new SimpleDateFormat("hh:mm a , dd|MM|yy");
+                targetDate = formatter_yr.format(date);
+            }
+        } catch (ParseException e) {
+            System.out.println("error while parsing date");
+        }
+
+        return targetDate ;
+    }
+
+
+    private void addNotification(String message ,int withPK, String time) {
         int icon = R.drawable.ic_action_home;
         long when = System.currentTimeMillis();
         int notifyID = 1;
-        NotificationCompat.Builder builder ;
-        NotificationManager manager;
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        NotificationManager manager  = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        Users users = new Users(context);
+        final String[] name = new String[1];
+        final String[] username = new String[1];
+        final Bitmap[] bp = new Bitmap[1];
+        final Intent notificationIntent = new Intent(this, ChatRoomActivity.class);
+        users.get(withPK, new UserMetaHandler() {
+            @Override
+            public void onSuccess(UserMeta user) {
+                System.out.println("yes65262626626");
+                name[0] = user.getFirstName() + " " + user.getLastName();
+                // set text in the layout here'
+                username[0] = user.getUsername();
+
+
+            }
+
+            @Override
+            public void handleDP(Bitmap dp) {
+                System.out.println("dp dsda");
+                bp[0] = dp;
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                bp[0].compress(Bitmap.CompressFormat.PNG, 80, stream);
+                byte[] byteArray = stream.toByteArray();
+                notificationIntent.putExtra("dp", byteArray);
+
+
+
+
+                // set text in the layout here
+            }
+
+        });
+
+
         if (firstTime) {
             RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification);
 
 
             contentView.setImageViewResource(R.id.notificationDp, R.drawable.ic_action_gear);
-
+        contentView.setTextViewText(R.id.notificationTime, time);
             contentView.setTextViewText(R.id.notificationTitle, message);
-            contentView.setTextViewText(R.id.notificationText, name);
-            contentView.setTextViewText(R.id.notificationTime, time);
-            builder =
-                    new NotificationCompat.Builder(this)
-                            .setSmallIcon(icon)
-                            .setContent(contentView);
+            contentView.setTextViewText(R.id.notificationText, name[0]);
+
+            contentView.setTextViewText(R.id.not_count, "6");
+            builder.setSmallIcon(icon);
+            builder.setContent(contentView);
 
 
             dba = new DBHandler(context, null, null, 1);
             int chatId = dba.getIDFromWithPk(withPK);
-            Intent notificationIntent = new Intent(this, ChatRoomActivity.class);
+
 
             notificationIntent.putExtra("with_id",Integer.toString(withPK));
             notificationIntent.putExtra("chatID",Integer.toString(chatId));
-            notificationIntent.putExtra("name",name);
+            notificationIntent.putExtra("name",name[0]);
+            notificationIntent.putExtra("userName",username[0]);
 
 
             PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent,
@@ -354,10 +403,14 @@ public class HomeActivity extends AppCompatActivity
             builder.getNotification().flags |= Notification.FLAG_AUTO_CANCEL;
 
             // Add as notification
-            manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            manager.notify(notifyID, builder.build());
+
+
             firstTime = false ;
         }
+        builder.setContentText(message);
+
+
+        manager.notify(notifyID, builder.build());
         // Add as notification
 
     }
