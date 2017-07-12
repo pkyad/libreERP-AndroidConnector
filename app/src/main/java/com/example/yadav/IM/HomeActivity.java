@@ -52,6 +52,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import cz.msebera.android.httpclient.Header;
@@ -369,20 +371,26 @@ public class HomeActivity extends AppCompatActivity
             }
 
         });
-
-
+        NotificationMessage notificationMessage = new NotificationMessage();
+        notificationMessage.setTimestamp(time);
+        notificationMessage.setWith_pk(withPK);
+        notificationMessage.setMessage(message);
+        unreadNotification.add(notificationMessage);
+        builder.setSmallIcon(icon);
+        builder.setAutoCancel(true);
         if (firstTime) {
 
 
 
             //contentView.setImageViewResource(R.id.notificationDp, R.drawable.ic_action_gear);
-        contentView.setTextViewText(R.id.notificationTime, message);
-            contentView.setTextViewText(R.id.notificationTitle, time);
+            contentView.setTextViewText(R.id.notificationTime, time);
+            contentView.setTextViewText(R.id.notificationTitle, message);
             contentView.setTextViewText(R.id.notificationText, name[0]);
 
-            contentView.setTextViewText(R.id.not_count, "6");
-            builder.setSmallIcon(icon);
+
+
             builder.setContent(contentView);
+
 
 
             dba = new DBHandler(context, null, null, 1);
@@ -408,6 +416,53 @@ public class HomeActivity extends AppCompatActivity
 
 
             firstTime = false ;
+        }
+        else {
+            Set<Integer> mySet = new HashSet<Integer>();
+
+
+            int differentWithPK = 0 ;
+            int number_Messages = unreadNotification.size();
+            // Now to Calculate different withPK
+            for (int i = 0 ; i <  number_Messages ; i++ ){
+                mySet.add(unreadNotification.get(i).getWith_pk());
+            }
+            differentWithPK = mySet.size();
+            builder.setContentText(message);
+
+            String notification_Message ;
+
+            if (differentWithPK == 1){
+                notification_Message = Integer.toString(number_Messages) + " messages " ;
+                contentView.setTextViewText(R.id.notificationTime, time);
+                contentView.setTextViewText(R.id.notificationTitle, notification_Message);
+                builder.setContent(contentView);
+
+                dba = new DBHandler(context, null, null, 1);
+                int chatId = dba.getIDFromWithPk(withPK);
+                notificationIntent.putExtra("with_id",Integer.toString(withPK));
+                notificationIntent.putExtra("chatID",Integer.toString(chatId));
+                notificationIntent.putExtra("name",name[0]);
+                notificationIntent.putExtra("userName",username[0]);
+                PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+                builder.setContentIntent(contentIntent);
+            }
+            else {
+                final Intent IntentHomeActivity = new Intent(this, HomeActivity.class);
+                notification_Message = Integer.toString(number_Messages) + " messages from " + Integer.toString(differentWithPK) + " chats" ;
+                contentView.setTextViewText(R.id.notificationTime, time);
+                contentView.setTextViewText(R.id.notificationTitle, message);
+                contentView.setTextViewText(R.id.notificationText, "LIBRE-ERP CHATS");
+                contentView.setImageViewResource(R.id.notificationDp, R.drawable.ic_action_gear);
+
+                builder.setContent(contentView);
+
+                PendingIntent contentIntent = PendingIntent.getActivity(this, 0, IntentHomeActivity,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+                builder.setContentIntent(contentIntent);
+
+            }
         }
         //builder.setContentText(message);
 
