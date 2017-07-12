@@ -340,6 +340,8 @@ public class HomeActivity extends AppCompatActivity
         final String[] username = new String[1];
         final Bitmap[] bp = new Bitmap[1];
         final Intent notificationIntent = new Intent(this, ChatRoomActivity.class);
+        final RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification);
+
         users.get(withPK, new UserMetaHandler() {
             @Override
             public void onSuccess(UserMeta user) {
@@ -359,7 +361,7 @@ public class HomeActivity extends AppCompatActivity
                 bp[0].compress(Bitmap.CompressFormat.PNG, 80, stream);
                 byte[] byteArray = stream.toByteArray();
                 notificationIntent.putExtra("dp", byteArray);
-
+                contentView.setImageViewBitmap(R.id.notificationDp ,bp[0]);
 
 
 
@@ -370,12 +372,12 @@ public class HomeActivity extends AppCompatActivity
 
 
         if (firstTime) {
-            RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification);
 
 
-            contentView.setImageViewResource(R.id.notificationDp, R.drawable.ic_action_gear);
-        contentView.setTextViewText(R.id.notificationTime, time);
-            contentView.setTextViewText(R.id.notificationTitle, message);
+
+            //contentView.setImageViewResource(R.id.notificationDp, R.drawable.ic_action_gear);
+        contentView.setTextViewText(R.id.notificationTime, message);
+            contentView.setTextViewText(R.id.notificationTitle, time);
             contentView.setTextViewText(R.id.notificationText, name[0]);
 
             contentView.setTextViewText(R.id.not_count, "6");
@@ -407,7 +409,7 @@ public class HomeActivity extends AppCompatActivity
 
             firstTime = false ;
         }
-        builder.setContentText(message);
+        //builder.setContentText(message);
 
 
         manager.notify(notifyID, builder.build());
