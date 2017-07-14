@@ -43,6 +43,7 @@ public class DBHandler extends SQLiteOpenHelper {
     public static final String COLUMN_MESSAGE_CREATED = "CREATED";
     public static final String COLUMN_MESSAGE_USER_PK = "USERPK";
     public static final String COLUMN_MESSAGE_SENDER_CHANGE = "SENDERC";
+    public static final String COLUMN_MESSAGE_READ_STATUS = "READ"; // 0 for Unread and 1 for read
     //     comments and commit table
     public static final String TABLE_COMMENTS = "comment";
     public static final String COLUMN_PK_COMMENT = "PK_COMMENT";
@@ -87,6 +88,7 @@ public class DBHandler extends SQLiteOpenHelper {
                 + COLUMN_MESSAGE_ORIGINATOR + " INTEGER,"
                 + COLUMN_MESSAGE_CREATED + " TEXT,"
                 + COLUMN_MESSAGE_USER_PK + "  INTEGER,"
+                + COLUMN_MESSAGE_READ_STATUS + "  INTEGER,"
                 + COLUMN_MESSAGE_SENDER_CHANGE + "  INTEGER"
                 + ");";
 
@@ -131,6 +133,7 @@ public class DBHandler extends SQLiteOpenHelper {
         initialValues.put(COLUMN_MESSAGE_CREATED,chatRoomTable.getCreated());
         initialValues.put(COLUMN_MESSAGE_USER_PK, chatRoomTable.getPkUser());
         initialValues.put(COLUMN_MESSAGE_SENDER_CHANGE, chatRoomTable.isSender_change());
+        initialValues.put(COLUMN_MESSAGE_READ_STATUS, chatRoomTable.getIsReadStatus());
         SQLiteDatabase db = getWritableDatabase();
 
         return db.insert(TABLE_MESSAGE, null, initialValues);
@@ -157,6 +160,15 @@ public class DBHandler extends SQLiteOpenHelper {
         return db.update(TABLE_CHATROOM, updateValues, COLUMN_WITH_PK + " = ?",new String[]{String.valueOf(with_pk)});
     }
 
+    public long  updateAllUnReadMessage(int chatRoomId ) {
+        ContentValues updateValues = new ContentValues();
+
+        updateValues.put(COLUMN_MESSAGE_READ_STATUS, 1);
+
+        SQLiteDatabase db = getWritableDatabase();
+
+        return db.update(TABLE_MESSAGE, updateValues, COLUMN_CHATROOMID + " = ?",new String[]{String.valueOf(chatRoomId)});
+    }
     // retrive data from table tasks
 
 
@@ -177,7 +189,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 
@@ -196,7 +208,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return chatRoomId;
     }
     public int getUnREADFromWithPk(int withPk) {
@@ -214,7 +226,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return unRead;
     }
 
@@ -232,7 +244,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
     public String message_getAttachment(int position) {
@@ -249,7 +261,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 
@@ -266,7 +278,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 
@@ -283,7 +295,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 
@@ -300,7 +312,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 
@@ -317,7 +329,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 
@@ -335,7 +347,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 
@@ -363,7 +375,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 
@@ -381,7 +393,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
     public ArrayList<ChatRoomTable> getData(int chatRoomId ) {
@@ -413,10 +425,13 @@ public class DBHandler extends SQLiteOpenHelper {
             if (c.getString(c.getColumnIndex("SENDERC")) != null) {
                 chatRoomTable.setSender_change(c.getInt(c.getColumnIndex("SENDERC")));
             }
+            if (c.getString(c.getColumnIndex("READ")) != null) {
+                chatRoomTable.setIsReadStatus(c.getInt(c.getColumnIndex("READ")));
+            }
             dbstring.add(chatRoomTable);
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring ;
     }
 
@@ -434,7 +449,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 
@@ -451,7 +466,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 
@@ -468,7 +483,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
     public int getTotalDBEntries_MESSAGE() {
@@ -494,7 +509,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 
@@ -512,7 +527,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 
@@ -530,7 +545,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 
@@ -572,7 +587,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 
@@ -593,7 +608,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring;
     }
 
@@ -610,7 +625,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring;
     }
 
@@ -627,7 +642,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-        db.close();
+        db.close(); c.close();
         return dbstring.get(position);
     }
 }

@@ -137,11 +137,11 @@ public class HomeFragment extends Fragment {
                                 chatRoomTable.setPkOriginator(pkOriginator);
                                 chatRoomTable.setPkUser(pkUser);
                                 chatRoomTable.setOtherPk(with_pk);
-                                chatRoomTable.setTotal_Read(1);
+                                chatRoomTable.setTotal_UnRead(1);
                                 //storeUnreadList.add(chatRoomTable);
 
 
-                                if (!dba.CheckIfPKAlreadyInDBorNot(with_pk)) { // check in table of Message
+                                if (!dba.CheckIfPKAlreadyInDBorNot(with_pk)) { // check in table of ChatRoom , new chatroom it is
                                     dba.insertTableChatRoom(chatRoomTable);
 
                                     ignore_id.add(with_pk);
@@ -436,6 +436,12 @@ public class HomeFragment extends Fragment {
                         chatRoomTable.setPkUser(pkUser);
                         chatRoomTable.setOtherPk(other_pk);
 
+                        if (read == false){
+                            chatRoomTable.setIsReadStatus(0); // means it is unnread
+                        }
+                        else {
+                            chatRoomTable.setIsReadStatus(1);
+                        }
                        if (searchInIgnoreIdArray(ignore_id,other_pk) == 0 ) {
                            // if not found in database insert it otherwise update it
                            int total_unread = 0;
@@ -459,11 +465,11 @@ public class HomeFragment extends Fragment {
 
                            }
 
-                           chatRoomTable.setTotal_Read(0);
+                           chatRoomTable.setTotal_UnRead(0);
                            if (!dba.CheckIfPKAlreadyInDBorNot(other_pk)) { // check in table for chatroom
                                dba.insertTableChatRoom(chatRoomTable);
                            } else { // update it
-                               dba.updateMessageTableChatRoom(chatRoomTable.getOtherPk() ,chatRoomTable.getMessage() ,0,chatRoomTable.getCreated());
+                               dba.updateMessageTableChatRoom(chatRoomTable.getOtherPk() ,chatRoomTable.getMessage() ,0,chatRoomTable.getCreated()); // check 1 more time
                            }
 
                        }
@@ -530,7 +536,7 @@ public class HomeFragment extends Fragment {
                     data.setMessage(dba.getLastMessage(i));
                     String date = dba.getDate(i);
                     data.setCreated(date);
-                    data.setTotal_Read(dba.getUnRead(i));
+                    data.setTotal_UnRead(dba.getUnRead(i));
                     data.setChatRoomID(dba.getID(i));
                      String messageDate;
                      //messageDate = new SimpleDateFormat("dd MMM, yyyy").format(date);

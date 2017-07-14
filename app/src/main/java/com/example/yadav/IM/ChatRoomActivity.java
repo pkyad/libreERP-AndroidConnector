@@ -840,7 +840,12 @@ public class ChatRoomActivity extends AppCompatActivity  {
                             }
 
 
-
+                            if (read == false){
+                                chatRoomTable.setIsReadStatus(1);
+                            }
+                            else {
+                                chatRoomTable.setIsReadStatus(0);
+                            }
 
 
                             chatRoomTable.setAttachement(attachement);
@@ -906,7 +911,9 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
                 final DBHandler dba = new DBHandler(context, null, null, 1); // see this
                 //System.out.println("pkTask = "+pkTask);
+                dba.updateAllUnReadMessage(chatRoomId);
                 ArrayList<ChatRoomTable> message_table = dba.getData(chatRoomId);
+
                 int size = message_table.size();
                 User login = User.loadUser(context);
                 int login_pk = login.getPk();

@@ -30,6 +30,17 @@ public class ChatRoomTable implements Parcelable{
 
     private int sender_change;
 
+
+    public int getIsReadStatus() {
+        return isReadStatus;
+    }
+
+    public void setIsReadStatus(int isReadStatus) {
+        this.isReadStatus = isReadStatus;
+    }
+
+    private int isReadStatus;
+
     public ChatRoomTable(){
         this.sender_change = 0 ;
     }
@@ -96,7 +107,7 @@ public class ChatRoomTable implements Parcelable{
         return total_unread;
     }
 
-    public void setTotal_Read(int total_unread) {
+    public void setTotal_UnRead(int total_unread) {
         this.total_unread = total_unread;
     }
 
