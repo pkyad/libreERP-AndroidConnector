@@ -74,6 +74,7 @@ public class HomeFragment extends Fragment {
                                     fragmentManager.beginTransaction()
                                             .replace(R.id.content_frame_home, new HomeHomeFragment())
                                             .commit();
+                                    getActivity().setTitle("HOME");
                                     break;
                                 case R.id.action_home_todo:
                                     System.out.println("todo");
@@ -87,12 +88,14 @@ public class HomeFragment extends Fragment {
                                     fragmentManager.beginTransaction()
                                             .replace(R.id.content_frame_home, homeToDoFragment)
                                             .commit();
+                                    getActivity().setTitle("TASKS");
                                     break;
                                 case R.id.action_home_project:
                                     System.out.println("prpject");
                                     fragmentManager.beginTransaction()
                                             .replace(R.id.content_frame_home, new HomeProjectFragment())
                                             .commit();
+                                    getActivity().setTitle("PROJECTS");
                                     break;
                             }
                             return true;
