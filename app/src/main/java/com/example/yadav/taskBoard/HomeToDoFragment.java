@@ -2,7 +2,6 @@ package com.example.yadav.taskBoard;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -14,12 +13,10 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -36,9 +33,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
@@ -80,6 +75,8 @@ public boolean removeFilter = false;
     DBHandler dba1 = null;
     View filterCardView = null;
     int initialCount;
+    AsyncHttpClient client;
+    AsyncTask<Integer, Void, Void> task;
     private void presentFilterSettingsDialog(final Context context) {
 
         final CharSequence[] items = {"Follower", "Assignee", "Responsible"};
@@ -157,7 +154,7 @@ public boolean removeFilter = false;
         MenuItem homeSort = menu.getItem(0);
         homeSort.setVisible(false);
         MenuItem itemSort = menu.getItem(2);
-        itemSort.setVisible(true);
+        itemSort.setVisible(false);
         MenuItem itemFilter = menu.getItem(3);
         itemFilter.setVisible(true);
         MenuItem itemSearch = menu.getItem(1);
@@ -334,8 +331,7 @@ public boolean removeFilter = false;
 
 
         setFilters(inflater1,container1,dba1);
-
-        AsyncHttpClient client = helper.getHTTPClient();
+        client = helper.getHTTPClient();
         RequestParams params = new RequestParams();
         params.put("title__contains", "");
         params.put("limit",150);
@@ -369,7 +365,7 @@ public boolean removeFilter = false;
                                 JSONObject file = filesArray.getJSONObject(j);
                                 files[j] = file.getInt("pk");
                                 if(!dba.CheckIfFILE_PKAlreadyInDBorNot(files[j])) {
-                                    File file1 = new File(pk);
+                                    Files file1 = new Files(pk);
                                     file1.setPkTask(pk);
                                     file1.setFilePk(file.getInt("pk"));
                                     file1.setProject_pk(0);
@@ -545,12 +541,11 @@ public boolean removeFilter = false;
 
 
     private void load_data_from_server(int id) {
-
-        final AsyncTask<Integer, Void, Void> task = new AsyncTask<Integer, Void, Void>() {
+        task = new AsyncTask<Integer, Void, Void>() {
             @Override
             protected Void doInBackground(Integer... integers) {
 
-                DBHandler dba = new DBHandler(getActivity(),null,null,2);
+                DBHandler dba = new DBHandler(getContext(),null,null,2);
                 data = dba.getAllTasksList();
                 for (int i = 0; i < data.size(); i++) {
                     if(PK_Project!=0) {
@@ -697,7 +692,7 @@ public boolean removeFilter = false;
                                 JSONObject file = filesArray.getJSONObject(j);
                                 files[j] = file.getInt("pk");
                                 if(!dba.CheckIfFILE_PKAlreadyInDBorNot(files[j])) {
-                                    File file1 = new File(pk);
+                                    Files file1 = new Files(pk);
                                     file1.setPkTask(pk);
                                     file1.setFilePk(file.getInt("pk"));
                                     file1.setProject_pk(0);

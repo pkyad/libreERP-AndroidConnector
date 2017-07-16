@@ -28,9 +28,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
@@ -109,7 +107,7 @@ public class HomeProjectFragment extends Fragment {
                                 JSONObject file = filesArray.getJSONObject(j);
                                 files[j] = file.getInt("pk");
                                 if(!dba.CheckIfFILE_PKAlreadyInDBorNot(files[j])) {
-                                    File file1 = new File(pk_project);
+                                    Files file1 = new Files(pk_project);
                                     file1.setProject_pk(pk_project);
                                     file1.setFilePk(file.getInt("pk"));
                                     file1.setFileLink(file.getString("link"));
@@ -262,7 +260,7 @@ public class HomeProjectFragment extends Fragment {
                                 JSONObject file = filesArray.getJSONObject(j);
                                 files[j] = file.getInt("pk");
                                 if(!dba.CheckIfFILE_PKAlreadyInDBorNot(files[j])) {
-                                    File file1 = new File(pk_project);
+                                    Files file1 = new Files(pk_project);
                                     file1.setProject_pk(pk_project);
                                     file1.setFilePk(file.getInt("pk"));
                                     file1.setFileLink(file.getString("link"));

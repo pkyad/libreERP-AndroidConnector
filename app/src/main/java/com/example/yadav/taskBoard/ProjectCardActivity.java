@@ -2,11 +2,14 @@ package com.example.yadav.taskBoard;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.support.design.widget.BottomSheetDialogFragment;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -24,10 +27,10 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,8 +48,14 @@ import com.loopj.android.http.RequestParams;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -54,8 +63,6 @@ import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
 import de.hdodenhof.circleimageview.CircleImageView;
-
-import static java.security.AccessController.getContext;
 
 public class ProjectCardActivity extends AppCompatActivity {
 
@@ -80,7 +87,8 @@ public class ProjectCardActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST = 1024;
     private static final int GALLERY_REQUEST = 2134;
     private static final int CHOOSE_FILE_REQUESTCODE = 4512;
-
+    static FloatingActionMenu menuRed;
+    static CustomFileCardAdapter customFileCardAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -117,14 +125,14 @@ public class ProjectCardActivity extends AppCompatActivity {
         View rootView;
 
         private View getUsersRowView(LayoutInflater inflater, ViewGroup container,
-                                     final List<Integer> usersList){
+                                     final List<Integer> usersList) {
 
 
             View layoutList = inflater.inflate(R.layout.teamtwomembers, container, false);
-            LinearLayout layout  =(LinearLayout) layoutList.findViewById(R.id.team);
+            LinearLayout layout = (LinearLayout) layoutList.findViewById(R.id.team);
 
 
-            for (int i=0;i<usersList.size();i++) {
+            for (int i = 0; i < usersList.size(); i++) {
                 View layout1 = inflater.inflate(R.layout.team_view, container, false);
                 final CircleImageView userImage = (CircleImageView) layout1.findViewById(R.id.userImageProject);
                 final TextView userName = (TextView) layout1.findViewById(R.id.userNameProject);
@@ -179,36 +187,36 @@ public class ProjectCardActivity extends AppCompatActivity {
                     int run = team.length;
                     LinearLayout view = (LinearLayout) rootView.findViewById(R.id.layout222);
 
-                        if (run == 0) {
-                            TextView text = (TextView) rootView.findViewById(R.id.texttext);
-                            text.setVisibility(View.GONE);
-                        } else {
-                            for (int k = 0; k < run; k = k+2) {
-                                int u1 = k;
-                                int u2 = 0;
-                                if(u1 != run-1)
-                                    u2 = k+1;
+                    if (run == 0) {
+                        TextView text = (TextView) rootView.findViewById(R.id.texttext);
+                        text.setVisibility(View.GONE);
+                    } else {
+                        for (int k = 0; k < run; k = k + 2) {
+                            int u1 = k;
+                            int u2 = 0;
+                            if (u1 != run - 1)
+                                u2 = k + 1;
 
-                                final List<Integer> usersList = new ArrayList<>();
-                                usersList.add(team[u1]);
-                                if(u1 != run-1)
-                                    usersList.add(team[u2]);
-                                view.addView(getUsersRowView(inflater,container,usersList));
+                            final List<Integer> usersList = new ArrayList<>();
+                            usersList.add(team[u1]);
+                            if (u1 != run - 1)
+                                usersList.add(team[u2]);
+                            view.addView(getUsersRowView(inflater, container, usersList));
 
-                            }
                         }
+                    }
 
-                        rootView.findViewById(R.id.showTasksProject).setOnClickListener(new View.OnClickListener() {
-                            public void onClick(View v) {
+                    rootView.findViewById(R.id.showTasksProject).setOnClickListener(new View.OnClickListener() {
+                        public void onClick(View v) {
 
-                                Intent intent = new Intent(getActivity(), HomeActivity.class);
-                                intent.putExtra("PK_PROJECT",projects.getPk());
-                                startActivity(intent);
-                            }
-                        });
+                            Intent intent = new Intent(getActivity(), HomeActivity.class);
+                            intent.putExtra("PK_PROJECT", projects.getPk());
+                            startActivity(intent);
+                        }
+                    });
 
                     break;
-                    }
+                }
 
 
                 case 2: {
@@ -232,10 +240,10 @@ public class ProjectCardActivity extends AppCompatActivity {
                     RequestParams params = new RequestParams();
                     params.put("task", projects.getPk());
                     String url = String.format("%s/%s/", serverURL, "/api/projects/timelineItem");
-                    client.get(url,params, new JsonHttpResponseHandler() {
+                    client.get(url, params, new JsonHttpResponseHandler() {
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
-                            super.onSuccess(statusCode, headers,response);
+                            super.onSuccess(statusCode, headers, response);
 
                             System.out.println("success 001xzc");
                             try {
@@ -244,7 +252,7 @@ public class ProjectCardActivity extends AppCompatActivity {
                                 int pkProject;
                                 String created;
                                 String category;
-                                String text=null;
+                                String text = null;
                                 int user;
 
                                 DBHandler dba = new DBHandler(getActivity(), null, null, 2);
@@ -254,7 +262,7 @@ public class ProjectCardActivity extends AppCompatActivity {
                                     pkComment = c.getInt("pk");
                                     user = c.getInt("user");
                                     if (!dba.CheckIfCOMMENT_PKAlreadyInDBorNot(pkComment)) {
-                                        created = c.getString("created").replace("Z","").replace("T"," ");
+                                        created = c.getString("created").replace("Z", "").replace("T", " ");
                                         category = c.getString("category");
                                         if (category.equals("message")) {
                                             text = c.getString("text");
@@ -339,6 +347,132 @@ public class ProjectCardActivity extends AppCompatActivity {
                         }
                     });
 
+
+                    final EditText postTimeline = (EditText) myView.findViewById(R.id.msgBox);
+                    Button send = (Button) myView.findViewById(R.id.button);
+
+
+                    send.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if(!postTimeline.getText().toString().equals("")){
+                                String categoryPOST = "message";
+
+                                Helper helper = new Helper(context);
+                                serverURL = helper.serverURL;
+                                client = helper.getHTTPClient();
+                                RequestParams params = new RequestParams();
+                                params.put("project", projects.getPk());
+                                params.put("text", postTimeline.getText());
+                                params.put("category",categoryPOST);
+                                String url = String.format("%s/%s/", serverURL, "/api/projects/timelineItem");
+                                client.post(url, params, new JsonHttpResponseHandler() {
+                                    @Override
+                                    public void onSuccess(int statusCode, Header[] headers, JSONObject c) {
+                                        super.onSuccess(statusCode, headers, c);
+
+                                        System.out.println("success 001xzc");
+                                        try {
+//                                JSONArray response = tasks.getJSONArray("results");
+                                            int pkComment;
+                                            int pkProject;
+                                            String created;
+                                            String category;
+                                            String text = null;
+                                            int user;
+
+                                            DBHandler dba = new DBHandler(getActivity(), null, null, 2);
+                                                pkComment = c.getInt("pk");
+                                                user = c.getInt("user");
+
+                                                    created = c.getString("created").replace("Z", "").replace("T", " ");
+                                                    category = c.getString("category");
+                                                    if (category.equals("message")) {
+                                                        text = c.getString("text");
+                                                    }
+                                                    pkProject = c.getInt("project");
+                                                    Comment comment = new Comment(pkComment);
+                                                    comment.setPkComment(pkComment);
+                                                    comment.setPkProject(pkProject);
+                                                    comment.setUserPK(user);
+                                                    comment.setCategory(category);
+                                                    comment.setCreated(created);
+                                                    comment.setText(text);
+                                                    dba.insertTableComment(comment);
+                                            postTimeline.setText("");
+
+                                            final Comment data = new Comment(pkComment);
+                                            data.setCategory(category);
+                                            data.setUserPK(user);
+                                            Date commentDate = new Date();
+                                            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                                            try {
+                                                commentDate = formatter.parse(created);
+                                            } catch (ParseException e) {
+                                                System.out.println("error while parsing");
+                                            }
+                                            String formattedCommitDate;
+                                            Date current = new Date();
+                                            if(commentDate.getYear() == current.getYear()) {
+                                                formattedCommitDate = new SimpleDateFormat("dd MMM").format(commentDate);
+                                            }
+                                            else {
+                                                formattedCommitDate = new SimpleDateFormat("dd MMM, yyyy").format(commentDate);
+                                            }
+
+                                            data.setCreated(formattedCommitDate);
+
+
+                                            data.setText(text);
+
+                                            Users users = new Users(context);
+                                            users.get(user , new UserMetaHandler(){
+                                                @Override
+                                                public void onSuccess(UserMeta user){
+
+                                                    data.setUser(user.getFirstName() + " " + user.getLastName());
+                                                    // set text in the layout here
+                                                }
+                                                @Override
+                                                public void handleDP(Bitmap dp){
+
+                                                    data.setDpUser(dp);
+                                                    // set text in the layout here
+                                                }
+
+                                            });
+                                            data_list.add(data);
+                                            adapter.notifyDataSetChanged();
+                                        } catch (final JSONException e) {
+                                            Log.e("TAG", "Json parsing error: " + e.getMessage());
+
+                                        }
+
+                                    }
+
+                                    @Override
+                                    public void onFinish() {
+                                        System.out.println("finished 001cxczdfhgfg");
+                                        // retrieve all the db entries
+
+                                    }
+
+                                    @Override
+                                    public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
+                                        // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                                        load_data_from_database(0);
+                                        System.out.println("finished failed 001xczxc");
+                                    }
+                                });
+                            }
+                        }
+                    });
+
+
+
+
+
+
                     return myView;
 
 
@@ -349,15 +483,15 @@ public class ProjectCardActivity extends AppCompatActivity {
                     rootView = inflater.inflate(R.layout.fragment_files, container, false);
                     DBHandler dba = new DBHandler(getActivity(), null, null, 2);
 
-                    List<File> fileList = dba.getProjectFiles(projects.getPk());
+                    List<Files> fileList = dba.getProjectFiles(projects.getPk());
                     listView = (ListView) rootView.findViewById(R.id.files);
-                    CustomFileCardAdapter customFileCardAdapter = new CustomFileCardAdapter(context, R.layout.fileview);
+                    customFileCardAdapter = new CustomFileCardAdapter(context, R.layout.fileview);
 
                     for (int i = 0; i < fileList.size(); i++) {
                         customFileCardAdapter.add(fileList.get(i));
                     }
 
-                    FloatingActionMenu menuRed;
+
                     List<FloatingActionMenu> menus = new ArrayList<>();
                     Handler mUiHandler = new Handler();
 
@@ -394,6 +528,7 @@ public class ProjectCardActivity extends AppCompatActivity {
             }
             return rootView;
         }
+
         View.OnClickListener clickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -410,16 +545,19 @@ public class ProjectCardActivity extends AppCompatActivity {
                 }
             }
         };
-        private void sendGallery()  {
+
+        private void sendGallery() {
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            startActivityForResult(intent, GALLERY_REQUEST);
+            getActivity().startActivityForResult(intent, GALLERY_REQUEST);
         }
 
-        private void sendPhoto()  {
+        private void sendPhoto() {
             Intent cameraintent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(cameraintent, CAMERA_REQUEST);
+            getActivity().startActivityForResult(cameraintent, CAMERA_REQUEST);
+
         }
-        private void attachFiles(){
+
+        private void attachFiles() {
             Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
             intent.setType("*/*");
             intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -431,24 +569,199 @@ public class ProjectCardActivity extends AppCompatActivity {
             sIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
             Intent chooserIntent;
-            if (getContext().getPackageManager().resolveActivity(sIntent, 0) != null){
+            if (getContext().getPackageManager().resolveActivity(sIntent, 0) != null) {
                 // it is device with samsung file manager
                 chooserIntent = Intent.createChooser(sIntent, "Open file");
-                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] { intent});
-            }
-            else {
+                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{intent});
+            } else {
                 chooserIntent = Intent.createChooser(intent, "Open file");
             }
 
             try {
-                startActivityForResult(chooserIntent, CHOOSE_FILE_REQUESTCODE);
+                getActivity().startActivityForResult(chooserIntent, CHOOSE_FILE_REQUESTCODE);
             } catch (android.content.ActivityNotFoundException ex) {
-                Toast.makeText(getContext(), "No suitable File Manager was found.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "No suitable Files Manager was found.", Toast.LENGTH_SHORT).show();
             }
 
         }
 
     }
+    protected void onActivityResult(int requestCode, final int resultCode, Intent data) {
+
+        Bitmap bm = null ;
+        if (requestCode == CAMERA_REQUEST) {
+            bm = (Bitmap) data.getExtras().get("data");
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            bm.compress(Bitmap.CompressFormat.PNG, 100 , bos);
+            byte[] bitmapdata = bos.toByteArray();
+            ByteArrayInputStream bs = new ByteArrayInputStream(bitmapdata);
+            Date date = new Date();
+            String formattedDate = new SimpleDateFormat("HH:mm").format(date);
+            uploadFile(bs,"captured_" + formattedDate + ".png");
+        }
+
+        if (requestCode == GALLERY_REQUEST) {
+
+            if (data != null) {
+                try {
+                    Uri Fpath = data.getData();
+                    bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    bm.compress(Bitmap.CompressFormat.PNG, 100 , bos);
+                    byte[] bitmapdata = bos.toByteArray();
+                    ByteArrayInputStream bs = new ByteArrayInputStream(bitmapdata);
+
+                    String uriString = Fpath.toString();
+                    File myFile = new File(uriString);
+                    String displayName = null;
+
+                    if (uriString.startsWith("content://")) {
+                        Cursor cursor = null;
+                        try {
+                            cursor = context.getContentResolver().query(Fpath, null, null, null, null);
+                            if (cursor != null && cursor.moveToFirst()) {
+                                displayName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                            }
+                        } finally {
+                            cursor.close();
+                        }
+                    } else if (uriString.startsWith("file://")) {
+                        displayName = myFile.getName();
+                    }
+                    String[] splitted = displayName.split("_");
+                    displayName = splitted[splitted.length-1];
+                    //  String s = getFileNameByUri(Fpath);
+                    uploadFile(bs,displayName);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+
+        if (requestCode == CHOOSE_FILE_REQUESTCODE) {
+            Uri Fpath = data.getData();
+            InputStream is = null;
+            try {
+                is = getContentResolver().openInputStream(Fpath);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            String uriString = Fpath.toString();
+            File myFile = new File(uriString);
+            String displayName = null;
+
+            if (uriString.startsWith("content://")) {
+                Cursor cursor = null;
+                try {
+                    cursor = context.getContentResolver().query(Fpath, null, null, null, null);
+                    if (cursor != null && cursor.moveToFirst()) {
+                        displayName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                    }
+                } finally {
+                    cursor.close();
+                }
+            } else if (uriString.startsWith("file://")) {
+                displayName = myFile.getName();
+            }
+            String[] splitted = displayName.split("_");
+            displayName = splitted[splitted.length-1];
+            uploadFile(is,displayName);
+
+        }
+
+    }
+
+
+    private void uploadFile(InputStream is,String fileName){
+        final DBHandler dba = new DBHandler(this, null, null, 2);
+
+        RequestParams params = new RequestParams();
+
+        params.put("attachment", is, fileName);
+
+        String url = String.format("%s/%s/", serverURL, "/api/projects/media");
+        client.post(url,params, new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                super.onSuccess(statusCode, headers,response);
+                try {
+//                        JSONObject response = jsonArray.getJSONObject(jsonArray.length());
+                    final Files file1 = new Files(projects.getPk());
+
+                    file1.setProject_pk(projects.getPk());
+                    file1.setFilePk(response.getInt("pk"));
+                    file1.setFileLink(response.getString("link"));
+                    file1.setAttachment(response.getString("attachment"));
+                    file1.setMediaType(response.getString("mediaType"));
+                    file1.setName(response.getString("name"));
+                    file1.setPostedUser(response.getInt("user"));
+                    file1.setFileCreated(response.getString("created").replace("Z","").replace("T"," "));
+
+                    List<Files> files = dba.getAllFiles(projects.getPk());
+                    files.add(file1);
+                    String filesArray = new String ();
+                    for(int i=0;i<files.size();i++){
+                        filesArray = filesArray + "||" + (files.get(i).getFilePk());
+                    }
+                    String filesArrayNew = filesArray.substring(2);
+                    String url1 = String.format("%s/%s/", serverURL, "/api/projects/project/" + projects.getPk());
+                    RequestParams params1 = new RequestParams();
+                    params1.put("files", filesArrayNew);
+                    client.patch(url1,params1, new JsonHttpResponseHandler() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, JSONObject jsonArray) {
+                            super.onSuccess(statusCode, headers,jsonArray);
+                            dba.insetTableFiles(file1);
+                            customFileCardAdapter.add(file1);
+                            menuRed.close(true);
+                        }
+                        @Override
+                        public void onFinish() {
+                            System.out.println("finished ");
+                            // retrieve all the db entries
+
+                        }
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
+                            // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                            System.out.println("finished failed 001xczxc");
+                        }
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                            super.onFailure(statusCode, headers, responseString, throwable);
+                            System.out.println("finished failed 001xczxc sadasdsadsa");
+                        }
+
+                    });
+
+
+                }catch (JSONException e){
+                    Log.e("TAG", "Json parsing error: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onFinish() {
+                System.out.println("finished 001cxczdfhgfg");
+                // retrieve all the db entries
+
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                super.onFailure(statusCode, headers, responseString, throwable);
+                System.out.println("finished failed 001xczxc gbfdgfdgdf");
+            }
+
+
+        });
+
+    }
+
+
+
 
 
     /**

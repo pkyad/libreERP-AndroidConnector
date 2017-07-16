@@ -80,7 +80,7 @@ public class EditTask extends AppCompatActivity {
         });
 
 
-
+        updateLabel();
         final DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
 
             @Override
@@ -153,7 +153,7 @@ public class EditTask extends AppCompatActivity {
                         params.put("description", descriptionEdit.getText().toString());
 
                         params.put("dueDate", dueDateEdit.getText().toString() + "T" + dueDateTime.getText().toString() + "Z");
-                        final String url = String.format("%s/%s/", helper.serverURL, "/api/taskBoard/task/" + task.getPk() + "/");
+                        final String url = String.format("%s/%s/", helper.serverURL, "/api/taskBoard/task/" + task.getPk());
                         client.patch(url, params, new JsonHttpResponseHandler() {
                             @Override
                             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {

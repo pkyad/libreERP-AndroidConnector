@@ -61,9 +61,13 @@ public class CustomSubTaskCardAdapter extends RecyclerView.Adapter<CustomSubTask
     private DBHandler dba;
     private Context context;
     private List<SubTask> my_data;
+    List<ActivityManager.RunningTaskInfo> taskInfo;
     public CustomSubTaskCardAdapter(Context context, List<SubTask> my_data) {
         this.context = context;
         this.my_data = my_data;
+        ActivityManager am = (ActivityManager) context.getSystemService(ACTIVITY_SERVICE);
+        taskInfo = am.getRunningTasks(1);
+
     }
 
     @Override
@@ -74,7 +78,9 @@ public class CustomSubTaskCardAdapter extends RecyclerView.Adapter<CustomSubTask
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-
+        if(taskInfo.get(0).topActivity.getClassName().contains("taskBoard.TaskCardActivity")){
+            holder.taskTitle.setVisibility(View.GONE);
+        }
         dba = new DBHandler(context, null, null, 2);
         holder.txtTitle.setText(my_data.get(position).getTitle());
         holder.taskTitle.setText(dba.getTitle(my_data.get(position).getPkTask()));
@@ -105,35 +111,20 @@ public class CustomSubTaskCardAdapter extends RecyclerView.Adapter<CustomSubTask
                         switch (item.getItemId()) {
                             case R.id.inProgress:
                                 onStatusChange("inProgress",pos);
-                                //Or Some other code you want to put here.. This is just an example.
-                                Toast.makeText(context, " Install Clicked at position " + " : " + pos, Toast.LENGTH_LONG).show();
-
                                 break;
                             case R.id.stuck:
                                 onStatusChange( "stuck",pos);
-
-                                Toast.makeText(context, "Add to Wish List Clicked at position " + " : " + pos, Toast.LENGTH_LONG).show();
-
                                 break;
 
                             case R.id.complete:
                                 onStatusChange("complete",pos);
-
-                                Toast.makeText(context, "Add to Wish List Clicked at position " + " : " + pos, Toast.LENGTH_LONG).show();
-
                                 break;
                             case R.id.delete:
                                 deleteSubTask(pos);
-                                Toast.makeText(context, "Add to Wish List Clicked at position " + " : " + pos, Toast.LENGTH_LONG).show();
-
                                 break;
                             case R.id.editSubtask:
                                 editSubTask(pos);
-                                Toast.makeText(context, "Add to Wish List Clicked at position " + " : " + pos, Toast.LENGTH_LONG).show();
-
                                 break;
-
-
                             default:
                                 break;
                         }
@@ -183,7 +174,7 @@ public class CustomSubTaskCardAdapter extends RecyclerView.Adapter<CustomSubTask
         params.put("title", my_data.get(position).getTitle());
         params.put("status", status);
 //
-        final String url = String.format("%s/%s/", helper.serverURL, "/api/taskBoard/subTask/" + my_data.get(position).getPk()+"/");
+        final String url = String.format("%s/%s/", helper.serverURL, "/api/taskBoard/subTask/" + my_data.get(position).getPk());
         client.patch(url, params, new JsonHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
@@ -197,9 +188,9 @@ public class CustomSubTaskCardAdapter extends RecyclerView.Adapter<CustomSubTask
                 }
 
                 ActivityManager am = (ActivityManager) context.getSystemService(ACTIVITY_SERVICE);
-                List<ActivityManager.RunningTaskInfo> taskInfo = am.getRunningTasks(1);
+                taskInfo = am.getRunningTasks(1);
                 System.out.println(" taskInfo.get(0).topActivity.getClassName() = " +  taskInfo.get(0).topActivity.getClassName());
-                if(my_data.get(position).getStatus().equals("complete") && taskInfo.get(0).topActivity.getClassName().equals("com.example.yadav.taskBoard.HomeActivity")){
+                if(my_data.get(position).getStatus().equals("complete") && taskInfo.get(0).topActivity.getClassName().contains("taskBoard.HomeActivity")){
                     my_data.remove(my_data.get(position));
                 }
                 notifyDataSetChanged();
@@ -224,7 +215,7 @@ public class CustomSubTaskCardAdapter extends RecyclerView.Adapter<CustomSubTask
                         Helper helper = new Helper(context);
                         AsyncHttpClient client = helper.getHTTPClient();
 //
-                        final String url = String.format("%s/%s/", helper.serverURL, "/api/taskBoard/subTask/" + my_data.get(position).getPk()+"/");
+                        final String url = String.format("%s/%s/", helper.serverURL, "/api/taskBoard/subTask/" + my_data.get(position).getPk());
                         client.delete(url, new JsonHttpResponseHandler() {
                             @Override
                             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
@@ -271,7 +262,7 @@ public class CustomSubTaskCardAdapter extends RecyclerView.Adapter<CustomSubTask
                 params.put("title",subTaskTitle.getText().toString());
                 params.put("status", my_data.get(position).getStatus());
 //
-                final String url = String.format("%s/%s/", helper.serverURL, "/api/taskBoard/subTask/" + my_data.get(position).getPk()+"/");
+                final String url = String.format("%s/%s/", helper.serverURL, "/api/taskBoard/subTask/" + my_data.get(position).getPk());
                 client.patch(url, params, new JsonHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, JSONObject response) {

@@ -1,13 +1,22 @@
 package com.example.yadav.taskBoard;
 
+import android.annotation.SuppressLint;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.support.design.widget.BottomSheetDialogFragment;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -33,10 +42,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,12 +61,24 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -93,6 +112,22 @@ public class TaskCardActivity extends AppCompatActivity {
     private static final int CHOOSE_FILE_REQUESTCODE = 4512;
     static List<SubTask> subTasksList;
     private static FloatingActionMenu menuRed;
+    static CustomFileCardAdapter customFileCardAdapter;
+
+    static int pkComment;
+    static int pkTask;
+    static String created;
+    static String category;
+    static String text;
+    static int pkCommit;
+    static String commitMessage;
+    static int user;
+    static String CommitDate;
+    static String CommitBranch;
+    static String CommitCode;
+
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -107,6 +142,7 @@ public class TaskCardActivity extends AppCompatActivity {
         subTaskTitle = new EditText(context);
         // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
         subTaskTitle.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        subTaskTitle.setTextColor(getResources().getColor(R.color.black));
         subTaskTitle.setMinLines(1);
         builder.setView(subTaskTitle);
 
@@ -119,7 +155,7 @@ public class TaskCardActivity extends AppCompatActivity {
                 params.put("title",subTaskTitle.getText().toString());
                 params.put("status", "notStarted");
                 params.put("task",task.getPk());
-                final String url = String.format("%s/%s/", helper.serverURL, "/api/taskBoard/subTask/");
+                final String url = String.format("%s/%s/", helper.serverURL, "/api/taskBoard/subTask");
                 client.post(url, params, new JsonHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
@@ -303,10 +339,16 @@ public class TaskCardActivity extends AppCompatActivity {
                     gridLayoutManager = new GridLayoutManager(mainContext, 1);
                     recyclerView.setLayoutManager(gridLayoutManager);
 
+                    final EditText postTimeline = (EditText) myView.findViewById(R.id.msgBox);
+                    Button send = (Button) myView.findViewById(R.id.button);
+
                     adapter = new CustomTaskViewAdapterTimeline(mainContext, data_list);
                     recyclerView.setAdapter(adapter);
                     mSwipeRefreshLayout = (SwipeRefreshLayout) myView.findViewById(R.id.swipeRefreshTaskBoard);
                     ///////////////////
+
+                    final DBHandler dba = new DBHandler(getActivity(), null, null, 2);
+
                     context = getActivity().getApplicationContext();
                     Helper helper = new Helper(context);
 
@@ -321,20 +363,7 @@ public class TaskCardActivity extends AppCompatActivity {
 
                             System.out.println("success 001xzc");
                             try {
-//                                JSONArray response = tasks.getJSONArray("results");
-                                int pkComment;
-                                int pkTask;
-                                String created;
-                                String category;
-                                String text;
-                                int pkCommit;
-                                String commitMessage;
-                                int user;
-                                String CommitDate;
-                                String CommitBranch;
-                                String CommitCode;
 
-                                DBHandler dba = new DBHandler(getActivity(), null, null, 2);
                                 for (int i = 0; i < response.length(); i++) {
 
                                     JSONObject c = response.getJSONObject(i);
@@ -446,6 +475,144 @@ public class TaskCardActivity extends AppCompatActivity {
                         }
                     });
 
+
+                    send.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if(!postTimeline.getText().toString().equals("")){
+                                String categoryPOST = "message";
+
+
+                                Helper helper = new Helper(context);
+                                AsyncHttpClient client = helper.getHTTPClient();
+                                RequestParams params = new RequestParams();
+                                params.put("task",task.getPk());
+                                params.put("text", postTimeline.getText());
+                                params.put("category",categoryPOST);
+
+                                final String url = String.format("%s/%s/", helper.serverURL, "/api/taskBoard/timelineItem");
+                                client.post(url, params,new JsonHttpResponseHandler() {
+                                    @Override
+                                    public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                                        try {
+                                            pkComment = response.getInt("pk");
+                                            user = response.getInt("user");
+
+                                                created = response.getString("created").replace("Z", "").replace("T", " ");
+                                                category = response.getString("category");
+                                                if (category.equals("message")) {
+                                                    text = response.getString("text");
+                                                    pkCommit = 0;
+                                                    commitMessage = null;
+                                                    CommitDate = null;
+                                                    CommitBranch = null;
+                                                    CommitCode = null;
+                                                } else {
+                                                    text = null;
+                                                    JSONObject commit = response.getJSONObject("commit");
+                                                    JSONObject repo = commit.getJSONObject("repo");
+                                                    pkCommit = commit.getInt("pk");
+                                                    commitMessage = commit.getString("message");
+                                                    CommitBranch = repo.getString("name") + "/" + commit.getString("branch");
+                                                    CommitCode = commit.getString("sha");
+                                                    CommitDate = commit.getString("created").replace("Z", "").replace("T", " ");
+                                                }
+                                                pkTask = response.getInt("task");
+                                                Comment comment = new Comment(pkComment);
+                                                comment.setPkComment(pkComment);
+                                                comment.setPkTask(pkTask);
+                                                comment.setUserPK(user);
+                                                comment.setCategory(category);
+                                                comment.setCreated(created);
+                                                comment.setText(text);
+                                                comment.setCommitPK(pkCommit);
+                                                comment.setCommitMessage(commitMessage);
+                                                comment.setCommitBranch(CommitBranch);
+                                                comment.setCommitCode(CommitCode);
+                                                comment.setCommitDate(CommitDate);
+                                                dba.insertTableComment(comment);
+                                            postTimeline.setText("");
+
+                                            final Comment data = new Comment(pkComment);
+                                            data.setCategory(category);
+                                            data.setUserPK(user);
+                                            Date commentDate = new Date();
+                                            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                                            try {
+                                                commentDate = formatter.parse(created);
+                                            } catch (ParseException e) {
+                                                System.out.println("error while parsing");
+                                            }
+                                            String formattedCommitDate;
+                                            Date current = new Date();
+                                            if(commentDate.getYear() == current.getYear()) {
+                                                formattedCommitDate = new SimpleDateFormat("dd MMM").format(commentDate);
+                                            }
+                                            else {
+                                                formattedCommitDate = new SimpleDateFormat("dd MMM, yyyy").format(commentDate);
+                                            }
+                                            data.setCreated(formattedCommitDate);
+
+                                            if(category.equals("message")) {
+                                                data.setText(text);
+                                            }
+                                            else {
+                                                data.setText(commitMessage);
+                                                data.setCommitBranch(CommitBranch);
+
+                                                Date commitDate = new Date();
+                                                try {
+                                                    commitDate = formatter.parse(CommitDate);
+                                                } catch (ParseException e) {
+                                                    System.out.println("error while parsing");
+                                                }
+                                                if(commitDate.getYear() == current.getYear()) {
+                                                    formattedCommitDate = new SimpleDateFormat("dd MMM").format(commitDate);
+                                                }
+                                                else {
+                                                    formattedCommitDate = new SimpleDateFormat("dd MMM, yyyy").format(commitDate);
+                                                }
+                                                data.setCommitDate(formattedCommitDate);
+                                                data.setCommitCode(CommitCode);
+                                            }
+                                            Users users = new Users(context);
+                                            // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
+                                            users.get(user , new UserMetaHandler(){
+                                                @Override
+                                                public void onSuccess(UserMeta user){
+
+                                                    data.setUser(user.getFirstName() + " " + user.getLastName());
+                                                    // set text in the layout here
+                                                }
+                                                @Override
+                                                public void handleDP(Bitmap dp){
+
+                                                    data.setDpUser(dp);
+                                                    // set text in the layout here
+                                                }
+
+                                            });
+
+
+                                            data_list.add(data);
+                                            adapter.notifyDataSetChanged();
+                                        }
+                                        catch (JSONException e){
+                                            Log.e("TAG", "Json parsing error: " + e.getMessage());
+                                        }
+
+                                    }
+                                    @Override
+                                    public void onFailure(int statusCode, Header[] headers, Throwable error, JSONObject response) {
+                                        // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                                        System.out.println("failure");
+                                        System.out.println(statusCode);
+                                    }
+                                });
+                            }
+                        }
+                    });
+
                     return myView;
 
 
@@ -458,9 +625,9 @@ public class TaskCardActivity extends AppCompatActivity {
                     setHasOptionsMenu(false);
                     DBHandler dba = new DBHandler(getActivity(), null, null, 2);
                     ListView listView;
-                    List<File> fileList = dba.getAllFiles(task.getPk());
+                    List<Files> fileList = dba.getAllFiles(task.getPk());
                     listView = (ListView) rootView.findViewById(R.id.files);
-                    CustomFileCardAdapter customFileCardAdapter = new CustomFileCardAdapter(context, R.layout.fileview);
+                    customFileCardAdapter = new CustomFileCardAdapter(context, R.layout.fileview);
 
                     for (int i = 0; i < fileList.size(); i++) {
                         customFileCardAdapter.add(fileList.get(i));
@@ -526,12 +693,13 @@ public class TaskCardActivity extends AppCompatActivity {
         };
         private void sendGallery()  {
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            startActivityForResult(intent, GALLERY_REQUEST);
+            getActivity().startActivityForResult(intent, GALLERY_REQUEST);
         }
 
         private void sendPhoto()  {
             Intent cameraintent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(cameraintent, CAMERA_REQUEST);
+            getActivity().startActivityForResult(cameraintent, CAMERA_REQUEST);
+
         }
         private void attachFiles(){
             Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -555,12 +723,185 @@ public class TaskCardActivity extends AppCompatActivity {
             }
 
             try {
-                startActivityForResult(chooserIntent, CHOOSE_FILE_REQUESTCODE);
+                getActivity().startActivityForResult(chooserIntent, CHOOSE_FILE_REQUESTCODE);
             } catch (android.content.ActivityNotFoundException ex) {
-                Toast.makeText(getContext(), "No suitable File Manager was found.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "No suitable Files Manager was found.", Toast.LENGTH_SHORT).show();
             }
 
         }
+
+    }
+
+    protected void onActivityResult(int requestCode, final int resultCode, Intent data) {
+
+        Bitmap bm = null ;
+        if (requestCode == CAMERA_REQUEST) {
+            bm = (Bitmap) data.getExtras().get("data");
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            bm.compress(Bitmap.CompressFormat.PNG, 100 , bos);
+            byte[] bitmapdata = bos.toByteArray();
+            ByteArrayInputStream bs = new ByteArrayInputStream(bitmapdata);
+            Date date = new Date();
+            String formattedDate = new SimpleDateFormat("HH:mm").format(date);
+            uploadFile(bs,"captured_" + formattedDate + ".png");
+        }
+
+        if (requestCode == GALLERY_REQUEST) {
+
+            if (data != null) {
+                try {
+                    Uri Fpath = data.getData();
+                    bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    bm.compress(Bitmap.CompressFormat.PNG, 100 , bos);
+                    byte[] bitmapdata = bos.toByteArray();
+                    ByteArrayInputStream bs = new ByteArrayInputStream(bitmapdata);
+
+                    String uriString = Fpath.toString();
+                    File myFile = new File(uriString);
+                    String displayName = null;
+
+                    if (uriString.startsWith("content://")) {
+                        Cursor cursor = null;
+                        try {
+                            cursor = context.getContentResolver().query(Fpath, null, null, null, null);
+                            if (cursor != null && cursor.moveToFirst()) {
+                                displayName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                            }
+                        } finally {
+                            cursor.close();
+                        }
+                    } else if (uriString.startsWith("file://")) {
+                        displayName = myFile.getName();
+                    }
+                    String[] splitted = displayName.split("_");
+                    displayName = splitted[splitted.length-1];
+                  //  String s = getFileNameByUri(Fpath);
+                    uploadFile(bs,displayName);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+
+        if (requestCode == CHOOSE_FILE_REQUESTCODE) {
+            Uri Fpath = data.getData();
+            InputStream is = null;
+            try {
+                is = getContentResolver().openInputStream(Fpath);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            String uriString = Fpath.toString();
+            File myFile = new File(uriString);
+            String displayName = null;
+
+            if (uriString.startsWith("content://")) {
+                Cursor cursor = null;
+                try {
+                    cursor = context.getContentResolver().query(Fpath, null, null, null, null);
+                    if (cursor != null && cursor.moveToFirst()) {
+                        displayName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                    }
+                } finally {
+                    cursor.close();
+                }
+            } else if (uriString.startsWith("file://")) {
+                displayName = myFile.getName();
+            }
+            String[] splitted = displayName.split("_");
+            displayName = splitted[splitted.length-1];
+            uploadFile(is,displayName);
+
+        }
+
+    }
+
+
+    private void uploadFile(InputStream is,String fileName){
+        final DBHandler dba = new DBHandler(this, null, null, 2);
+
+        RequestParams params = new RequestParams();
+
+        params.put("attachment", is, fileName);
+
+        String url = String.format("%s/%s/", serverURL, "/api/taskBoard/media");
+        client.post(url,params, new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                super.onSuccess(statusCode, headers,response);
+                try {
+//                        JSONObject response = jsonArray.getJSONObject(jsonArray.length());
+                    final Files file1 = new Files(task.getPk());
+                    file1.setPkTask(task.getPk());
+                    file1.setFilePk(response.getInt("pk"));
+                    file1.setProject_pk(0);
+                    file1.setFileLink(response.getString("link"));
+                    file1.setAttachment(response.getString("attachment"));
+                    file1.setMediaType(response.getString("mediaType"));
+                    file1.setName(response.getString("name"));
+                    file1.setPostedUser(response.getInt("user"));
+                    file1.setFileCreated((response.getString("created")).replace("Z", "").replace("T", " "));
+                    List<Files> files = dba.getAllFiles(task.getPk());
+                    files.add(file1);
+                    String filesArray = new String ();
+                    for(int i=0;i<files.size();i++){
+                        filesArray = filesArray + "||" + (files.get(i).getFilePk());
+                    }
+                    String filesArrayNew = filesArray.substring(2);
+                    String url1 = String.format("%s/%s/", serverURL, "/api/taskBoard/task/" + task.getPk());
+                    RequestParams params1 = new RequestParams();
+                    params1.put("files", filesArrayNew);
+                    client.patch(url1,params1, new JsonHttpResponseHandler() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, JSONObject jsonArray) {
+                            super.onSuccess(statusCode, headers,jsonArray);
+                            dba.insetTableFiles(file1);
+                            customFileCardAdapter.add(file1);
+                            menuRed.close(true);
+                        }
+                        @Override
+                        public void onFinish() {
+                            System.out.println("finished ");
+                            // retrieve all the db entries
+
+                        }
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
+                            // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                            System.out.println("finished failed 001xczxc");
+                        }
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                            super.onFailure(statusCode, headers, responseString, throwable);
+                            System.out.println("finished failed 001xczxc sadasdsadsa");
+                        }
+
+                    });
+
+
+                }catch (JSONException e){
+                    Log.e("TAG", "Json parsing error: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onFinish() {
+                System.out.println("finished 001cxczdfhgfg");
+                // retrieve all the db entries
+
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                super.onFailure(statusCode, headers, responseString, throwable);
+                System.out.println("finished failed 001xczxc gbfdgfdgdf");
+            }
+
+
+        });
 
     }
 

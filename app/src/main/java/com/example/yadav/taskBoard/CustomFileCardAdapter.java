@@ -1,15 +1,9 @@
 package com.example.yadav.taskBoard;
 
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Environment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,26 +12,15 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.example.libreerp.User;
 import com.example.libreerp.UserMeta;
 import com.example.libreerp.UserMetaHandler;
 import com.example.libreerp.Users;
-import java.io.BufferedInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 
-/**
- * Created by cioc on 29/6/17.
- */
-
-public class CustomFileCardAdapter extends ArrayAdapter<File> {
+public class CustomFileCardAdapter extends ArrayAdapter<Files> {
 
 
     static Context context;
@@ -77,7 +60,7 @@ public class CustomFileCardAdapter extends ArrayAdapter<File> {
 
         } else
             holder = (CustomFileCardAdapter.ViewHolder) convertView.getTag();
-        final File card = getItem(position);
+        final Files card = getItem(position);
         Users users = new Users(getContext());
         users.get(card.getPostedUser() , new UserMetaHandler(){
             @Override
@@ -87,7 +70,7 @@ public class CustomFileCardAdapter extends ArrayAdapter<File> {
 
         });
         holder.fileTitle.setText(card.getName());
-        DBHandler db = new DBHandler(context,null,null,1);
+        DBHandler db = new DBHandler(context,null,null,2);
         Date dateCreated = db.getFileUploadDate(card.getFilePk());
         Date current = new Date();
         String formattedCreatedDate;

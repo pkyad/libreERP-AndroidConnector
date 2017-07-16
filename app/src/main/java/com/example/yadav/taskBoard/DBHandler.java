@@ -3,7 +3,6 @@ package com.example.yadav.taskBoard;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -31,7 +30,6 @@ public class DBHandler extends SQLiteOpenHelper {
     private static final String COLUMN_FILES = "FILES";
     private static final String COLUMN_PK_PROJECT111 = "PK_PROJECT";
     private static final String COLUMN_PERSONAL = "PERSONAL";
-
 
     //    Subtask table variables
     private static final String TABLE_SUBTASK = "subTask";
@@ -77,10 +75,10 @@ public class DBHandler extends SQLiteOpenHelper {
     private static final String COLUMN_DUEDATE_PROJECT = "DUEDATE_PROJECT";
     private static final String COLUMN_FILES_PROJECT = "FILES_PROJECT";
     private static final String COLUMN_REPOS_COUNT = "PROJECT_REPOS";
-    private SQLiteDatabase db;
+
     public DBHandler(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
-        super(context, DATABASE_NAME, factory, version);
-        db = this.getWritableDatabase();
+        super(context, DATABASE_NAME, factory, DATABASE_VERSION);
+
     }
 
 
@@ -166,6 +164,7 @@ public class DBHandler extends SQLiteOpenHelper {
 
 
     public long insertTableMain(Task task) {
+        SQLiteDatabase db = this.getWritableDatabase();
         ContentValues initialValues = new ContentValues();
         initialValues.put(COLUMN_PK, task.getPk());
         initialValues.put(COLUMN_DESCRIPTION, task.getDescription());
@@ -189,10 +188,12 @@ public class DBHandler extends SQLiteOpenHelper {
         initialValues.put(COLUMN_FILES, filesMerged);
         initialValues.put(COLUMN_PK_PROJECT111,task.getPk_project());
         initialValues.put(COLUMN_PERSONAL,task.getPersonal());
+
         return db.insert(TABLE_TASKVALUE, null, initialValues);
     }
 
     public long insertTableSubtask(SubTask subTask) {
+        SQLiteDatabase db = this.getWritableDatabase();
         ContentValues initialValues = new ContentValues();
         initialValues.put(COLUMN_PK_SUBTASK, subTask.getPk());
         initialValues.put(COLUMN_PK, subTask.getPkTask());
@@ -204,6 +205,7 @@ public class DBHandler extends SQLiteOpenHelper {
     }
 
     public long insertTableComment(Comment comment) {
+        SQLiteDatabase db = this.getWritableDatabase();
         ContentValues initialValues = new ContentValues();
         initialValues.put(COLUMN_PK, comment.getPkTask());
         initialValues.put(COLUMN_PK_COMMENT, comment.getPkComment());
@@ -218,13 +220,12 @@ public class DBHandler extends SQLiteOpenHelper {
         initialValues.put(COLUMN_COMMIT_DATE, comment.getCommitDate());
         initialValues.put(COLUMN_COMMIT_CODE, comment.getCommitCode());
         initialValues.put(COLUMN_COMMIT_BRANCH, comment.getCommitBranch());
-
-
         return db.insert(TABLE_COMMENTS, null, initialValues);
     }
 
 
-    public long insetTableFiles(File file) {
+    public long insetTableFiles(Files file) {
+        SQLiteDatabase db = this.getWritableDatabase();
         ContentValues initialValues = new ContentValues();
         initialValues.put(COLUMN_FILE_PK, file.getFilePk());
         initialValues.put(COLUMN_PK_TASK, file.getPkTask());
@@ -241,6 +242,7 @@ public class DBHandler extends SQLiteOpenHelper {
 
 
     public long insertTableProjects(Projects projects) {
+        SQLiteDatabase db = this.getWritableDatabase();
         ContentValues initialValues = new ContentValues();
         initialValues.put(COLUMN_PK_PROJECT, projects.getPk());
         initialValues.put(COLUMN_DESCRIPTION_PROJECT, projects.getDescription());
@@ -271,28 +273,37 @@ public class DBHandler extends SQLiteOpenHelper {
 
 
     public void cleanTasks() {
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "DELETE FROM " + TABLE_TASKVALUE;
-
         db.execSQL(query);
+        db.close();
     }
     public void cleanSubTasks() {
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "DELETE FROM " + TABLE_SUBTASK;
         db.execSQL(query);
+        db.close();
     }
     public void cleanFiles() {
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "DELETE FROM " + TABLE_FILES;
         db.execSQL(query);
+        db.close();
     }
     public void cleanProjects() {
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "DELETE FROM " + TABLE_PROJECTS;
         db.execSQL(query);
+        db.close();
     }
     public void cleanComments() {
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "DELETE FROM " + TABLE_COMMENTS;
-
         db.execSQL(query);
+        db.close();
     }
     public List<Task> getAllTasksList() {
+        SQLiteDatabase db = this.getWritableDatabase();
         List<Task> taskList = new ArrayList<Task>();
         // Select All Query
         String selectQuery = "SELECT  * FROM " + TABLE_TASKVALUE + " WHERE 1";
@@ -338,20 +349,26 @@ public class DBHandler extends SQLiteOpenHelper {
                 taskList.add(task);
             } while (cursor.moveToNext());
         }
+        db.close();
         return taskList;
     }
 
     public void deleteTask(int PK_Task){
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "DELETE FROM " + TABLE_TASKVALUE + " WHERE " + COLUMN_PK + " = " + PK_Task;
         db.execSQL(query);
+        db.close();
     }
     public void updateTask(int PK_Task,String title,String description,String dueDate){
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "UPDATE " + TABLE_TASKVALUE + " SET " + COLUMN_TITLE + " = '" + title + "', " + COLUMN_DESCRIPTION + " = '" + description + "', " +
                 COLUMN_DUEDATE + " = '" + dueDate + "' WHERE " + COLUMN_PK + " = " + PK_Task;
         db.execSQL(query);
+        db.close();
     }
 
     public String getTitle(int pk) {
+        SQLiteDatabase db = this.getWritableDatabase();
         String dbstring = new String();
 
         String query = "SELECT * FROM " + TABLE_TASKVALUE + " WHERE " + COLUMN_PK + " = " + pk;
@@ -364,14 +381,14 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+db.close();
         return dbstring;
     }
 
 
 
     public boolean CheckIfPKAlreadyInDBorNot(int pk_Task) {
-
+        SQLiteDatabase db = this.getWritableDatabase();
         String Query = "Select * from " + TABLE_TASKVALUE + " where " + COLUMN_PK + " = " + pk_Task;
         Cursor cursor = db.rawQuery(Query, null);
         if (cursor.getCount() <= 0) {
@@ -379,10 +396,12 @@ public class DBHandler extends SQLiteOpenHelper {
             return false;
         }
         cursor.close();
+        db.close();
         return true;
     }
 
     public int getResponsible(int pk_task) {
+        SQLiteDatabase db = this.getWritableDatabase();
         int dbstring = 0;
 
         String query = "SELECT * FROM " + TABLE_TASKVALUE + " WHERE " + COLUMN_PK + " = " + pk_task;
@@ -397,17 +416,19 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+db.close();
         return dbstring;
     }
 
 
     public int getTotalDBEntries_TASK() {
+        SQLiteDatabase db = this.getWritableDatabase();
         String countQuery = "SELECT  * FROM " + TABLE_TASKVALUE + " WHERE 1";
 
         Cursor cursor = db.rawQuery(countQuery, null);
         int cnt = cursor.getCount();
         cursor.close();
+        db.close();
         return cnt;
     }
 
@@ -415,16 +436,18 @@ public class DBHandler extends SQLiteOpenHelper {
 
 
     public int getTotalDBEntries_COMMENT(int pk_task) {
+        SQLiteDatabase db = this.getWritableDatabase();
         String countQuery = "SELECT  * FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK + " = " + pk_task;
 
         Cursor cursor = db.rawQuery(countQuery, null);
         int cnt = cursor.getCount();
         cursor.close();
+        db.close();
         return cnt;
     }
 
     public boolean CheckIfCOMMENT_PKAlreadyInDBorNot(int pk_Comment) {
-
+        SQLiteDatabase db = this.getWritableDatabase();
         String Query = "Select * from " + TABLE_COMMENTS + " where " + COLUMN_PK_COMMENT + " = " + pk_Comment;
         Cursor cursor = db.rawQuery(Query, null);
         if (cursor.getCount() <= 0) {
@@ -432,10 +455,12 @@ public class DBHandler extends SQLiteOpenHelper {
             return false;
         }
         cursor.close();
+        db.close();
         return true;
     }
 
     public String getCategory(int position, int pk_task) {
+        SQLiteDatabase db = this.getWritableDatabase();
         ArrayList<String> dbstring = new ArrayList<String>();
 
         String query = "SELECT * FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK + " = " + pk_task;
@@ -449,11 +474,12 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+        db.close();
         return dbstring.get(position);
     }
 
     public String getCategory_COMMENT_Project(int position, int pk_project) {
+        SQLiteDatabase db = this.getWritableDatabase();
         ArrayList<String> dbstring = new ArrayList<String>();
 
         String query = "SELECT * FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK_PROJECT + " = " + pk_project;
@@ -467,11 +493,12 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+        db.close();
         return dbstring.get(position);
     }
 
     public String getCreatedMessage(int position, int pk_task) {
+        SQLiteDatabase db = this.getWritableDatabase();
         ArrayList<String> dbstring = new ArrayList<String>();
 
         String query = "SELECT * FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK + " = " + pk_task;
@@ -484,11 +511,13 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+db.close();
         return dbstring.get(position);
     }
 
     public String getMessage(int pk_comment) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
 //        ArrayList<String> dbstring = new ArrayList<String>();
         String dbstring = new String();
 
@@ -502,11 +531,12 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+db.close();
         return dbstring;
     }
 
     public String getCommitMessage(int pk_comment) {
+        SQLiteDatabase db = this.getWritableDatabase();
         String dbstring = new String();
 
         String query = "SELECT " + COLUMN_COMMIT_MESSAGE + " FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK_COMMENT + " = " + pk_comment;
@@ -519,13 +549,13 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+db.close();
         return dbstring;
     }
 
     public String getCommitBranch(int pk_comment) {
         String dbstring = new String();
-
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "SELECT " + COLUMN_COMMIT_BRANCH + " FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK_COMMENT + " = " + pk_comment;
         Cursor c = db.rawQuery(query, null);
         c.moveToFirst();
@@ -536,13 +566,13 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+db.close();
         return dbstring;
     }
 
     public Date getCommitDate(int pk_comment) {
         Date dbstring = new Date();
-
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "SELECT * FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK_COMMENT + " = " + pk_comment;
         Cursor c = db.rawQuery(query, null);
         c.moveToFirst();
@@ -561,13 +591,13 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+db.close();
         return dbstring;
     }
 
     public Date getCommentDate(int pk_comment) {
         Date dbstring = new Date();
-
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "SELECT " + COLUMN_COMMENT_CREATED + " FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK_COMMENT + " = " + pk_comment;
         Cursor c = db.rawQuery(query, null);
         c.moveToFirst();
@@ -586,14 +616,14 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+db.close();
         return dbstring;
     }
 
 
     public String getCommitCode(int pk_comment) {
         String dbstring = new String();
-
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "SELECT " + COLUMN_COMMIT_CODE + " FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK_COMMENT + " = " + pk_comment;
         Cursor c = db.rawQuery(query, null);
         c.moveToFirst();
@@ -604,11 +634,12 @@ public class DBHandler extends SQLiteOpenHelper {
             c.moveToNext();
         }
         dbstring = dbstring.substring(30);
-
+db.close();
         return dbstring;
     }
 
     public int getCommentPK(int position, int pk_task) {
+        SQLiteDatabase db = this.getWritableDatabase();
         ArrayList<Integer> dbstring = new ArrayList<Integer>();
 
         String query = "SELECT * FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK + " = " + pk_task;
@@ -621,13 +652,13 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+db.close();
         return dbstring.get(position);
     }
 
     public int getCommentPK_Project_Comment(int position, int pk_project) {
         ArrayList<Integer> dbstring = new ArrayList<Integer>();
-
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "SELECT * FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK_PROJECT + " = " + pk_project;
         Cursor c = db.rawQuery(query, null);
         c.moveToFirst();
@@ -638,12 +669,12 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+db.close();
         return dbstring.get(position);
     }
     public String getPostUser(int pk_comment) {
         String dbstring = new String();
-
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "SELECT * FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK_COMMENT + " = " + pk_comment;
         Cursor c = db.rawQuery(query, null);
         c.moveToFirst();
@@ -655,13 +686,13 @@ public class DBHandler extends SQLiteOpenHelper {
             c.moveToNext();
         }
 
-
+db.close();
         return dbstring;
     }
 
     public int getPostUserPK(int pk_comment) {
         int dbstring = 0;
-
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "SELECT * FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK_COMMENT + " = " + pk_comment;
         Cursor c = db.rawQuery(query, null);
         c.moveToFirst();
@@ -673,7 +704,7 @@ public class DBHandler extends SQLiteOpenHelper {
             c.moveToNext();
         }
 
-
+db.close();
         return dbstring;
     }
 
@@ -683,6 +714,7 @@ public class DBHandler extends SQLiteOpenHelper {
     public List<SubTask> getAllSubtasks(int pkTask) {
         List<SubTask> subTaskList = new ArrayList<SubTask>();
         // Select All Query
+        SQLiteDatabase db = this.getWritableDatabase();
         String selectQuery = "SELECT  * FROM " + TABLE_SUBTASK + " WHERE " + COLUMN_PK + " = " + pkTask;
 
         Cursor cursor = db.rawQuery(selectQuery, null);
@@ -702,26 +734,32 @@ public class DBHandler extends SQLiteOpenHelper {
                 subTaskList.add(subTask);
             } while (cursor.moveToNext());
         }
-
+db.close();
         // return contact list
         return subTaskList;
     }
 
     public void updateSubTaskStatus(int PK_Subtask,String status){
+        SQLiteDatabase db = this.getWritableDatabase();
         String Query = "UPDATE " + TABLE_SUBTASK +   " SET " + COLUMN_STATUS_SUBTASK + " = " + "'" + status + "'" + " WHERE " + COLUMN_PK_SUBTASK + " = " + PK_Subtask;
         db.execSQL(Query);
+        db.close();
     }
     public void deleteSubTask(int PK_Subtask){
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "DELETE FROM " + TABLE_SUBTASK + " WHERE " + COLUMN_PK_SUBTASK + " = " + PK_Subtask;
         db.execSQL(query);
+        db.close();
     }
     public void updateSubTaskTitle(int PK_Subtask,String title){
+        SQLiteDatabase db = this.getWritableDatabase();
         String Query = "UPDATE " + TABLE_SUBTASK +   " SET " + COLUMN_TITLE_SUBTASK + " = " + "'" + title + "'" + " WHERE " + COLUMN_PK_SUBTASK + " = " + PK_Subtask;
         db.execSQL(Query);
+        db.close();
     }
 
     public boolean CheckIfSUB_PKAlreadyInDBorNot(int fieldValue) {
-
+        SQLiteDatabase db = this.getWritableDatabase();
         String Query = "Select * from " + TABLE_SUBTASK + " where " + COLUMN_PK_SUBTASK + " = " + fieldValue;
         Cursor cursor = db.rawQuery(Query, null);
         if (cursor.getCount() <= 0) {
@@ -729,6 +767,7 @@ public class DBHandler extends SQLiteOpenHelper {
             return false;
         }
         cursor.close();
+        db.close();
         return true;
     }
 
@@ -736,6 +775,7 @@ public class DBHandler extends SQLiteOpenHelper {
     // retrive data from table file
 
     public String getColumnAttachment(int pk_file) {
+        SQLiteDatabase db = this.getWritableDatabase();
         String dbstring = new String();
         String query = "SELECT * FROM " + TABLE_FILES + " WHERE " + COLUMN_FILE_PK + " = " + pk_file;
         Cursor c = db.rawQuery(query, null);
@@ -746,13 +786,14 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+db.close();
         return dbstring;
     }
 
 
-    public List<File> getAllFiles(int pkTask) {
-        List<File> fileList = new ArrayList<File>();
+    public List<Files> getAllFiles(int pkTask) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        List<Files> fileList = new ArrayList<Files>();
         // Select All Query
         String selectQuery = "SELECT  * FROM " + TABLE_FILES + " WHERE " + COLUMN_PK_TASK + " = " + pkTask;
 
@@ -761,7 +802,7 @@ public class DBHandler extends SQLiteOpenHelper {
         // looping through all rows and adding to list
         if (cursor.moveToFirst()) {
             do {
-                File file = new File(pkTask);
+                Files file = new Files(pkTask);
                 file.setFilePk(Integer.parseInt(cursor.getString(0)));
                 file.setPkTask(Integer.parseInt(cursor.getString(1)));
                 file.setProject_pk(Integer.parseInt(cursor.getString(2)));
@@ -774,13 +815,13 @@ public class DBHandler extends SQLiteOpenHelper {
                 fileList.add(file);
             } while (cursor.moveToNext());
         }
-
+db.close();
         // return contact list
         return fileList;
     }
 
     public boolean CheckIfFILE_PKAlreadyInDBorNot(int fieldValue) {
-
+        SQLiteDatabase db = this.getWritableDatabase();
         String Query = "Select * from " + TABLE_FILES + " where " + COLUMN_FILE_PK + " = " + fieldValue;
         Cursor cursor = db.rawQuery(Query, null);
         if (cursor.getCount() <= 0) {
@@ -788,10 +829,12 @@ public class DBHandler extends SQLiteOpenHelper {
             return false;
         }
         cursor.close();
+        db.close();
         return true;
     }
 
     public Date getFileUploadDate(int pk_file) {
+        SQLiteDatabase db = this.getWritableDatabase();
         Date dbstring = new Date();
         String query = "SELECT * FROM " + TABLE_FILES + " WHERE " + COLUMN_FILE_PK + " = " + pk_file;
         Cursor c = db.rawQuery(query, null);
@@ -811,7 +854,7 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+        db.close();
         return dbstring;
     }
 
@@ -819,6 +862,7 @@ public class DBHandler extends SQLiteOpenHelper {
     public List<SubTask> getAllSubtasksList() {
         List<SubTask> subTaskList = new ArrayList<SubTask>();
         // Select All Query
+        SQLiteDatabase db = this.getWritableDatabase();
         String selectQuery = "SELECT  * FROM " + TABLE_SUBTASK + " WHERE 1";
 
         Cursor cursor = db.rawQuery(selectQuery, null);
@@ -835,6 +879,7 @@ public class DBHandler extends SQLiteOpenHelper {
                 subTaskList.add(subTask);
             } while (cursor.moveToNext());
         }
+        db.close();
         return subTaskList;
     }
 
@@ -844,6 +889,7 @@ public class DBHandler extends SQLiteOpenHelper {
 
 
     public List<Projects> getAllProjectList() {
+        SQLiteDatabase db = this.getWritableDatabase();
         List<Projects> projectsList = new ArrayList<Projects>();
         // Select All Query
         String selectQuery = "SELECT  * FROM " + TABLE_PROJECTS + " WHERE 1";
@@ -911,12 +957,13 @@ public class DBHandler extends SQLiteOpenHelper {
 
             } while (cursor.moveToNext());
         }
+        db.close();
         return projectsList;
     }
 
 
     public boolean CheckIfPK_ProjectAlreadyInDBorNot(int pk_project) {
-
+        SQLiteDatabase db = this.getWritableDatabase();
         String Query = "Select * from " + TABLE_PROJECTS + " where " + COLUMN_PK_PROJECT + " = " + pk_project;
         Cursor cursor = db.rawQuery(Query, null);
         if (cursor.getCount() <= 0) {
@@ -924,13 +971,14 @@ public class DBHandler extends SQLiteOpenHelper {
             return false;
         }
         cursor.close();
+        db.close();
         return true;
     }
 
 
     public String getTitleProjectFormPK(int PK_Project) {
         String dbstring = new String();
-
+        SQLiteDatabase db = this.getWritableDatabase();
         String query = "SELECT * FROM " + TABLE_PROJECTS + " WHERE " + COLUMN_PK_PROJECT +  " = " + PK_Project;
 
         Cursor c = db.rawQuery(query, null);
@@ -942,16 +990,17 @@ public class DBHandler extends SQLiteOpenHelper {
             }
             c.moveToNext();
         }
-
+db.close();
         return dbstring;
     }
 
 
 
 
-    public List<File> getProjectFiles(int pk_project) {
-        List<File> fileList = new ArrayList<File>();
+    public List<Files> getProjectFiles(int pk_project) {
+        List<Files> fileList = new ArrayList<Files>();
         // Select All Query
+        SQLiteDatabase db = this.getWritableDatabase();
         String selectQuery = "SELECT  * FROM " + TABLE_FILES + " WHERE " + COLUMN_PROJECT_PK_FILE + " = " + pk_project;
 
         Cursor cursor = db.rawQuery(selectQuery, null);
@@ -959,7 +1008,7 @@ public class DBHandler extends SQLiteOpenHelper {
         // looping through all rows and adding to list
         if (cursor.moveToFirst()) {
             do {
-                File file = new File(pk_project);
+                Files file = new Files(pk_project);
                 file.setProject_pk(pk_project);
                 file.setFilePk(Integer.parseInt(cursor.getString(0)));
                 file.setPkTask(Integer.parseInt(cursor.getString(1)));
@@ -973,16 +1022,19 @@ public class DBHandler extends SQLiteOpenHelper {
                 fileList.add(file);
             } while (cursor.moveToNext());
         }
+        db.close();
         return fileList;
     }
 
 
     public int getTotalDBEntries_COMMENT_Project(int pk_projet) {
+        SQLiteDatabase db = this.getWritableDatabase();
         String countQuery = "SELECT  * FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK_PROJECT + " = " + pk_projet;
 
         Cursor cursor = db.rawQuery(countQuery, null);
         int cnt = cursor.getCount();
         cursor.close();
+        db.close();
         return cnt;
     }
 

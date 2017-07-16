@@ -4,7 +4,7 @@ package com.example.yadav.taskBoard;
  * Created by cioc on 29/6/17.
  */
 
-public class File {
+public class Files {
     private Integer filePk;
     private String fileLink;
     private int project_pk;
@@ -87,7 +87,7 @@ public class File {
         this.postedUser = postedUser;
     }
 
-    public File(Integer pk) {
+    public Files(Integer pk) {
         pkTask = pk;
     }
 

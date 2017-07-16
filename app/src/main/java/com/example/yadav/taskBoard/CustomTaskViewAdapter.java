@@ -74,10 +74,13 @@ public class CustomTaskViewAdapter extends RecyclerView.Adapter<CustomTaskViewAd
             holder.title.setText(my_data.get(pos).getTitle());
         }
         else holder.title.setText(my_data.get(pos).getTitle().substring(0,40) + "...");
-        if(my_data.get(pos).getDescription().length()<=60) {
-            holder.description.setText(my_data.get(pos).getDescription());
+
+        String[] splitted = my_data.get(pos).getDescription().split("\n");
+
+        if(splitted[0].length()<=60) {
+            holder.description.setText(splitted[0]);
         }
-        else holder.description.setText(my_data.get(pos).getDescription().substring(0,60) + "...");
+        else holder.description.setText(splitted[0] + "...");
        // Glide.with(context).load("http://placehold.it/350x150").into(holder.imageView);
         holder.progressBar.setProgress(my_data.get(pos).getCompletion());
         Integer color;
