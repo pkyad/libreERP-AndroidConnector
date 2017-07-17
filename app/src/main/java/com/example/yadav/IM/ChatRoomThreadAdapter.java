@@ -1,8 +1,12 @@
 package com.example.yadav.IM;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Environment;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.TypedValue;
@@ -10,16 +14,27 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.example.libreerp.Helper;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.FileAsyncHttpResponseHandler;
+
+import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
+import cz.msebera.android.httpclient.Header;
+
+import static com.example.yadav.IM.ChatRoomActivity.cacheCopy;
 import static com.example.yadav.IM.R.drawable.bg_bubble_gray;
 
 
@@ -29,13 +44,14 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private int userId;
     private int SELF = 100;
     private static String today;
-
+    private ImageView card ;
    
     private boolean margin = false;
     private Context mContext;
     private ArrayList<Message> messageArrayList;
     private static final int CAMERA_REQUEST = 1 ;
-    private Bitmap bm = null;
+    private Helper helper;
+
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         private TextView  message , timestamp;
@@ -63,12 +79,12 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View itemView;
         TextView message ;
-        ImageView card ;
+
         ImageView attachment ;
         TextView timestamp ;
-        int position = viewType ;
+        final int position = viewType ;
        
-        String type =  messageType(position);
+        final String type =  messageType(position);
         Boolean self = isSelf(position);
         Boolean margin = giveMargin(position); 
         
@@ -139,12 +155,16 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 card.setImageResource(R.drawable.ic_location_on_black_24dp);
             }
             else if (type.equals("IMG")){
+
                 itemView = LayoutInflater.from(parent.getContext())
                         .inflate(R.layout.card_location, parent, false);
                 // view type is to identify where to render the chat message
                 // left or right
                 card = (ImageView) itemView.findViewById(R.id.image_location);
-                card.setImageBitmap(bm);
+                card.setImageResource(R.drawable.ic_burst_mode_black_24dp);
+                saveFileFromUrl(messageArrayList.get(position).getAttachment());
+
+
             }
             else{ // attachment is file
                 itemView = LayoutInflater.from(parent.getContext())
@@ -154,9 +174,11 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 card = (ImageView) itemView.findViewById(R.id.image_location);
                 if (type.equals("PDF")){ // file is pdf
                     card.setImageResource(R.drawable.ic_picture_as_pdf_black_24dp);
+                    saveFileFromUrl(messageArrayList.get(position).getAttachment());
                 }
                 else {
                     card.setImageResource(R.drawable.ic_insert_drive_file_black_24dp);
+                    saveFileFromUrl(messageArrayList.get(position).getAttachment());
                 }
             }
             if (self) {
@@ -172,14 +194,41 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 itemView = LayoutInflater.from(parent.getContext())
                         .inflate(R.layout.chat_item, parent, false);
             }
+            card.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String url = messageArrayList.get(position).getAttachment();
+                    String extension = url.substring(url.length()-3);
+//                    if (extension.equals("pdf") || extension.equals("PDF")){
+//                        File file = new File(mContext.getFilesDir().getAbsolutePath()+ url.substring(url.lastIndexOf('/') + 1, url.length()));
+//                        Intent intent = new Intent(Intent.ACTION_VIEW);
+//                        intent.setDataAndType(Uri.fromFile(file), "application/pdf");
+//                        intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+//                        mContext.startActivity(intent);
+//                    }
+                     if(extension.equals("JPG") || extension.equals("jpg") || extension.equals("PNG") || extension.equals("png")){
+                        Intent intent = new Intent();
+                        intent.setAction(Intent.ACTION_VIEW);
+                         System.out.println(mContext.getFilesDir().getAbsolutePath()+ url.substring(url.lastIndexOf('/') + 1));
+                        intent.setDataAndType(Uri.parse(mContext.getFilesDir().getAbsolutePath()+ url.substring(url.lastIndexOf('/') + 1)), "image/*");
+                        mContext.startActivity(intent);
+                    }
+                    else{
+                         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                         browserIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                         mContext.startActivity(browserIntent);
+                     }
+                }
+            });
 
         }
 
 
 
-
         return new ViewHolder(itemView);
     }
+
+
     /* public void onReceive(Context context, Intent intent) {
          String action = intent.getAction();
 
@@ -198,7 +247,8 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         String toReturn="MSG";
         if (msgText.startsWith("GPS://")){
             toReturn = "GPS";
-        }else if (!attachment.equals(null) && !attachment.equals("null")){
+        }
+        else if (attachment != null && !attachment.equals("null")){
             String extension = attachment.substring(attachment.length()-3);
             if (extension.equals("pdf") || extension.equals("PDF")){
                 toReturn = "PDF";
@@ -211,6 +261,8 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
         return toReturn ;
     }
+
+
 
 
 
@@ -230,9 +282,10 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         return false ;
     }
 
-    public void getAttachBitmap(int position) {
+    public Bitmap getAttachBitmap(int position) {
         Message message = messageArrayList.get(position);
-        bm =  message.getBm();
+
+        return  message.getBm();
     }
 
     private Boolean isSelf(int position){
@@ -261,6 +314,68 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         else{
             ((ViewHolder) holder).timestamp.setVisibility(View.VISIBLE);
         }
+
+    }
+
+    public void saveFileFromUrl(final String url){
+        if(getFileFromCache(url.substring(url.lastIndexOf('/')+1, url.length()))==null) {
+            helper = new Helper(mContext);
+            final AsyncHttpClient httpClient = helper.getHTTPClient();
+            AsyncHttpClient client = helper.getHTTPClient();
+
+            client.get(url, new FileAsyncHttpResponseHandler(mContext) {
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, File file) {
+                    // Do something with the file `response`
+
+                    try {
+                        //Splitting a File Name from SourceFileName
+                        String DestinationName = url.substring(url.lastIndexOf('/') + 1, url.length());
+                        //Saving an image into DCIM Folder
+                        File newFile = new File(mContext.getFilesDir(), DestinationName);
+                        cacheCopy(file, newFile);
+                        String extension = url.substring(url.length()-3);
+                        if (extension.equals("JPG") || extension.equals("jpg") || extension.equals("PNG") || extension.equals("png")){
+                            Bitmap bm = getFileFromCache(DestinationName);
+                            card.setImageBitmap(bm);
+                        }
+
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+
+                }
+
+                @Override
+                public void onFailure(int statusCode, Header[] headers, Throwable e, File file) {
+                    // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                    System.out.println("failure");
+                    System.out.println(statusCode);
+                }
+            });
+        }
+        else{
+            String extension = url.substring(url.length()-3);
+            if (extension.equals("JPG") || extension.equals("jpg") || extension.equals("PNG") || extension.equals("png")){
+                Bitmap bm = getFileFromCache(url.substring(url.lastIndexOf('/') + 1, url.length()));
+                card.setImageBitmap(bm);
+            }
+        }
+
+    }
+
+    public Bitmap getFileFromCache(String fileName){
+        File dir = new File(mContext.getFilesDir(),"");
+        if (dir.exists()) {
+            for (File f : dir.listFiles()) {
+                //perform here your operation
+                if (f.getName().equals(fileName)){
+                    return BitmapFactory.decodeFile(f.getPath());
+                }
+            }
+        }
+
+     return null;
 
     }
 

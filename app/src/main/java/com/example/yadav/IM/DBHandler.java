@@ -11,7 +11,10 @@ import android.text.style.TextAppearanceSpan;
 import android.util.Log;
 
 import java.security.PublicKey;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -44,26 +47,8 @@ public class DBHandler extends SQLiteOpenHelper {
     public static final String COLUMN_MESSAGE_USER_PK = "USERPK";
     public static final String COLUMN_MESSAGE_SENDER_CHANGE = "SENDERC";
     public static final String COLUMN_MESSAGE_READ_STATUS = "READ"; // 0 for Unread and 1 for read
-    //     comments and commit table
-    public static final String TABLE_COMMENTS = "comment";
-    public static final String COLUMN_PK_COMMENT = "PK_COMMENT";
-    public static final String COLUMN_COMMENT_CREATED = "COMMENT_CREATED";
-    public static final String COLUMN_CATEGORY = "CATEGORY";
-    public static final String COLUMN_TEXT = "TEXT";
-    public static final String COLUMN_COMMIT_PK = "COMMIT_PK";
-    public static final String COLUMN_COMMIT_MESSAGE = "COMMIT_MESSAGE";
-    public static final String COLUMN_POST_USER = "POST_USER";
+    //     file upload
 
-
-    //       users table
-    public static final String TABLE_USERS = "USERS";
-    public static final String COLUMN_USERS_PK = "PK_USERS";
-    public static final String COLUMN_USERNAME = "USERNAME";
-    public static final String COLUMN_FIRST_NAME = "FIRST_NAME";
-    public static final String COLUMN_LAST_NAME = "LAST_NAME";
-    public static final String COLUMN_DESIGNATION = "DESIGNATION";
-    public static final String COLUMN_SOCIAL = "SOCIAL";
-    public static final String COLUMN_DISPLAY_PICTURE = "DISPLAY_PICTURE";
 
     public DBHandler(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, DATABASE_NAME, factory, DATABASE_VERSION);
@@ -93,8 +78,11 @@ public class DBHandler extends SQLiteOpenHelper {
                 + ");";
 
 
+
+
         db.execSQL(queryChat);
         db.execSQL(queryMessage);
+
 
     }
 
@@ -102,8 +90,7 @@ public class DBHandler extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_CHATROOM);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_MESSAGE);
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_COMMENTS);
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
+
         onCreate(db);
     }
 
@@ -138,6 +125,12 @@ public class DBHandler extends SQLiteOpenHelper {
 
         return db.insert(TABLE_MESSAGE, null, initialValues);
     }
+
+
+
+
+
+
 
 
     public long  updateMessageTableChatRoom(int with_pk , String lastMessage , int unread , String timestamp) {
@@ -625,57 +618,7 @@ public class DBHandler extends SQLiteOpenHelper {
 
     // retrive data from table comments
 
-    public String getMessage(int pk_comment) {
-//        ArrayList<String> dbstring = new ArrayList<String>();
-        String dbstring = new String();
-        SQLiteDatabase db = getWritableDatabase();
-        String query = "SELECT * FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK_COMMENT + " = " + pk_comment;
-        Cursor c = db.rawQuery(query, null);
-        c.moveToFirst();
-        while (!c.isAfterLast()) {
-            if (c.getString(c.getColumnIndex("TEXT")) != null) {
-                dbstring = c.getString(c.getColumnIndex("TEXT"));
 
-            }
-            c.moveToNext();
-        }
-        db.close(); c.close();
-        return dbstring;
-    }
-
-    public String getCommitMessage(int pk_comment) {
-        String dbstring = new String();
-        SQLiteDatabase db = getWritableDatabase();
-        String query = "SELECT " + COLUMN_COMMIT_MESSAGE + " FROM " + TABLE_COMMENTS + " WHERE " + COLUMN_PK_COMMENT + " = " + pk_comment;
-        Cursor c = db.rawQuery(query, null);
-        c.moveToFirst();
-
-        while (!c.isAfterLast()) {
-            if (c.getString(c.getColumnIndex("COMMIT_MESSAGE")) != null) {
-                dbstring = c.getString(c.getColumnIndex("COMMIT_MESSAGE"));
-            }
-            c.moveToNext();
-        }
-        db.close(); c.close();
-        return dbstring;
-    }
-
-    public int getCommitPK(int position) {
-        ArrayList<Integer> dbstring = new ArrayList<Integer>();
-        SQLiteDatabase db = getWritableDatabase();
-        String query = "SELECT * FROM " + TABLE_COMMENTS + " WHERE 1";
-        Cursor c = db.rawQuery(query, null);
-        c.moveToFirst();
-
-        while (!c.isAfterLast()) {
-            if (c.getString(c.getColumnIndex("COMMIT_PK")) != null) {
-                dbstring.add(c.getInt(c.getColumnIndex("COMMIT_PK")));
-            }
-            c.moveToNext();
-        }
-        db.close(); c.close();
-        return dbstring.get(position);
-    }
 }
 
 

@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -21,6 +22,7 @@ import android.os.Bundle;
 
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.support.design.widget.BottomSheetDialogFragment;
 import android.support.multidex.MultiDex;
 import android.support.v4.app.NavUtils;
@@ -70,8 +72,11 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -81,10 +86,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import cz.msebera.android.httpclient.Header;
@@ -969,14 +976,6 @@ public class ChatRoomActivity extends AppCompatActivity  {
                         UserMeta usermeta = new UserMeta(message_table.get(i).getPkOriginator());
                         Message message = new Message(Integer.toString(message_table.get(i).getPkMessage()),message_table.get(i).getMessage(),message_table.get(i).getCreated(),usermeta);
                         message.setAttachment(message_table.get(i).getAttachement());
-                        if (message_table.get(i).isSender_change() == 1){
-                            message.setMargin(true);
-                        }
-                        else {
-                            message.setMargin(false);
-                        }
-
-
                         messageArrayList.add(message);
 
                         //)
@@ -1024,6 +1023,27 @@ public class ChatRoomActivity extends AppCompatActivity  {
         };
 
         comment.execute(id);
+    }
+
+    public void saveDPOnSD(Context context, Bitmap pp, String dpFileName){
+
+        File DPFolder = new File(context.getFilesDir() , "DPs");
+        if (!DPFolder.exists()){
+            DPFolder.mkdir();
+        }
+
+        File dpFile = new File(DPFolder, dpFileName);
+
+        try{
+            FileOutputStream fOut = new FileOutputStream(dpFile);
+            pp.compress(Bitmap.CompressFormat.PNG, 85, fOut);
+            fOut.flush();
+            fOut.close();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
 
@@ -1185,7 +1205,13 @@ public class ChatRoomActivity extends AppCompatActivity  {
         Bitmap bm = null ;
         if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
             bm = (Bitmap) data.getExtras().get("data");
-
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            bm.compress(Bitmap.CompressFormat.PNG, 100 , bos);
+            byte[] bitmapdata = bos.toByteArray();
+            ByteArrayInputStream bs = new ByteArrayInputStream(bitmapdata);
+            Date date = new Date();
+            String formattedDate = new SimpleDateFormat("HH:mm").format(date);
+            uploadFile(bs,"captured_" + formattedDate + ".png");
 
             UserMeta user = new UserMeta(login.getPk());
 
@@ -1201,10 +1227,40 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
             if (data != null) {
                 try {
+                    Uri Fpath = data.getData();
                     bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    bm.compress(Bitmap.CompressFormat.PNG, 100 , bos);
+                    byte[] bitmapdata = bos.toByteArray();
+                    ByteArrayInputStream bs = new ByteArrayInputStream(bitmapdata);
+
+                    String uriString = Fpath.toString();
+                    File myFile = new File(uriString);
+                    String displayName = null;
+
+                    if (uriString.startsWith("content://")) {
+                        Cursor cursor = null;
+                        try {
+                            cursor = context.getContentResolver().query(Fpath, null, null, null, null);
+                            if (cursor != null && cursor.moveToFirst()) {
+                                displayName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                            }
+                        } finally {
+                            cursor.close();
+                        }
+                    } else if (uriString.startsWith("file://")) {
+                        displayName = myFile.getName();
+                    }
+                    String[] splitted = displayName.split("_");
+                    displayName = splitted[splitted.length-1];
+                    //  String s = getFileNameByUri(Fpath);
+                    uploadFile(bs,displayName);
+
+
                     card_location_image.setImageBitmap(bm);
 
-                   // Message dummy = new Message("1","","1 am" ,user1);
+
+                    // Message dummy = new Message("1","","1 am" ,user1);
                    // dummy.setLocation(2); // 2 is for gallery
                   //  dummy.setBm(bm);
                   //  messageArrayList.add(dummy) ;
@@ -1219,25 +1275,134 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
         }
         if (requestCode == CHOOSE_FILE_REQUESTCODE && resultCode == Activity.RESULT_OK) {
-            String Fpath = data.getData().getPath();
-            String filename=Fpath.substring(Fpath.lastIndexOf("/")+1);
-            String extension = Fpath.substring(Fpath.lastIndexOf(".") + 1);
-           // Message dummy = new Message("1",Fpath,"1 am" ,user1);
-            extension = "pdf";
-            if (extension.equals("pdf") == true || extension.equals("PDF") == true || extension.equals(".pdf") == true ||  extension.equals(".PDF") == true ){
-           //     dummy.setLocation(5); // 5 is for pdf
+            Uri Fpath = data.getData();
+            InputStream is = null;
+            try {
+                is = getContentResolver().openInputStream(Fpath);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
             }
-            else {
-          //      dummy.setLocation(6); // 6 is for other document
+            String uriString = Fpath.toString();
+            File myFile = new File(uriString);
+            String displayName = null;
+
+            if (uriString.startsWith("content://")) {
+                Cursor cursor = null;
+                try {
+                    cursor = context.getContentResolver().query(Fpath, null, null, null, null);
+                    if (cursor != null && cursor.moveToFirst()) {
+                        displayName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                    }
+                } finally {
+                    cursor.close();
+                }
+            } else if (uriString.startsWith("file://")) {
+                displayName = myFile.getName();
             }
-         //   messageArrayList.add(dummy) ;
-            mAdapter.notifyDataSetChanged();
+            String[] splitted = displayName.split("_");
+            displayName = splitted[splitted.length-1];
+            uploadFile(is,displayName);
 
         }
 
     }
 
+    private void uploadFile(InputStream is,String fileName){
+        final DBHandler dba = new DBHandler(this, null, null, 2);
 
+        RequestParams params = new RequestParams();
+        final Helper helper = new Helper(context);
+
+        final AsyncHttpClient httpClient = helper.getHTTPClient();
+
+
+        params.put("message", "");
+        params.put("user",with_id);
+        params.put("read",false);
+        params.put("attachment", is,fileName);
+        int msgPk ;
+
+        String url = String.format("%s/%s/" , helper.serverURL, "api/PIM/chatMessage");
+        final ChatRoomTable chatRoomTable = new ChatRoomTable();
+        httpClient.post(url, params, new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                super.onSuccess(statusCode, headers, response);
+                try {
+
+                        String message;
+                        String attachement;
+                        int pkOriginator;
+                        String created;
+                        boolean read;
+                        int pkUser;
+
+                        int msgPk = response.getInt("pk");
+                        String rtcMsg = String.format("%s||%s||%s||%s", "M", "", login.getUsername(), msgPk);
+                        client.publish(chennel, rtcMsg);
+
+                        inputMessage.setText("");
+                        if (!dba.CheckIfMessagePKAlreadyInDBorNot(msgPk)) { // check in table of Message
+                            message = response.getString("message");
+                            attachement = response.getString("attachment");
+                            pkOriginator = response.getInt("originator");
+                            created = response.getString("created").replace("Z", "").replace("T", " ");
+                            read = response.getBoolean("read");
+                            pkUser = response.getInt("user");
+
+                            chatRoomTable.setSender_change(0);
+
+
+                            chatRoomTable.setAttachement(attachement);
+                            chatRoomTable.setCreated(created);
+                            chatRoomTable.setMessage(message);
+                            chatRoomTable.setPkMessage(msgPk);
+                            chatRoomTable.setPkOriginator(pkOriginator);
+                            chatRoomTable.setPkUser(pkUser);
+                            chatRoomTable.setChatRoomID(chatRoomId);
+                            dba.insertTableMessage(chatRoomTable);
+
+                            dba.updateMessageTableChatRoom(pkUser, message, 0, created);
+
+                            UserMeta usermeta = new UserMeta(login.getPk());
+                            Message sentMessage = new Message(Integer.toString(chatRoomTable.getPkMessage()), "", chatRoomTable.getCreated(), usermeta);
+
+                            sentMessage.setAttachment(chatRoomTable.getAttachement());
+                            messageArrayList.add(sentMessage);
+                            mAdapter.notifyDataSetChanged();
+                            recyclerView.scrollToPosition(mAdapter.getItemCount() - 1);
+
+                        }
+
+                    // now to update last message of chatRoomTable from db
+
+                } catch (JSONException e) {
+                    Log.e("TAG", "Json parsing error: " + e.getMessage());
+                }
+                // mAdapter.notifyDataSetChanged();
+                // recyclerView.scrollToPosition(messageArrayList.size()-1);
+
+                // layoutManager.setStackFromEnd(true);
+            }
+
+
+            @Override
+            public void onFinish() {
+                System.out.println("finished 001cxczdfhgfg");
+                // retrieve all the db entries
+
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                super.onFailure(statusCode, headers, responseString, throwable);
+                System.out.println("finished failed 001xczxc gbfdgfdgdf");
+            }
+
+
+        });
+
+    }
 
 
 
@@ -1312,6 +1477,17 @@ public class ChatRoomActivity extends AppCompatActivity  {
     }
 
 
+    //Copy downloaded file into SD Card From cache
+    public static void cacheCopy(File src, File dst) throws IOException {
+        FileChannel inChannel = new FileInputStream(src).getChannel();
+        FileChannel outChannel = new FileOutputStream(dst).getChannel();
+        try {
+            inChannel.transferTo(0, inChannel.size(), outChannel);
+        } finally
+        {
+            if (inChannel != null) inChannel.close(); if (outChannel != null) outChannel.close();
+        }
+    }
 
 
 
