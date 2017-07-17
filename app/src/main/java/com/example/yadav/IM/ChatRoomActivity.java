@@ -1051,6 +1051,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
     }
 
     private void sendPhoto()  {
+
         Intent cameraintent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(cameraintent, CAMERA_REQUEST);
     }
@@ -1146,6 +1147,12 @@ public class ChatRoomActivity extends AppCompatActivity  {
                                 dba.insertTableMessage(chatRoomTable);
 
                                 dba.updateMessageTableChatRoom(pkUser ,message ,0 ,created);
+                                UserMeta usermeta = new UserMeta(login.getPk());
+                                Message locationMessage = new Message(Integer.toString(chatRoomTable.getPkMessage()),content,chatRoomTable.getCreated(),usermeta);
+                                locationMessage.setAttachment(chatRoomTable.getAttachement());
+                                messageArrayList.add(locationMessage);
+                                mAdapter.notifyDataSetChanged();
+
 
                             }
                             // now to update last message of chatRoomTable from db
@@ -1169,11 +1176,6 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
 
 
-                UserMeta usermeta = new UserMeta(login.getPk());
-                Message message = new Message(Integer.toString(chatRoomTable.getPkMessage()),content,showTime,usermeta);
-                message.setAttachment(chatRoomTable.getAttachement());
-                messageArrayList.add(message);
-                mAdapter.notifyDataSetChanged();
 
 
 

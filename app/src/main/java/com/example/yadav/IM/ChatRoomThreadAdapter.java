@@ -194,7 +194,7 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private String messageType(int position){
         Message msg = messageArrayList.get(position);
         String msgText = msg.getMessage();
-        String attachment = "null";
+        String attachment = msg.getAttachment();
         String toReturn="MSG";
         if (msgText.startsWith("GPS://")){
             toReturn = "GPS";
