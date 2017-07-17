@@ -9,6 +9,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -94,6 +95,7 @@ public class HomeFragment extends Fragment {
 
                 Helper helper = new Helper(context);
                 httpClient = helper.getHTTPClient();
+
                  if (is_typing.equals("M")){
                     int msgPK = Integer.parseInt(intent.getStringExtra("msgPK"));
 
@@ -237,7 +239,11 @@ public class HomeFragment extends Fragment {
 
 
 
+    public void clearData(){
+        if(chatRoomArrayList.size() != 0)
+        chatRoomArrayList.clear();
 
+    }
 
 
 
@@ -270,9 +276,10 @@ public class HomeFragment extends Fragment {
 
 
         chatRoomArrayList = new ArrayList<>();
+        //clearData();
         context = getActivity().getApplicationContext();
         mContext = this ;
-        mAdapter = new ChatRoomsAdapter(mContext, chatRoomArrayList,context);
+        mAdapter = new ChatRoomsAdapter(mContext, chatRoomArrayList,context,getActivity().getSupportFragmentManager());
         int size = chatRoomArrayList.size();
         layoutManager = new LinearLayoutManager( getActivity());
         recyclerView.setLayoutManager(layoutManager);
@@ -284,40 +291,40 @@ public class HomeFragment extends Fragment {
         recyclerView.setAdapter(mAdapter);
 
 
-        recyclerView.addOnItemTouchListener(new ChatRoomsAdapter.RecyclerTouchListener(getActivity(), recyclerView, new ChatRoomsAdapter.ClickListener() {
-            @Override
-            public void onClick(View view, int position) {
-                // when chat is clicked, launch full chat thread activity
-
-
-                ChatRoom chatRoom = chatRoomArrayList.get(position);
-
-                int pk_select = chatRoom.getWith_pk();
-                String name_select =  chatRoom.getName();
-                Intent intent = new Intent(getActivity(), ChatRoomActivity.class);
-                intent.putExtra("chatID", Integer.toString(chatRoom.getId()));
-                intent.putExtra("with_id", Integer.toString(pk_select));
-                intent.putExtra("name", name_select);
-                intent.putExtra("userName" , chatRoom.getUsername());
-               /* intent.putExtra("UnreadMessages", storeUnreadList);
-
-                for (int i = storeUnreadList.size() - 1 ; i >= 0 ; i++){
-                    storeUnreadList.remove(i);
-                }*/
-
-                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                chatRoom.getDP().compress(Bitmap.CompressFormat.PNG, 80, stream);
-                byte[] byteArray = stream.toByteArray();
-                intent.putExtra("dp", byteArray);
-                startActivity(intent);
-            }
-
-
-            @Override
-            public void onLongClick(View view, int position) {
-
-            }
-        }));
+//        recyclerView.addOnItemTouchListener(new ChatRoomsAdapter.RecyclerTouchListener(getActivity(), recyclerView, new ChatRoomsAdapter.ClickListener() {
+//            @Override
+//            public void onClick(View view, int position) {
+//                // when chat is clicked, launch full chat thread activity
+//
+//
+//                ChatRoom chatRoom = chatRoomArrayList.get(position);
+//
+//                int pk_select = chatRoom.getWith_pk();
+//                String name_select =  chatRoom.getName();
+//                Intent intent = new Intent(getActivity(), ChatRoomActivity.class);
+//                intent.putExtra("chatID", Integer.toString(chatRoom.getId()));
+//                intent.putExtra("with_id", Integer.toString(pk_select));
+//                intent.putExtra("name", name_select);
+//                intent.putExtra("userName" , chatRoom.getUsername());
+//               /* intent.putExtra("UnreadMessages", storeUnreadList);
+//
+//                for (int i = storeUnreadList.size() - 1 ; i >= 0 ; i++){
+//                    storeUnreadList.remove(i);
+//                }*/
+//
+//                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//                chatRoom.getDP().compress(Bitmap.CompressFormat.PNG, 80, stream);
+//                byte[] byteArray = stream.toByteArray();
+//                intent.putExtra("dp", byteArray);
+//                startActivity(intent);
+//            }
+//
+//
+//            @Override
+//            public void onLongClick(View view, int position) {
+//
+//            }
+//        }));
 
         fetchChatRooms();
         return myView;
@@ -342,7 +349,7 @@ public class HomeFragment extends Fragment {
                     }
                 }
                 recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-                mAdapter = new ChatRoomsAdapter(mContext,filterData,context);
+                mAdapter = new ChatRoomsAdapter(mContext,filterData,context,getActivity().getSupportFragmentManager());
                 recyclerView.setAdapter(mAdapter);
                 mAdapter.notifyDataSetChanged();
                 return false;
@@ -362,7 +369,7 @@ public class HomeFragment extends Fragment {
                         }
                     }
                     recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-                    mAdapter = new ChatRoomsAdapter(mContext, filterData, context);
+                    mAdapter = new ChatRoomsAdapter(mContext, filterData, context,getActivity().getSupportFragmentManager());
                     recyclerView.setAdapter(mAdapter);
                     mAdapter.notifyDataSetChanged();
 
@@ -459,13 +466,13 @@ public class HomeFragment extends Fragment {
                                if (other == login_pk) {
                                    other = pkUser_copy;
                                }
-                               if (other_pk == other && read == false){
+                               if (other_pk == other && read_copy == false){
                                    total_unread ++ ;
                                }
 
                            }
 
-                           chatRoomTable.setTotal_UnRead(0);
+                           chatRoomTable.setTotal_UnRead(total_unread);
                            if (!dba.CheckIfPKAlreadyInDBorNot(other_pk)) { // check in table for chatroom
                                dba.insertTableChatRoom(chatRoomTable);
                            } else { // update it
@@ -482,6 +489,7 @@ public class HomeFragment extends Fragment {
 
                         ignore_id.add(other_pk);
                     }
+                    chatRoomArrayList.clear();
                     load_data_from_database(0);
                     mAdapter.notifyDataSetChanged();
                     recyclerView.scrollToPosition(chatRoomArrayList.size() - 1);

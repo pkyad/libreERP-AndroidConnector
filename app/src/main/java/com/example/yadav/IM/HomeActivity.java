@@ -75,12 +75,28 @@ public class HomeActivity extends AppCompatActivity
     DBHandler dba;
     private BroadcastReceiver mReceiver;
     private Helper helper;
-    private ArrayList<NotificationMessage> unreadNotification = new ArrayList<NotificationMessage>();
+    private ArrayList<NotificationMessage> unreadNotification;
     private boolean firstTime = true ;
+    private static Boolean connected = false;
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         context = getApplicationContext();
+
+        unreadNotification = new ArrayList<NotificationMessage>();
+        unreadNotification.clear();
+        dba = new DBHandler(context, null, null, 1);
+
+        unreadNotification = dba.getAllUnReadMessages(0);
+        for (int i = unreadNotification.size()-1 ; i >= 0 ; i--){
+            if (unreadNotification.get(i).getUnreadChat() < 1){
+                unreadNotification.remove(i);
+            }
+        }
+
 
         setContentView(R.layout.activity_home);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -113,106 +129,135 @@ public class HomeActivity extends AppCompatActivity
 
         });
 
-        WampClientBuilder builder = new WampClientBuilder();
+        usr = User.loadUser(context);
+
+        if (!connected){
+
+            WampClientBuilder builder = new WampClientBuilder();
 
 
-        try{
-            builder.withUri("ws://pradeepyadav.net:8080/ws")
-                    .withRealm("default")
-                    .withInfiniteReconnects()
-                    .withReconnectInterval(10, TimeUnit.SECONDS);
-
-            client = builder.build();
-
-            client.open();
-
-            String done = "ok";
-
-            client.statusChanged().subscribe(new Action1<WampClient.Status>() {
-                private Subscription procSubscription;
-
-                public void call(WampClient.Status t1) {
-                    Log.d("info","Session status changed to " + t1);
-
-                    if (t1 == WampClient.Status.Connected) {
-                        Log.d("info","Connected");
-
-                        procSubscription = client.makeSubscription("service.chat.admin").subscribe(new Action1<PubSubData>() {
-                            @Override
-                            public void call(PubSubData pubSubData) {
-                                String message = pubSubData.toString();
-                                ArrayNode c  = pubSubData.arguments();
-                                String type = c.get(0).textValue();
-                                String new_message = c.get(1).textValue();
-                                String type_user = c.get(2).textValue();
-
-                                Intent intent = new Intent();
-                                intent.setAction("com.libreERP.TYPING");
-                                intent.putExtra("type",type);
-                                intent.putExtra("new_message",new_message);
-                                intent.putExtra("type_user",type_user);
-
-                                if (type.equals("M") ){
-
-                                    intent.putExtra("msgPK" , c.get(3).toString());
+            try{
 
 
-                                    final int msgPK =  Integer.parseInt(c.get(3).toString());
+                builder.withUri("ws://pradeepyadav.net:8080/ws")
+                        .withRealm("default")
+                        .withInfiniteReconnects()
+                        .withReconnectInterval(10, TimeUnit.SECONDS);
+
+                client = builder.build();
+
+                client.open();
+
+                String done = "ok";
+
+                client.statusChanged().subscribe(new Action1<WampClient.Status>() {
+                    private Subscription procSubscription;
+
+                    public void call(WampClient.Status t1) {
+                        Log.d("info","Session status changed to " + t1);
+
+                        if (t1 == WampClient.Status.Connected) {
+                            Log.d("info","Connected");
 
 
-                                    // if the username is not prsent in chatroom then create new chatRoom else update the last Messsage;
+                            String channel = String.format("service.chat.%s", usr.getUsername());
 
-                                   try{
-                                       Thread thread = new Thread() {
-                                           public void run() {
-                                               Looper.prepare();
-
-                                               final Handler handler = new Handler();
-                                               handler.postDelayed(new Runnable() {
-                                                   @Override
-                                                   public void run() {
-                                                       fetchNotificationData(msgPK);
-                                                       handler.removeCallbacks(this);
-                                                       //Looper.myLooper().quit();
-                                                   }
-                                               }, 2000);
-
-                                               Looper.loop();
-                                           }
-                                       };
-                                       thread.start();
-
-                                   }catch (rx.exceptions.OnErrorNotImplementedException e){
-                                       System.out.println("failure");
-                                   }
+                            procSubscription = client.makeSubscription(channel).subscribe(new Action1<PubSubData>() {
+                                @Override
+                                public void call(PubSubData pubSubData) {
+                                    connected = true;
 
 
 
+                                    String message = pubSubData.toString();
+                                    ArrayNode c  = pubSubData.arguments();
+
+                                    String type, new_message, type_user;
+
+                                    if (c.size()==1){
+                                        String [] args = c.get(0).textValue().split("||");
+
+                                        type = args[0];
+                                        new_message = args[1];
+                                        type_user = args[2];
+
+                                    }else{
+
+                                        type = c.get(0).textValue();
+                                        new_message = c.get(1).textValue();
+                                        type_user = c.get(2).textValue();
+                                    }
 
 
 
+                                    Intent intent = new Intent();
+                                    intent.setAction("com.libreERP.TYPING");
+                                    intent.putExtra("type",type);
+                                    intent.putExtra("new_message",new_message);
+                                    intent.putExtra("type_user",type_user);
+
+                                    if (type.equals("M") ){
+
+                                        intent.putExtra("msgPK" , c.get(3).toString());
+
+
+                                        final int msgPK =  Integer.parseInt(c.get(3).toString());
+
+
+                                        // if the username is not prsent in chatroom then create new chatRoom else update the last Messsage;
+
+                                        try{
+                                            Thread thread = new Thread() {
+                                                public void run() {
+                                                    Looper.prepare();
+
+                                                    final Handler handler = new Handler();
+                                                    handler.postDelayed(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            fetchNotificationData(msgPK);
+                                                            handler.removeCallbacks(this);
+                                                            //Looper.myLooper().quit();
+                                                        }
+                                                    }, 2000);
+
+                                                    Looper.loop();
+                                                }
+                                            };
+                                            thread.start();
+
+                                        }catch (rx.exceptions.OnErrorNotImplementedException e){
+                                            System.out.println("failure");
+                                        }
+
+
+
+
+
+
+
+                                    }
+
+                                    sendBroadcast(intent);
 
                                 }
-
-                                sendBroadcast(intent);
-
-                            }
-                        });
-//                        client.publish("service.chat.admin", "{'key': 'some text messag'}");
+                            });
+        //                        client.publish("service.chat.admin", "{'key': 'some text messag'}");
+                        }
                     }
-                }
 
-            });
+                });
 
-            client.open();
+                client.open();
 
 
-        }catch (ws.wamp.jawampa.ApplicationError e){
-            String done = "ok";
+            }catch (ws.wamp.jawampa.ApplicationError e){
+                String done = "ok";
+            }
         }
-        //=======================
+                //=======================
 
-        usr = User.loadUser(context);
+
 
         ImageView image =(ImageView) navigationView.getHeaderView(0).findViewById(R.id.displayPic);
 
@@ -260,7 +305,22 @@ public class HomeActivity extends AppCompatActivity
                     }else{
                         with_pk = pkOriginator ;
                     }
-
+                    // adding of new messages
+                    boolean newWithPK = true ;
+                    for (int i = 0 ; i < unreadNotification.size() ; i++){
+                        if (with_pk == unreadNotification.get(i).getWith_pk()){
+                            unreadNotification.get(i).setUnreadChat(unreadNotification.get(i).getUnreadChat() + 1);
+                            newWithPK = false ;
+                        }
+                    }
+                    if (newWithPK == true){
+                        NotificationMessage newNotification = new NotificationMessage();
+                        newNotification.setMessage(message);
+                        newNotification.setTimestamp(getCommitDate(created));
+                        newNotification.setUnreadChat(1);
+                        newNotification.setWith_pk(with_pk);
+                        unreadNotification.add(newNotification);
+                    }
 
 
                     // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
@@ -324,7 +384,7 @@ public class HomeActivity extends AppCompatActivity
                 targetDate = formatter_yr.format(date);
             }
         } catch (ParseException e) {
-            System.out.println("error while parsing date");
+            System.out.println("error while parsing date 1");
         }
 
         return targetDate ;
@@ -332,6 +392,7 @@ public class HomeActivity extends AppCompatActivity
 
 
     private void addNotification(String message ,int withPK, String time) {
+
         int icon = R.drawable.ic_action_home;
         long when = System.currentTimeMillis();
         int notifyID = 1;
@@ -371,14 +432,10 @@ public class HomeActivity extends AppCompatActivity
             }
 
         });
-        NotificationMessage notificationMessage = new NotificationMessage();
-        notificationMessage.setTimestamp(time);
-        notificationMessage.setWith_pk(withPK);
-        notificationMessage.setMessage(message);
-        unreadNotification.add(notificationMessage);
+
         builder.setSmallIcon(icon);
         builder.setAutoCancel(true);
-        if (firstTime) {
+        if (unreadNotification.size() == 1 && unreadNotification.get(0).getUnreadChat() == 1) {
 
 
 
@@ -393,7 +450,7 @@ public class HomeActivity extends AppCompatActivity
 
 
 
-            dba = new DBHandler(context, null, null, 1);
+
             int chatId = dba.getIDFromWithPk(withPK);
 
 
@@ -415,19 +472,19 @@ public class HomeActivity extends AppCompatActivity
             // Add as notification
 
 
-            firstTime = false ;
+
         }
         else {
             Set<Integer> mySet = new HashSet<Integer>();
+            int number_Messages = 0 ;
 
-
-            int differentWithPK = 0 ;
-            int number_Messages = unreadNotification.size();
-            // Now to Calculate different withPK
-            for (int i = 0 ; i <  number_Messages ; i++ ){
-                mySet.add(unreadNotification.get(i).getWith_pk());
+            for (int i = 0 ; i < unreadNotification.size() ; i++){
+                    number_Messages = number_Messages + unreadNotification.get(i).getUnreadChat();
             }
-            differentWithPK = mySet.size();
+            int differentWithPK = unreadNotification.size();
+
+            // Now to Calculate different withPK
+
             builder.setContentText(message);
 
             String notification_Message ;
@@ -436,6 +493,7 @@ public class HomeActivity extends AppCompatActivity
                 notification_Message = Integer.toString(number_Messages) + " messages " ;
                 contentView.setTextViewText(R.id.notificationTime, time);
                 contentView.setTextViewText(R.id.notificationTitle, notification_Message);
+                contentView.setTextViewText(R.id.notificationText, name[0]);
                 builder.setContent(contentView);
 
                 dba = new DBHandler(context, null, null, 1);
@@ -452,7 +510,7 @@ public class HomeActivity extends AppCompatActivity
                 final Intent IntentHomeActivity = new Intent(this, HomeActivity.class);
                 notification_Message = Integer.toString(number_Messages) + " messages from " + Integer.toString(differentWithPK) + " chats" ;
                 contentView.setTextViewText(R.id.notificationTime, time);
-                contentView.setTextViewText(R.id.notificationTitle, message);
+                contentView.setTextViewText(R.id.notificationTitle, notification_Message);
                 contentView.setTextViewText(R.id.notificationText, "LIBRE-ERP CHATS");
                 contentView.setImageViewResource(R.id.notificationDp, R.drawable.ic_action_gear);
 

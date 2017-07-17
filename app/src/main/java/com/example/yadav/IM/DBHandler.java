@@ -435,6 +435,37 @@ public class DBHandler extends SQLiteOpenHelper {
         return dbstring ;
     }
 
+    public ArrayList<NotificationMessage> getAllUnReadMessages(int value) {
+        ArrayList<NotificationMessage> dbstring = new ArrayList<NotificationMessage>();
+        SQLiteDatabase db = getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_CHATROOM + " WHERE 1";
+        Cursor c = db.rawQuery(query, null);
+        c.moveToFirst();
+
+        while (!c.isAfterLast()) {
+            NotificationMessage unreadMessage = new NotificationMessage();
+            if (c.getString(c.getColumnIndex("LASTMESSAGE")) != null) {
+
+                unreadMessage.setMessage(c.getString(c.getColumnIndex("LASTMESSAGE")));
+            }
+
+
+            if (c.getString(c.getColumnIndex("PK")) != null) {
+                unreadMessage.setWith_pk(c.getInt(c.getColumnIndex("PK")));
+            }
+            if (c.getString(c.getColumnIndex("UNREAD")) != null) {
+                unreadMessage.setUnreadChat(c.getInt(c.getColumnIndex("UNREAD")));
+            }
+            if (c.getString(c.getColumnIndex("DATE")) != null) {
+                unreadMessage.setTimestamp(c.getString(c.getColumnIndex("DATE")));
+            }
+
+            dbstring.add(unreadMessage);
+            c.moveToNext();
+        }
+        db.close(); c.close();
+        return dbstring ;
+    }
 
     public String getLastMessage(int position) {
         ArrayList<String> dbstring = new ArrayList<String>();

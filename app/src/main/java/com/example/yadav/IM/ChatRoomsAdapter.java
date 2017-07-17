@@ -1,19 +1,28 @@
 package com.example.yadav.IM;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.support.design.widget.BottomSheetDialogFragment;
+import android.support.multidex.MultiDexApplication;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.example.libreerp.UserMeta;
 import com.example.libreerp.UserMetaHandler;
 import com.example.libreerp.Users;
+import android.support.v4.app.Fragment;
 
+import java.io.ByteArrayOutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -22,16 +31,18 @@ import java.util.Date;
 import de.hdodenhof.circleimageview.CircleImageView;
 
 
-public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.ViewHolder> {
+public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.ViewHolder>  {
 
     private HomeFragment mContext;
     private ArrayList<ChatRoom> chatRoomArrayList;
     private static String today;
     private Context context;
+    private FragmentManager fragmentManager ;
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public TextView name, message, timestamp, count;
         public CircleImageView chatRoomDP;
+        public RelativeLayout imagelayout , chatlayout ;
 
         public ViewHolder(View view) {
             super(view);
@@ -40,14 +51,26 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
             timestamp = (TextView) view.findViewById(R.id.timestamp);
             count = (TextView) view.findViewById(R.id.count);
             chatRoomDP = (CircleImageView) view.findViewById(R.id.chatRoomDP);
+            imagelayout = (RelativeLayout) view.findViewById(R.id.imagelayout);
+            chatlayout = (RelativeLayout) view.findViewById(R.id.chatlayout);
+
+
+
         }
     }
+//    public void bottomSheet(View view){
+//        TextView view1 = (TextView) view.findViewById(R.id.userPK);
+//
+//        final BottomSheetDialogFragment userViewBS = UserViewBS.newInstance(Integer.parseInt(view1.getText().toString()));
+//        userViewBS.show(getActivity().getSupportFragmentManager(), userViewBS.getTag());
+//
+//    }
 
-
-    public ChatRoomsAdapter(HomeFragment mContext, ArrayList<ChatRoom> chatRoomArrayList, Context context) {
+    public ChatRoomsAdapter(HomeFragment mContext, ArrayList<ChatRoom> chatRoomArrayList, Context context , FragmentManager fragmentManager) {
         this.mContext = mContext;
         this.chatRoomArrayList = chatRoomArrayList;
         this.context = context;
+        this.fragmentManager = fragmentManager ;
         // Calendar calendar = Calendar.getInstance();
         // today = String.valueOf(calendar.get(Calendar.DAY_OF_MONTH));
     }
@@ -62,9 +85,10 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        ChatRoom chatRoom = chatRoomArrayList.get(position);
+        final int index = position ;
+        ChatRoom chatRoom = chatRoomArrayList.get(index);
         int size = chatRoomArrayList.size();
-        int with_pk = chatRoom.getWith_pk();
+        final int with_pk = chatRoom.getWith_pk();
         Users users = new Users(context);
         final String[] name = new String[1];
         final String[] username = new String[1];
@@ -97,8 +121,12 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
 
 //        holder.chatRoomDP.setImageBitmap(dpBitmap);
 
+        String lastMsgText = chatRoom.getLastMessage().split("\n")[0];
+        if (lastMsgText.length()>20){
+            lastMsgText = lastMsgText.substring(0,20);
+        }
 
-        holder.message.setText(chatRoom.getLastMessage());
+        holder.message.setText(lastMsgText);
         holder.timestamp.setText(getCommitDate(chatRoom.getTimestamp()));
         if (chatRoom.getUnreadCount() > 0) {
             holder.count.setText(String.valueOf(chatRoom.getUnreadCount()));
@@ -108,6 +136,39 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
         }
 
         // holder.timestamp.setText(getTimeStamp(chatRoom.getTimestamp()));
+        holder.imagelayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final BottomSheetDialogFragment userViewBS = UserViewBS.newInstance(with_pk);
+                userViewBS.show(fragmentManager, userViewBS.getTag());
+            }
+        });
+
+        holder.chatlayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ChatRoom chatRoom = chatRoomArrayList.get(index);
+
+                int pk_select = chatRoom.getWith_pk();
+                String name_select =  chatRoom.getName();
+                Intent intent = new Intent(context, ChatRoomActivity.class);
+                intent.putExtra("chatID", Integer.toString(chatRoom.getId()));
+                intent.putExtra("with_id", Integer.toString(pk_select));
+                intent.putExtra("name", name_select);
+                intent.putExtra("userName" , chatRoom.getUsername());
+               /* intent.putExtra("UnreadMessages", storeUnreadList);
+
+                for (int i = storeUnreadList.size() - 1 ; i >= 0 ; i++){
+                    storeUnreadList.remove(i);
+                }*/
+
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                chatRoom.getDP().compress(Bitmap.CompressFormat.PNG, 80, stream);
+                byte[] byteArray = stream.toByteArray();
+                intent.putExtra("dp", byteArray);
+                mContext.startActivity(intent);
+            }
+        });
     }
 
     @Override
@@ -192,7 +253,7 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
                 targetDate = formatter_yr.format(date);
             }
         } catch (ParseException e) {
-            System.out.println("error while parsing date");
+            System.out.println("error while parsing date 2");
         }
 
         return targetDate ;

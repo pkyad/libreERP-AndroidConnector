@@ -8,6 +8,16 @@ public class NotificationMessage {
     private String timestamp ;
     private int with_pk ;
 
+    public int getUnreadChat() {
+        return unreadChat;
+    }
+
+    public void setUnreadChat(int unreadChat) {
+        this.unreadChat = unreadChat;
+    }
+
+    private int unreadChat ;
+
     public String getMessage() {
         return message;
     }

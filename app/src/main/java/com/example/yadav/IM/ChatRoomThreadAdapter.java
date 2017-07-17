@@ -29,8 +29,9 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private int userId;
     private int SELF = 100;
     private static String today;
-    private int ATTACH = 0;
-    private boolean MARGIN = false;
+
+   
+    private boolean margin = false;
     private Context mContext;
     private ArrayList<Message> messageArrayList;
     private static final int CAMERA_REQUEST = 1 ;
@@ -65,9 +66,13 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         ImageView card ;
         ImageView attachment ;
         TextView timestamp ;
-        ATTACH = 0 ;
-
-        if (ATTACH == 0) {
+        int position = viewType ;
+       
+        String type =  messageType(position);
+        Boolean self = isSelf(position);
+        Boolean margin = giveMargin(position); 
+        
+        if (type.equals("MSG")) {
             itemView = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.chat_item, parent, false);
             RelativeLayout relativeLayout = (RelativeLayout) itemView.findViewById(R.id.relativelayout);
@@ -76,17 +81,17 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             message = (TextView) itemView.findViewById(R.id.message);
             timestamp = (TextView) itemView.findViewById(R.id.time);
 
-            if (viewType == SELF) {
+            if (self) {
                 // self message
-                if (MARGIN == true) {
+                if (margin == true) {
                     RelativeLayout.LayoutParams params = new  RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
                     int sizeInDP = 40;
 
                     int marginInDp = (int) TypedValue.applyDimension(
                             TypedValue.COMPLEX_UNIT_DIP, sizeInDP, mContext.getResources().getDisplayMetrics());
                     params.setMargins(params.leftMargin, marginInDp, params.rightMargin, params.bottomMargin);
-                   // relativeLayout.setLayoutParams(params);
-                    MARGIN = false ;
+                    // relativeLayout.setLayoutParams(params);
+                    margin = false ;
                 }
 
                 ((RelativeLayout) itemView).setGravity(Gravity.RIGHT);
@@ -107,24 +112,24 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
             } else {
                 // others message
-                if (MARGIN == true) {
+                if (margin == true) {
                     RelativeLayout.LayoutParams params = new  RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
                     int sizeInDP = 40;
 
                     int marginInDp = (int) TypedValue.applyDimension(
                             TypedValue.COMPLEX_UNIT_DIP, sizeInDP, mContext.getResources().getDisplayMetrics());
                     params.setMargins(params.leftMargin, marginInDp, params.rightMargin, params.bottomMargin);
-                   // relativeLayout.setLayoutParams(params);
-                    MARGIN = false ;
+                    // relativeLayout.setLayoutParams(params);
+                    margin = false ;
                 }
                 //itemView = LayoutInflater.from(parent.getContext())
-                  //      .inflate(R.layout.chat_item, parent, false);
-               // timestamp.setGravity(Gravity.LEFT);
+                //      .inflate(R.layout.chat_item, parent, false);
+                // timestamp.setGravity(Gravity.LEFT);
             }
         }
         else { // given message is card message
-           ;
-            if (ATTACH == 1) {
+            ;
+            if (type.equals("GPS")) {
                 itemView = LayoutInflater.from(parent.getContext())
                         .inflate(R.layout.card_location, parent, false);
                 // view type is to identify where to render the chat message
@@ -133,7 +138,7 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
                 card.setImageResource(R.drawable.ic_location_on_black_24dp);
             }
-            else if (ATTACH == 2 || ATTACH == 3 ){
+            else if (type.equals("IMG")){
                 itemView = LayoutInflater.from(parent.getContext())
                         .inflate(R.layout.card_location, parent, false);
                 // view type is to identify where to render the chat message
@@ -147,14 +152,14 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 // view type is to identify where to render the chat message
                 // left or right
                 card = (ImageView) itemView.findViewById(R.id.image_location);
-                if (ATTACH == 5){ // file is pdf
+                if (type.equals("PDF")){ // file is pdf
                     card.setImageResource(R.drawable.ic_picture_as_pdf_black_24dp);
                 }
                 else {
                     card.setImageResource(R.drawable.ic_insert_drive_file_black_24dp);
                 }
             }
-            if (viewType == SELF) {
+            if (self) {
                 // self message
 
                 ((RelativeLayout) itemView).setGravity(Gravity.RIGHT);
@@ -175,44 +180,69 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
         return new ViewHolder(itemView);
     }
-   /* public void onReceive(Context context, Intent intent) {
-        String action = intent.getAction();
+    /* public void onReceive(Context context, Intent intent) {
+         String action = intent.getAction();
 
-        Log.i("Receiver", "Broadcast received: " + action);
+         Log.i("Receiver", "Broadcast received: " + action);
 
-        if(action.equals("com.example.broadcast.MY_NOTIFICATION")){
-            char isType = intent.getExtras().getChar("isTyping");
-            String type_user = intent.getExtras().getString("type_user");
+         if(action.equals("com.example.broadcast.MY_NOTIFICATION")){
+             char isType = intent.getExtras().getChar("isTyping");
+             String type_user = intent.getExtras().getString("type_user");
 
+         }
+     }*/
+    private String messageType(int position){
+        Message msg = messageArrayList.get(position);
+        String msgText = msg.getMessage();
+        String attachment = "null";
+        String toReturn="MSG";
+        if (msgText.startsWith("GPS://")){
+            toReturn = "GPS";
+        }else if (!attachment.equals(null) && !attachment.equals("null")){
+            String extension = attachment.substring(attachment.length()-3);
+            if (extension.equals("pdf") || extension.equals("PDF")){
+                toReturn = "PDF";
+            }else if (extension.equals("JPG") || extension.equals("jpg") || extension.equals("PNG") || extension.equals("png")){
+                toReturn = "IMG";
+            }else {
+                toReturn="FILE";
+            }
         }
-    }*/
+
+        return toReturn ;
+    }
+
 
 
     @Override
     public int getItemViewType(int position) {
-        Message message = messageArrayList.get(position);
-        location_card(position);
-        getAttachBitmap(position);
-        margin_text(position);
-        if (message.getUser().getPkUser() == userId) {
-            return SELF;
-        }
-
-        return position;
+        return position ;
     }
-    public void location_card(int position) {
-        Message message = messageArrayList.get(position);
-        ATTACH = message.isLocation();
-    }
-    public void margin_text(int position) {
-        Message message = messageArrayList.get(position);
-        MARGIN = message.isMargin();
-
+    
+    public Boolean giveMargin(int position) {
+       if (position + 1 < messageArrayList.size()){
+           Message msg1 = messageArrayList.get(position);
+           Message msg2 = messageArrayList.get(position + 1);
+           if (msg1.getUser().getPkUser() != msg2.getUser().getPkUser()){
+               return true ;
+           }
+       }
+        return false ;
     }
 
     public void getAttachBitmap(int position) {
         Message message = messageArrayList.get(position);
         bm =  message.getBm();
+    }
+
+    private Boolean isSelf(int position){
+        Message msg = messageArrayList.get(position);
+        if (msg.getUser().getPkUser() == userId){
+            return true;
+        }else {
+            return false;
+        }
+
     }
 
     @Override
@@ -225,7 +255,7 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         //String timestamp = getTimeStamp(message.getCreatedAt());
         String timestamp = getCommitDate(message.getCreatedAt());
         ((ViewHolder) holder).timestamp.setText(timestamp);
-        if (MARGIN == false){
+        if (!giveMargin(position)){
             ((ViewHolder) holder).timestamp.setVisibility(View.GONE);
         }
         else{
@@ -265,10 +295,9 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 targetDate = formatter_yr.format(date);
             }
         } catch (ParseException e) {
-            System.out.println("error while parsing date");
+            System.out.println("error while parsing date 3");
         }
 
         return targetDate ;
     }
 }
-

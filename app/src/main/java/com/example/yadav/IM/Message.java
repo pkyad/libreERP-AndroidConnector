@@ -16,6 +16,15 @@ public class Message  {
     String id, message, createdAt;
     UserMeta user;
 
+    public String getAttachment() {
+        return attachment;
+    }
+
+    public void setAttachment(String attachment) {
+        this.attachment = attachment;
+    }
+
+    private String attachment ;
     public boolean isMargin() {
         return margin;
     }

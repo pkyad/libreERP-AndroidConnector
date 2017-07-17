@@ -21,6 +21,8 @@ import android.os.Bundle;
 
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.design.widget.BottomSheetDialogFragment;
+import android.support.multidex.MultiDex;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -189,7 +191,9 @@ public class ChatRoomActivity extends AppCompatActivity  {
         }
     };
 
-        @Override
+
+
+    @Override
     protected void onResume() {
         // TODO Auto-generated method stub
         super.onResume();
@@ -266,6 +270,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
                                     dba.insertTableMessage(chatRoomTable);
                                     UserMeta usermeta = new UserMeta(pkOriginator);
                                     Message messageAfterType = new Message(Integer.toString(msgPk),message,created,usermeta);
+                                    messageAfterType.setAttachment(chatRoomTable.getAttachement());
                                     messageArrayList.add(messageAfterType);
                                     mAdapter.notifyDataSetChanged();
                                 }
@@ -312,10 +317,15 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
         connected = false;
 
+        context = getApplicationContext();
 
+        helper = new Helper(context);
+
+        messageArrayList = new ArrayList<>();
 
         WampClientBuilder builder = new WampClientBuilder();
 
+        String wampUrl = helper.serverURL.replace("http://", "ws://").replace("https://", "ws://")+":8080/ws";
 
         try{
             builder.withUri("ws://pradeepyadav.net:8080/ws")
@@ -379,9 +389,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
 
 
-        context = getApplicationContext();
 
-        helper = new Helper(context);
 
         httpClient = helper.getHTTPClient();
 
@@ -436,9 +444,10 @@ public class ChatRoomActivity extends AppCompatActivity  {
                 params.put("message", content);
                 params.put("user",with_id);
                 params.put("read",false);
+                int msgPk ;
 
                 String url = String.format("%s/%s/" , helper.serverURL, "api/PIM/chatMessage");
-
+                final ChatRoomTable chatRoomTable = new ChatRoomTable();
                 httpClient.post(url, params, new JsonHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
@@ -463,7 +472,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
                                 created = response.getString("created").replace("Z", "").replace("T", " ");
                                 read = response.getBoolean("read");
                                 pkUser = response.getInt("user");
-                                ChatRoomTable chatRoomTable = new ChatRoomTable();
+
                                 chatRoomTable.setSender_change(0);
 
 
@@ -502,7 +511,8 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
 
                 UserMeta usermeta = new UserMeta(login.getPk());
-                Message message = new Message("1000",content,showTime,usermeta);
+                Message message = new Message(Integer.toString(chatRoomTable.getPkMessage()),content,showTime,usermeta);
+                message.setAttachment(chatRoomTable.getAttachement());
                 messageArrayList.add(message);
 
 
@@ -511,7 +521,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
 
         });
-       btn_location.setOnClickListener(new View.OnClickListener() {
+        btn_location.setOnClickListener(new View.OnClickListener() {
 
 
             @Override
@@ -605,6 +615,13 @@ public class ChatRoomActivity extends AppCompatActivity  {
         image.setImageBitmap(profile);
         mActionBar.setCustomView(mCustomView);
         mActionBar.setDisplayShowCustomEnabled(true);
+        image.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final BottomSheetDialogFragment userViewBS = UserViewBS.newInstance(Integer.parseInt(with_id));
+                userViewBS.show(getSupportFragmentManager(), userViewBS.getTag());
+            }
+        });
 
         back_button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -621,7 +638,6 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
 
-        messageArrayList = new ArrayList<>();
         int i;
 
         // self user id is to identify the message owner
@@ -868,6 +884,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
 
                     }
+                    messageArrayList.clear();
                     load_data_from_database(0);
                     mAdapter.notifyDataSetChanged();
                     recyclerView.scrollToPosition(messageArrayList.size() - 1);
@@ -943,10 +960,11 @@ public class ChatRoomActivity extends AppCompatActivity  {
                         // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
 
                         */
-                    String s = message_table.get(message_table.size()-1).getMessage();
+                        String s = message_table.get(message_table.size()-1).getMessage();
                         //System.out.print(message_table.get(message_table.size()-1).getMessage());
                         UserMeta usermeta = new UserMeta(message_table.get(i).getPkOriginator());
                         Message message = new Message(Integer.toString(message_table.get(i).getPkMessage()),message_table.get(i).getMessage(),message_table.get(i).getCreated(),usermeta);
+                        message.setAttachment(message_table.get(i).getAttachement());
                         if (message_table.get(i).isSender_change() == 1){
                             message.setMargin(true);
                         }
@@ -1069,12 +1087,89 @@ public class ChatRoomActivity extends AppCompatActivity  {
                 catch (IOException e) {
                     e.printStackTrace();
                 }*/
+                long currentTime=System.currentTimeMillis(); //getting current time in millis
+                //converting it into user readable format
+                Calendar cal= Calendar.getInstance();
+                cal.setTimeInMillis(currentTime);
+                String showTime=String.format("%1$tI:%1$tM:%1$tS %1$Tp",cal);
+                final String content = "GPS://" + latitude_string + " " + longitude_string ;;
 
 
-              //  Message dummy = new Message("1","","1 am" ,user1);
-              //  dummy.setLocation(1); // 1 is for location
-              //  messageArrayList.add(dummy) ;
-              //  mAdapter.notifyDataSetChanged();
+                RequestParams params = new RequestParams();
+
+                params.put("message", content);
+                params.put("user",with_id);
+                params.put("read",false);
+
+                String url = String.format("%s/%s/" , helper.serverURL, "api/PIM/chatMessage");
+                final ChatRoomTable chatRoomTable = new ChatRoomTable();
+                httpClient.post(url, params, new JsonHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+
+                        try {
+                            String message;
+                            String attachement;
+                            int pkOriginator;
+                            String created;
+                            boolean read;
+                            int pkUser;
+
+                            int msgPk = response.getInt("pk");
+                            String rtcMsg = String.format("%s||%s||%s||%s", "M", content, login.getUsername(), msgPk);
+                            client.publish(chennel, rtcMsg);
+
+                            inputMessage.setText("");
+                            if (!dba.CheckIfMessagePKAlreadyInDBorNot(msgPk)) { // check in table of Message
+                                message = response.getString("message");
+                                attachement = response.getString("attachment");
+                                pkOriginator = response.getInt("originator");
+                                created = response.getString("created").replace("Z", "").replace("T", " ");
+                                read = response.getBoolean("read");
+                                pkUser = response.getInt("user");
+
+                                chatRoomTable.setSender_change(0);
+
+
+
+                                chatRoomTable.setAttachement(attachement);
+                                chatRoomTable.setCreated(created);
+                                chatRoomTable.setMessage(message);
+                                chatRoomTable.setPkMessage(msgPk);
+                                chatRoomTable.setPkOriginator(pkOriginator);
+                                chatRoomTable.setPkUser(pkUser);
+                                chatRoomTable.setChatRoomID(chatRoomId);
+                                dba.insertTableMessage(chatRoomTable);
+
+                                dba.updateMessageTableChatRoom(pkUser ,message ,0 ,created);
+
+                            }
+                            // now to update last message of chatRoomTable from db
+
+                        } catch (JSONException e) {
+
+                        }
+                        // mAdapter.notifyDataSetChanged();
+                        // recyclerView.scrollToPosition(messageArrayList.size()-1);
+
+                        // layoutManager.setStackFromEnd(true);
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, Throwable error, JSONObject response) {
+                        // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                        System.out.println("failure");
+                        System.out.println(statusCode);
+                    }
+                });;
+
+
+
+                UserMeta usermeta = new UserMeta(login.getPk());
+                Message message = new Message(Integer.toString(chatRoomTable.getPkMessage()),content,showTime,usermeta);
+                message.setAttachment(chatRoomTable.getAttachement());
+                messageArrayList.add(message);
+                mAdapter.notifyDataSetChanged();
 
 
 
@@ -1086,14 +1181,14 @@ public class ChatRoomActivity extends AppCompatActivity  {
             bm = (Bitmap) data.getExtras().get("data");
 
 
+            UserMeta user = new UserMeta(login.getPk());
 
-
-           // Message dummy = new Message("1","","1 am" ,user1);
-           // dummy.setLocation(3);// 3 is for camera
-           // dummy.setBm(bm);
-           // messageArrayList.add(dummy) ;
-           // mAdapter.notifyDataSetChanged();
-           // saveImageTOExternalStorage(bm);
+            Message dummy = new Message("1","","1 am" ,user);
+            dummy.setLocation(3);// 3 is for camera
+            dummy.setBm(bm);
+            messageArrayList.add(dummy) ;
+            mAdapter.notifyDataSetChanged();
+           saveImageTOExternalStorage(bm);
 
         }
         if (requestCode == GALLERY_REQUEST && resultCode == Activity.RESULT_OK) {
