@@ -87,15 +87,6 @@ public class HomeActivity extends AppCompatActivity
         context = getApplicationContext();
 
         unreadNotification = new ArrayList<NotificationMessage>();
-        unreadNotification.clear();
-        dba = new DBHandler(context, null, null, 1);
-
-        unreadNotification = dba.getAllUnReadMessages(0);
-        for (int i = unreadNotification.size()-1 ; i >= 0 ; i--){
-            if (unreadNotification.get(i).getUnreadChat() < 1){
-                unreadNotification.remove(i);
-            }
-        }
 
 
         setContentView(R.layout.activity_home);
@@ -196,12 +187,14 @@ public class HomeActivity extends AppCompatActivity
                                     intent.putExtra("new_message",new_message);
                                     intent.putExtra("type_user",type_user);
 
+
                                     if (type.equals("M") ){
 
                                         intent.putExtra("msgPK" , c.get(3).toString());
 
 
                                         final int msgPK =  Integer.parseInt(c.get(3).toString());
+
 
 
                                         // if the username is not prsent in chatroom then create new chatRoom else update the last Messsage;
@@ -277,7 +270,18 @@ public class HomeActivity extends AppCompatActivity
         Helper helper = new Helper(context);
         httpClient = helper.getHTTPClient();
         String url = String.format("%s/%s/%s/?mode=" , helper.serverURL, "api/PIM/chatMessage" ,msgPK );
+        unreadNotification.clear();
 
+        dba = new DBHandler(context, null, null, 1);
+
+        unreadNotification = dba.getAllUnReadMessages(0);
+        for (int i = unreadNotification.size()-1 ; i >= 0 ; i--){
+            if (unreadNotification.get(i).getUnreadChat() < 1){
+                unreadNotification.remove(i);
+            }
+        }
+
+        int size = unreadNotification.size();
         httpClient.get(url,  new JsonHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
@@ -306,25 +310,29 @@ public class HomeActivity extends AppCompatActivity
                         with_pk = pkOriginator ;
                     }
                     // adding of new messages
+
                     boolean newWithPK = true ;
-                    for (int i = 0 ; i < unreadNotification.size() ; i++){
-                        if (with_pk == unreadNotification.get(i).getWith_pk()){
-                            unreadNotification.get(i).setUnreadChat(unreadNotification.get(i).getUnreadChat() + 1);
-                            newWithPK = false ;
-                        }
-                    }
-                    if (newWithPK == true){
-                        NotificationMessage newNotification = new NotificationMessage();
-                        newNotification.setMessage(message);
-                        newNotification.setTimestamp(getCommitDate(created));
-                        newNotification.setUnreadChat(1);
-                        newNotification.setWith_pk(with_pk);
-                        unreadNotification.add(newNotification);
-                    }
+
+                    int size = unreadNotification.size();
+
+//                    for (int i = 0 ; i < unreadNotification.size() ; i++){
+//                        if (with_pk == unreadNotification.get(i).getWith_pk()){
+//                            unreadNotification.get(i).setUnreadChat(unreadNotification.get(i).getUnreadChat() + 1);
+//                            newWithPK = false ;
+//                        }
+//                    }
+//                    if (newWithPK == true){
+//                        NotificationMessage newNotification = new NotificationMessage();
+//                        newNotification.setMessage(message);
+//                        newNotification.setTimestamp(getCommitDate(created));
+//                        newNotification.setUnreadChat(1);
+//                        newNotification.setWith_pk(with_pk);
+//                       // unreadNotification.add(newNotification);
+//                    }
 
 
                     // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
-
+                    if (unreadNotification.size() != 0)
                     addNotification(message,with_pk ,getCommitDate(created));
 
 

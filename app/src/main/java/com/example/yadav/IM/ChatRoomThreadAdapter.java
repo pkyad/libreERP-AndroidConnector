@@ -272,10 +272,12 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     public String getCommitDate(String timestamp) {
 
+
+
         Date date = new Date();
         Date currentDate = new Date() ;
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String targetDate = date.toString() ;
+        String targetDate =date.toString();
         try {
 
             date = formatter.parse(timestamp);

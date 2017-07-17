@@ -488,6 +488,13 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
                                 dba.updateMessageTableChatRoom(pkUser ,message ,0 ,created);
 
+                                UserMeta usermeta = new UserMeta(login.getPk());
+                                Message sentMessage = new Message(Integer.toString(chatRoomTable.getPkMessage()),content,chatRoomTable.getCreated(),usermeta);
+                                sentMessage.setAttachment(chatRoomTable.getAttachement());
+                                messageArrayList.add(sentMessage);
+                                mAdapter.notifyDataSetChanged();
+                                recyclerView.scrollToPosition(mAdapter.getItemCount()-1);
+
                             }
                             // now to update last message of chatRoomTable from db
 
@@ -510,10 +517,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
 
 
 
-                UserMeta usermeta = new UserMeta(login.getPk());
-                Message message = new Message(Integer.toString(chatRoomTable.getPkMessage()),content,showTime,usermeta);
-                message.setAttachment(chatRoomTable.getAttachement());
-                messageArrayList.add(message);
+
 
 
 
