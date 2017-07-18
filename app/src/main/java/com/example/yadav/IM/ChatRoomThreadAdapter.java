@@ -43,6 +43,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -222,22 +223,17 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                     if (messageType.equals("GPS")){
                         String message = messageArrayList.get(position).getMessage().substring(6);
                         String[] cordinate = message.split("\\s+");
-                        PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
-                        LatLng northWest = new LatLng( Double.parseDouble(cordinate[0]), Double.parseDouble(cordinate[1]));
-                        LatLng southEast = new LatLng( Double.parseDouble(cordinate[0]) + 0.00001, Double.parseDouble(cordinate[1])+0.00001);
-                        LatLngBounds bounds = new LatLngBounds(northWest , southEast);
-                        builder.setLatLngBounds(bounds);
-                        Intent intent = new Intent() ;
-                        try {
-                            intent = builder.build((Activity) mContext);
-                            Activity activity = (Activity)mContext;
-                            activity.startActivityForResult(intent,PLACE_PICKER_REQUEST);
+                        Double latitude = Double.parseDouble(cordinate[0]);
+                        Double longitude =  Double.parseDouble(cordinate[1]);
+                        String geoCode = "geo:0,0?q=" + latitude + ","
+                                + longitude ;
+                        Intent sendLocationToMap = new Intent(Intent.ACTION_VIEW,
+                                Uri.parse(geoCode));
+                        mContext.startActivity(sendLocationToMap);
+                        //String uri = String.format(Locale.ENGLISH, "geo:%f,%f", latitude, longitude);
+                        //Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+                        //mContext.startActivity(intent);
 
-                        } catch (GooglePlayServicesRepairableException e) {
-                            e.printStackTrace();
-                        } catch (GooglePlayServicesNotAvailableException e) {
-                            e.printStackTrace();
-                        }
 
                     }
                     else {

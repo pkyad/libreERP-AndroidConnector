@@ -66,7 +66,7 @@ public class HomeFragment extends Fragment {
     private String chennel;
     private User login;
     private AsyncHttpClient httpClient;
-    DBHandler dba;
+    static DBHandler dba;
     private BroadcastReceiver mReceiver;
     private Helper helper;
     private BroadcastReceiver newChatReceiver;
@@ -79,7 +79,8 @@ public class HomeFragment extends Fragment {
     private static LinearLayoutManager layoutManager ;
     private ArrayList<Integer> ignore_id = new ArrayList<Integer>();;
     private ArrayList<ChatRoomTable> storeUnreadList = new ArrayList<ChatRoomTable>();
-
+    static Boolean isReceive;
+    static Bundle bundle;
     @Override
     public void onResume() {
         // TODO Auto-generated method stub
@@ -274,76 +275,13 @@ public class HomeFragment extends Fragment {
         dba = new DBHandler(getContext(), null, null, 1);
         mContext = this ;
         chatRoomArrayList = new ArrayList<>();
-
-        Boolean isReceive = false ;
-        Bundle bundle = getActivity().getIntent().getExtras();
+        context = getActivity().getApplicationContext();
+       // load_data_from_database(0);
+        isReceive = false ;
+        bundle = getActivity().getIntent().getExtras();
         if(bundle!=null) {
             isReceive = bundle.getBoolean("isReceive");
         }
-        if(isReceive){
-            load_data_from_database(0);
-            int newWithPk = bundle.getInt("with_PK");
-            String chatRoomName = bundle.getString("name");
-            byte[] newbyteArray = bundle.getByteArray("chatRoomDP");
-            Bitmap newchatRoomDP;
-            if(newbyteArray !=null) {
-                newchatRoomDP  = BitmapFactory.decodeByteArray(newbyteArray, 0, newbyteArray.length);
-            }
-            Boolean newchatRoomExist = false ;
-
-            for (int i = 0 ; i < chatRoomArrayList.size() ; i++){
-                if (chatRoomArrayList.get(i).getWith_pk() == newWithPk ){
-                    newchatRoomExist = true ;
-                    ChatRoom chatRoom = chatRoomArrayList.get(i);
-
-                    int pk_select = chatRoom.getWith_pk();
-                    String name_select =  chatRoom.getName();
-
-                    Intent intent = new Intent(getContext(), ChatRoomActivity.class);
-                    intent.putExtra("chatID", Integer.toString(chatRoom.getId()));
-                    intent.putExtra("with_id", Integer.toString(pk_select));
-                    intent.putExtra("name", chatRoomName);
-                    getContext().startActivity(intent);
-
-                    break ;
-                }
-
-            }
-
-            if (!newchatRoomExist){ // now to create new chatroom
-                ChatRoomTable chatRoomTable = new ChatRoomTable();
-                chatRoomTable.setOtherPk(newWithPk);
-                chatRoomTable.setPkMessage(0);
-                chatRoomTable.setMessage("");
-                chatRoomTable.setCreated("");
-                chatRoomTable.setTotal_UnRead(0);
-                dba.insertTableChatRoom(chatRoomTable);
-
-                ChatRoom chatRoom = new ChatRoom(chatRoomTable.getMessage(),chatRoomTable.getCreated(),chatRoomTable.getTotal_unread());
-                //chatRoom.setDP(newchatRoomDP);
-                chatRoom.setName(chatRoomName);
-                chatRoom.setId(dba.getIDFromWithPk(newWithPk));
-                chatRoom.setWith_pk(newWithPk);
-                chatRoomArrayList.add(chatRoom);
-                mAdapter.notifyDataSetChanged();
-
-                Intent intent = new Intent(getContext(), ChatRoomActivity.class);
-                intent.putExtra("chatID", Integer.toString(chatRoom.getId()));
-                intent.putExtra("with_id", Integer.toString(chatRoom.getWith_pk()));
-                intent.putExtra("name", chatRoom.getName());
-                intent.putExtra("userName" , chatRoom.getUsername());
-
-                getContext().startActivity(intent);
-
-
-
-
-            }
-
-
-        }
-
-
         setHasOptionsMenu(true);
         recyclerView = (RecyclerView)  myView.findViewById(R.id.chatList_recycler_view);
         FloatingActionButton newChat = (FloatingActionButton) myView.findViewById(R.id.newChat);
@@ -362,7 +300,7 @@ public class HomeFragment extends Fragment {
 
 
         //clearData();
-        context = getActivity().getApplicationContext();
+
 
         mAdapter = new ChatRoomsAdapter(mContext, chatRoomArrayList,context,getActivity().getSupportFragmentManager());
         int size = chatRoomArrayList.size();
@@ -374,42 +312,6 @@ public class HomeFragment extends Fragment {
 
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
-
-
-//        recyclerView.addOnItemTouchListener(new ChatRoomsAdapter.RecyclerTouchListener(getActivity(), recyclerView, new ChatRoomsAdapter.ClickListener() {
-//            @Override
-//            public void onClick(View view, int position) {
-//                // when chat is clicked, launch full chat thread activity
-//
-//
-//                ChatRoom chatRoom = chatRoomArrayList.get(position);
-//
-//                int pk_select = chatRoom.getWith_pk();
-//                String name_select =  chatRoom.getName();
-//                Intent intent = new Intent(getActivity(), ChatRoomActivity.class);
-//                intent.putExtra("chatID", Integer.toString(chatRoom.getId()));
-//                intent.putExtra("with_id", Integer.toString(pk_select));
-//                intent.putExtra("name", name_select);
-//                intent.putExtra("userName" , chatRoom.getUsername());
-//               /* intent.putExtra("UnreadMessages", storeUnreadList);
-//
-//                for (int i = storeUnreadList.size() - 1 ; i >= 0 ; i++){
-//                    storeUnreadList.remove(i);
-//                }*/
-//
-//                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-//                chatRoom.getDP().compress(Bitmap.CompressFormat.PNG, 80, stream);
-//                byte[] byteArray = stream.toByteArray();
-//                intent.putExtra("dp", byteArray);
-//                startActivity(intent);
-//            }
-//
-//
-//            @Override
-//            public void onLongClick(View view, int position) {
-//
-//            }
-//        }));
 
         fetchChatRooms();
         return myView;
@@ -617,7 +519,67 @@ public class HomeFragment extends Fragment {
         }
         return 0 ;
     }
+    private static void createnewChatroom(){
+        if(isReceive){
 
+            int newWithPk = bundle.getInt("with_PK");
+            String chatRoomName = bundle.getString("name");
+            byte[] newbyteArray = bundle.getByteArray("chatRoomDP");
+            Bitmap newchatRoomDP;
+            if(newbyteArray !=null) {
+                newchatRoomDP  = BitmapFactory.decodeByteArray(newbyteArray, 0, newbyteArray.length);
+            }
+            Boolean newchatRoomExist = false ;
+
+            for (int i = 0 ; i < chatRoomArrayList.size() ; i++){
+                if (chatRoomArrayList.get(i).getWith_pk() == newWithPk ){
+                    newchatRoomExist = true ;
+                    ChatRoom chatRoom = chatRoomArrayList.get(i);
+
+                    int pk_select = chatRoom.getWith_pk();
+                    String name_select =  chatRoom.getName();
+
+                    Intent intent = new Intent(context, ChatRoomActivity.class);
+                    intent.putExtra("chatID", Integer.toString(chatRoom.getId()));
+                    intent.putExtra("with_id", Integer.toString(pk_select));
+                    intent.putExtra("name", chatRoomName);
+                    context.startActivity(intent);
+
+                    break ;
+                }
+
+            }
+            System.out.println("newChatRoomExist = " + newchatRoomExist);
+            if (!newchatRoomExist){ // now to create new chatroom
+                ChatRoomTable chatRoomTable = new ChatRoomTable();
+                chatRoomTable.setOtherPk(newWithPk);
+                chatRoomTable.setPkMessage(0);
+                chatRoomTable.setMessage("");
+                chatRoomTable.setCreated("");
+                chatRoomTable.setTotal_UnRead(0);
+                dba.insertTableChatRoom(chatRoomTable);
+
+                ChatRoom chatRoom = new ChatRoom(chatRoomTable.getMessage(),chatRoomTable.getCreated(),chatRoomTable.getTotal_unread());
+                //chatRoom.setDP(newchatRoomDP);
+                chatRoom.setName(chatRoomName);
+                chatRoom.setId(dba.getIDFromWithPk(newWithPk));
+                chatRoom.setWith_pk(newWithPk);
+                chatRoomArrayList.add(chatRoom);
+//                mAdapter.notifyDataSetChanged();
+
+                Intent intent = new Intent(context, ChatRoomActivity.class);
+                intent.putExtra("chatID", Integer.toString(chatRoom.getId()));
+                intent.putExtra("with_id", Integer.toString(chatRoom.getWith_pk()));
+                intent.putExtra("name", chatRoom.getName());
+                intent.putExtra("userName" , chatRoom.getUsername());
+
+                context.startActivity(intent);
+
+            }
+
+
+        }
+    }
 
     private static void load_data_from_database(int id) {
 
@@ -650,35 +612,8 @@ public class HomeFragment extends Fragment {
 
                     chatRoomArrayList.add(chatRoom);
                 }
-                int size = chatRoomArrayList.size();
 
-                //
-//                    OkHttpClient client = new OkHttpClient();
-//                    Request request = new Request.Builder()
-//                            .url("http://192.168.178.26/test/script.php?id="+integers[0])
-//                            .build();
-//                    try {
-//                        Response response = client.newCall(request).execute();
-//
-//                        JSONArray array = new JSONArray(response.body().string());
-//
-//                        for (int i=0; i<array.length(); i++){
-//
-//                            JSONObject object = array.getJSONObject(i);
-//
-//                            MyData data = new MyData(object.getInt("id"),object.getString("description"),
-//                                    object.getString("image"));
-//
-//                            data_list.add(data);
-//                        }
-//
-//
-//
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    } catch (JSONException e) {
-//                        System.out.println("End of content");
-//                    }
+                createnewChatroom();
                 return null;
             }
             @Override
