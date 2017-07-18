@@ -5,11 +5,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -45,6 +48,8 @@ import java.util.Date;
 import cz.msebera.android.httpclient.Header;
 import ws.wamp.jawampa.WampClient;
 
+import static android.provider.LiveFolders.INTENT;
+
 /**
  * Created by yadav on 19/2/17.
  */
@@ -64,7 +69,7 @@ public class HomeFragment extends Fragment {
     DBHandler dba;
     private BroadcastReceiver mReceiver;
     private Helper helper;
-    private BroadcastReceiver mRegistrationBroadcastReceiver;
+    private BroadcastReceiver newChatReceiver;
     private TextView typing ;
     private boolean isType = false ;
     private int typing_id ;
@@ -265,20 +270,100 @@ public class HomeFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         myView = inflater.inflate(R.layout.fragment_home , container, false);
+        mContext = this ;
+        dba = new DBHandler(getContext(), null, null, 1);
+        mContext = this ;
+        chatRoomArrayList = new ArrayList<>();
+
+        Boolean isReceive = false ;
+        Bundle bundle = getActivity().getIntent().getExtras();
+        if(bundle!=null) {
+            isReceive = bundle.getBoolean("isReceive");
+        }
+        if(isReceive){
+            load_data_from_database(0);
+            int newWithPk = bundle.getInt("with_PK");
+            String chatRoomName = bundle.getString("name");
+            byte[] newbyteArray = bundle.getByteArray("chatRoomDP");
+            Bitmap newchatRoomDP;
+            if(newbyteArray !=null) {
+                newchatRoomDP  = BitmapFactory.decodeByteArray(newbyteArray, 0, newbyteArray.length);
+            }
+            Boolean newchatRoomExist = false ;
+
+            for (int i = 0 ; i < chatRoomArrayList.size() ; i++){
+                if (chatRoomArrayList.get(i).getWith_pk() == newWithPk ){
+                    newchatRoomExist = true ;
+                    ChatRoom chatRoom = chatRoomArrayList.get(i);
+
+                    int pk_select = chatRoom.getWith_pk();
+                    String name_select =  chatRoom.getName();
+
+                    Intent intent = new Intent(getContext(), ChatRoomActivity.class);
+                    intent.putExtra("chatID", Integer.toString(chatRoom.getId()));
+                    intent.putExtra("with_id", Integer.toString(pk_select));
+                    intent.putExtra("name", chatRoomName);
+                    getContext().startActivity(intent);
+
+                    break ;
+                }
+
+            }
+
+            if (!newchatRoomExist){ // now to create new chatroom
+                ChatRoomTable chatRoomTable = new ChatRoomTable();
+                chatRoomTable.setOtherPk(newWithPk);
+                chatRoomTable.setPkMessage(0);
+                chatRoomTable.setMessage("");
+                chatRoomTable.setCreated("");
+                chatRoomTable.setTotal_UnRead(0);
+                dba.insertTableChatRoom(chatRoomTable);
+
+                ChatRoom chatRoom = new ChatRoom(chatRoomTable.getMessage(),chatRoomTable.getCreated(),chatRoomTable.getTotal_unread());
+                //chatRoom.setDP(newchatRoomDP);
+                chatRoom.setName(chatRoomName);
+                chatRoom.setId(dba.getIDFromWithPk(newWithPk));
+                chatRoom.setWith_pk(newWithPk);
+                chatRoomArrayList.add(chatRoom);
+                mAdapter.notifyDataSetChanged();
+
+                Intent intent = new Intent(getContext(), ChatRoomActivity.class);
+                intent.putExtra("chatID", Integer.toString(chatRoom.getId()));
+                intent.putExtra("with_id", Integer.toString(chatRoom.getWith_pk()));
+                intent.putExtra("name", chatRoom.getName());
+                intent.putExtra("userName" , chatRoom.getUsername());
+
+                getContext().startActivity(intent);
+
+
+
+
+            }
+
+
+        }
+
 
         setHasOptionsMenu(true);
         recyclerView = (RecyclerView)  myView.findViewById(R.id.chatList_recycler_view);
-
+        FloatingActionButton newChat = (FloatingActionButton) myView.findViewById(R.id.newChat);
+        newChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getActivity(),com.example.libreerp.NewChat.class);
+                startActivity(intent);
+            }
+        });
         User usr = User.loadUser(getActivity());
 
 
 
 
 
-        chatRoomArrayList = new ArrayList<>();
+
         //clearData();
         context = getActivity().getApplicationContext();
-        mContext = this ;
+
         mAdapter = new ChatRoomsAdapter(mContext, chatRoomArrayList,context,getActivity().getSupportFragmentManager());
         int size = chatRoomArrayList.size();
         layoutManager = new LinearLayoutManager( getActivity());
@@ -414,7 +499,7 @@ public class HomeFragment extends Fragment {
                     String CommitBranch;
                     String CommitCode;
 
-                    dba = new DBHandler(context, null, null, 1);
+
                     login = User.loadUser(context);
                     int login_pk = login.getPk();
 
@@ -507,6 +592,12 @@ public class HomeFragment extends Fragment {
                 System.out.println("finished 001cxczdfhgfg");
                 // retrieve all the db entries
 
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                super.onFailure(statusCode, headers, responseString, throwable);
+                System.out.println(statusCode);
             }
 
             @Override

@@ -575,12 +575,11 @@ public class ChatRoomActivity extends AppCompatActivity  {
         with_id = intent.getStringExtra("with_id"); // chat Room id is same as with id here in this case
         String title = intent.getStringExtra("name");
         // read all messages
-        int unreadTotal1 = dba.getUnREADFromWithPk(Integer.parseInt(with_id));
+//        int unreadTotal1 = dba.getUnREADFromWithPk(Integer.parseInt(with_id));
         dba.updateUnreadChatRoom(Integer.parseInt(with_id) , 0);
-        int unreadTotal = dba.getUnREADFromWithPk(Integer.parseInt(with_id));
-        username = intent.getStringExtra("userName");
-        int number = dba.getTotalDBEntries_MESSAGE();
-        load_data_from_database(0);
+//        int unreadTotal = dba.getUnREADFromWithPk(Integer.parseInt(with_id));
+
+//        int number = dba.getTotalDBEntries_MESSAGE();
         chennel = String.format("service.chat.%s" , username);
         //ChatRoomTable unReadList = intent.getParcelableExtra("UnreadMessages");
         /*for (int i = 0 ; i < unReadList ; i++){
@@ -589,9 +588,29 @@ public class ChatRoomActivity extends AppCompatActivity  {
         for (int i = 0 ; i < unReadList.size() ; i++){
             unReadList.remove(i);
         }*/
+        LayoutInflater mInflater = LayoutInflater.from(this);
+        mCustomView = mInflater.inflate(R.layout.action_bar_chatroom, null);
+       final  CircleImageView image = (CircleImageView) mCustomView.findViewById(R.id.circularimageView1);
 
-        byte[] byteArray = getIntent().getByteArrayExtra("dp");
-        Bitmap profile = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+
+        Users users = new Users(context);
+        users.get(Integer.parseInt(with_id) , new UserMetaHandler(){
+            @Override
+            public void onSuccess(UserMeta user){
+                System.out.println("yes65262626626");
+                //bundle.putString("username",user.getUsername());
+                username = user.getUsername();
+                // set text in the layout here
+            }
+            @Override
+            public void handleDP(Bitmap dp){
+                System.out.println("dp dsda");
+                image.setImageBitmap(dp);
+                // set text in the layout here
+            }
+
+        });
+
 
         getSupportActionBar().setTitle(title);
 
@@ -602,10 +621,10 @@ public class ChatRoomActivity extends AppCompatActivity  {
         ActionBar mActionBar = getSupportActionBar();
         mActionBar.setDisplayShowHomeEnabled(false);
         mActionBar.setDisplayShowTitleEnabled(false);
-        LayoutInflater mInflater = LayoutInflater.from(this);
 
 
-        mCustomView = mInflater.inflate(R.layout.action_bar_chatroom, null);
+
+
 
         title_bar = (TextView) mCustomView.findViewById(R.id.titleText);
         title_bar.setText(title);
@@ -622,8 +641,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
 //        else {
 //            typing.setVisibility(mCustomView.GONE);
 //        }
-        CircleImageView image = (CircleImageView) mCustomView.findViewById(R.id.circularimageView1);
-        image.setImageBitmap(profile);
+
         mActionBar.setCustomView(mCustomView);
         mActionBar.setDisplayShowCustomEnabled(true);
         image.setOnClickListener(new View.OnClickListener() {
@@ -646,56 +664,19 @@ public class ChatRoomActivity extends AppCompatActivity  {
         }
 
 
-
-        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-
-        int i;
-
-        // self user id is to identify the message owner
-        // String selfUserId = MyApplication.getInstance().getPrefManager().getUser().getId();
-
-        User login = User.loadUser(context);
         int login_pk = login.getPk();
-        Bitmap bm = null ;
-        mAdapter = new ChatRoomThreadAdapter(this, messageArrayList ,login_pk);
-        mAdapter.notifyDataSetChanged();
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
         layoutManager.setStackFromEnd(true);
+        mAdapter = new ChatRoomThreadAdapter(this, messageArrayList ,login_pk);
         recyclerView.scrollToPosition(mAdapter.getItemCount()-1);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
+
         recyclerView.setAdapter(mAdapter);
+        mAdapter.notifyDataSetChanged();
 
 
-//        mRegistrationBroadcastReceiver = new BroadcastReceiver() {
-//            @Override
-//            public void onReceive(Context context, Intent intent) {
-//                if (intent.getAction().equals("com.libreERP.TYPING")) {
-//                    // new push message is received
-//                   // handlePushNotification(intent);
-//                    String message =  intent.getStringExtra("new_message");
-//                    String Typing = intent.getStringExtra("type");
-//                    String user_name = intent.getStringExtra("type_user");
-//                    typing_id = Integer.parseInt(with_id);
-//                    if (Typing.compareTo("T") == 0 && typing_id ==  Integer.parseInt(with_id)){
-//                        isType = true ;
-//                    }
-//
-//                }
-//            }
-//
-//        };
-
-       /* Intent sendIntent = getIntent();
-            if (sendIntent.getAction().equals("MY_NOTIFICATION")) {
-                String message =  intent.getStringExtra("new_message");
-                String Typing = intent.getStringExtra("type");
-                String user_name = intent.getStringExtra("type_user");
-                typing_id = Integer.parseInt(with_id);
-               if ( intent.getStringExtra("type").compareTo("T") == 0 && typing_id ==  Integer.parseInt(with_id)){
-                   isType = true ;
-               }
-            }*/
 
         recyclerView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
@@ -725,18 +706,6 @@ public class ChatRoomActivity extends AppCompatActivity  {
             }
         }));
         recyclerView.scrollToPosition(messageArrayList.size() - 1);
-
-
-
-       /* btnSend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendMessage();
-            }
-        });
-
-        */
-       //fetchChatRooms();
         fetchChatThread();
 
 
@@ -917,6 +886,12 @@ public class ChatRoomActivity extends AppCompatActivity  {
             }
 
             @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                super.onFailure(statusCode, headers, responseString, throwable);
+                System.out.println(statusCode);
+            }
+
+            @Override
             public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
                 load_data_from_database(0);
@@ -936,7 +911,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
         final AsyncTask<Integer, Void, Void> comment = new AsyncTask<Integer, Void, Void>() {
             @Override
             protected Void doInBackground(Integer... integers) {
-
+                messageArrayList.clear();
                 final DBHandler dba = new DBHandler(context, null, null, 1); // see this
                 //System.out.println("pkTask = "+pkTask);
                 dba.updateAllUnReadMessage(chatRoomId);
@@ -1522,7 +1497,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
     private void saveImageTOExternalStorage(Bitmap bm){
         String root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
 
-        File path = this.getFilesDir();
+        File path = new File(root);
         File myDir = new File(path + "/saveImages");
         if (!myDir.exists()) {
             myDir.mkdirs();
@@ -1548,7 +1523,7 @@ public class ChatRoomActivity extends AppCompatActivity  {
         }
 
         String text = traverse(myDir);
-        ;
+
 
     }
     public String traverse (File dir) {

@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
 
     <application
@@ -32,6 +33,12 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name="com.example.yadav.IM.KeyLoginActivity" />
 
+        <receiver android:name=".NewChatReceiver">
+            <intent-filter>
+                <action android:name="com.libreERP.NEWCHAT"/>
+
+            </intent-filter>
+        </receiver>
 
         <activity
             android:name="com.example.yadav.IM.ChatRoomActivity"
@@ -39,6 +46,15 @@
             android:parentActivityName="com.example.yadav.IM.HomeActivity"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
+        <provider
+            android:name=".GenericFileProvider"
+            android:authorities="${applicationId}.com.example.yadav.IM.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
+        </provider>
 
         <meta-data android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_place_api"></meta-data>

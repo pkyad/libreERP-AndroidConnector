@@ -5,7 +5,10 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
 >
-
+        <activity android:name="com.example.libreerp.NewChat"
+            android:label="New Chat"
+            >
+        </activity>
     </application>
 
 </manifest>

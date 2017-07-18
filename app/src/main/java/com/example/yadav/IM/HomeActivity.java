@@ -78,7 +78,7 @@ public class HomeActivity extends AppCompatActivity
     private ArrayList<NotificationMessage> unreadNotification;
     private boolean firstTime = true ;
     private static Boolean connected = false;
-
+    private boolean isReceive =false ;
 
 
     @Override
@@ -87,6 +87,44 @@ public class HomeActivity extends AppCompatActivity
         context = getApplicationContext();
 
         unreadNotification = new ArrayList<NotificationMessage>();
+        Intent newChatIntent = getIntent();
+        isReceive = newChatIntent.getBooleanExtra("isReceive",isReceive);
+        int newWithPk = 0;
+        newWithPk = newChatIntent.getIntExtra("with_PK",newWithPk );
+        String chatRoomName = newChatIntent.getStringExtra("name");
+        Users users = new Users(context);
+
+
+
+
+        final Bundle bundle = new Bundle();
+        bundle.putInt("with_PK",newWithPk);
+        bundle.putString("name",chatRoomName);
+        bundle.putBoolean("isReceive",isReceive);
+
+        users.get(newWithPk , new UserMetaHandler(){
+            @Override
+            public void onSuccess(UserMeta user){
+                System.out.println("yes65262626626");
+                bundle.putString("username",user.getUsername());
+                // set text in the layout here
+            }
+            @Override
+            public void handleDP(Bitmap dp){
+                System.out.println("dp dsda");
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                dp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                byte[] byteArray = stream.toByteArray();
+
+
+                bundle.putByteArray("chatRoomDP",byteArray);
+                HomeFragment newChatdata = new HomeFragment();
+                newChatdata.setArguments(bundle);
+                // set text in the layout here
+            }
+
+        });
+// set Fragmentclass Arguments
 
 
         setContentView(R.layout.activity_home);
@@ -104,7 +142,7 @@ public class HomeActivity extends AppCompatActivity
 
         //=======================
 
-        Users users = new Users(context);
+
 
         users.get(11 , new UserMetaHandler(){
             @Override

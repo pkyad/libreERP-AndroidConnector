@@ -1,12 +1,19 @@
 package com.example.yadav.IM;
 
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.StrictMode;
+import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.TypedValue;
@@ -21,6 +28,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.libreerp.Helper;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.location.places.ui.PlacePicker;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.FileAsyncHttpResponseHandler;
 
@@ -51,6 +63,7 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private ArrayList<Message> messageArrayList;
     private static final int CAMERA_REQUEST = 1 ;
     private Helper helper;
+    private static final int PLACE_PICKER_REQUEST = 1000;
 
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -77,6 +90,9 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
+
         View itemView;
         TextView message ;
 
@@ -91,57 +107,62 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         if (type.equals("MSG")) {
             itemView = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.chat_item, parent, false);
-            RelativeLayout relativeLayout = (RelativeLayout) itemView.findViewById(R.id.relativelayout);
-            // view type is to identify where to render the chat message
-            // left or right
-            message = (TextView) itemView.findViewById(R.id.message);
-            timestamp = (TextView) itemView.findViewById(R.id.time);
+            itemView.setVisibility(View.GONE);
+            if(!messageArrayList.get(position).getMessage().equals("")) {
+                itemView.setVisibility(View.VISIBLE);
+                RelativeLayout relativeLayout = (RelativeLayout) itemView.findViewById(R.id.relativelayout);
+                // view type is to identify where to render the chat message
+                // left or right
+                message = (TextView) itemView.findViewById(R.id.message);
+                timestamp = (TextView) itemView.findViewById(R.id.time);
 
-            if (self) {
-                // self message
-                if (margin == true) {
-                    RelativeLayout.LayoutParams params = new  RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-                    int sizeInDP = 40;
+                if (self) {
+                    // self message
+                    if (margin == true) {
+                        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                        int sizeInDP = 40;
 
-                    int marginInDp = (int) TypedValue.applyDimension(
-                            TypedValue.COMPLEX_UNIT_DIP, sizeInDP, mContext.getResources().getDisplayMetrics());
-                    params.setMargins(params.leftMargin, marginInDp, params.rightMargin, params.bottomMargin);
-                    // relativeLayout.setLayoutParams(params);
-                    margin = false ;
+                        int marginInDp = (int) TypedValue.applyDimension(
+                                TypedValue.COMPLEX_UNIT_DIP, sizeInDP, mContext.getResources().getDisplayMetrics());
+                        params.setMargins(params.leftMargin, marginInDp, params.rightMargin, params.bottomMargin);
+                        // relativeLayout.setLayoutParams(params);
+                        margin = false;
+                    }
+
+                    ((RelativeLayout) itemView).setGravity(Gravity.RIGHT);
+                    message.setBackgroundResource(R.drawable.bg_bubble_gray);
+                    RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) message.getLayoutParams();
+                    params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+
+
+                    message.setLayoutParams(params);
+
+                    RelativeLayout.LayoutParams params_time = (RelativeLayout.LayoutParams) timestamp.getLayoutParams();
+                    params_time.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+
+
+                    timestamp.setLayoutParams(params_time);
+                    // we can change margina and align parent right by adding in params
+
+
+                } else {
+                    // others message
+                    if (margin == true) {
+                        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                        int sizeInDP = 40;
+
+                        int marginInDp = (int) TypedValue.applyDimension(
+                                TypedValue.COMPLEX_UNIT_DIP, sizeInDP, mContext.getResources().getDisplayMetrics());
+                        params.setMargins(params.leftMargin, marginInDp, params.rightMargin, params.bottomMargin);
+                        // relativeLayout.setLayoutParams(params);
+                        margin = false;
+                    }
+                    //itemView = LayoutInflater.from(parent.getContext())
+                    //      .inflate(R.layout.chat_item, parent, false);
+                    // timestamp.setGravity(Gravity.LEFT);
                 }
-
-                ((RelativeLayout) itemView).setGravity(Gravity.RIGHT);
-                message.setBackgroundResource(R.drawable.bg_bubble_gray);
-                RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)message.getLayoutParams();
-                params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-
-
-                message.setLayoutParams(params);
-
-                RelativeLayout.LayoutParams params_time = (RelativeLayout.LayoutParams)timestamp.getLayoutParams();
-                params_time.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-
-
-                timestamp.setLayoutParams(params_time);
-                // we can change margina and align parent right by adding in params
-
-
-            } else {
-                // others message
-                if (margin == true) {
-                    RelativeLayout.LayoutParams params = new  RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-                    int sizeInDP = 40;
-
-                    int marginInDp = (int) TypedValue.applyDimension(
-                            TypedValue.COMPLEX_UNIT_DIP, sizeInDP, mContext.getResources().getDisplayMetrics());
-                    params.setMargins(params.leftMargin, marginInDp, params.rightMargin, params.bottomMargin);
-                    // relativeLayout.setLayoutParams(params);
-                    margin = false ;
-                }
-                //itemView = LayoutInflater.from(parent.getContext())
-                //      .inflate(R.layout.chat_item, parent, false);
-                // timestamp.setGravity(Gravity.LEFT);
             }
+
         }
         else { // given message is card message
             ;
@@ -197,27 +218,46 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             card.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    String url = messageArrayList.get(position).getAttachment();
-                    String extension = url.substring(url.length()-3);
-//                    if (extension.equals("pdf") || extension.equals("PDF")){
-//                        File file = new File(mContext.getFilesDir().getAbsolutePath()+ url.substring(url.lastIndexOf('/') + 1, url.length()));
-//                        Intent intent = new Intent(Intent.ACTION_VIEW);
-//                        intent.setDataAndType(Uri.fromFile(file), "application/pdf");
-//                        intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-//                        mContext.startActivity(intent);
-//                    }
-                     if(extension.equals("JPG") || extension.equals("jpg") || extension.equals("PNG") || extension.equals("png")){
-                        Intent intent = new Intent();
-                        intent.setAction(Intent.ACTION_VIEW);
-                         System.out.println(mContext.getFilesDir().getAbsolutePath()+ url.substring(url.lastIndexOf('/') + 1));
-                        intent.setDataAndType(Uri.parse(mContext.getFilesDir().getAbsolutePath()+ url.substring(url.lastIndexOf('/') + 1)), "image/*");
-                        mContext.startActivity(intent);
+                    String messageType = messageType(position);
+                    if (messageType.equals("GPS")){
+                        String message = messageArrayList.get(position).getMessage().substring(6);
+                        String[] cordinate = message.split("\\s+");
+                        PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+                        LatLng northWest = new LatLng( Double.parseDouble(cordinate[0]), Double.parseDouble(cordinate[1]));
+                        LatLng southEast = new LatLng( Double.parseDouble(cordinate[0]) + 0.00001, Double.parseDouble(cordinate[1])+0.00001);
+                        LatLngBounds bounds = new LatLngBounds(northWest , southEast);
+                        builder.setLatLngBounds(bounds);
+                        Intent intent = new Intent() ;
+                        try {
+                            intent = builder.build((Activity) mContext);
+                            Activity activity = (Activity)mContext;
+                            activity.startActivityForResult(intent,PLACE_PICKER_REQUEST);
+
+                        } catch (GooglePlayServicesRepairableException e) {
+                            e.printStackTrace();
+                        } catch (GooglePlayServicesNotAvailableException e) {
+                            e.printStackTrace();
+                        }
+
                     }
-                    else{
-                         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                         browserIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                         mContext.startActivity(browserIntent);
-                     }
+                    else {
+                        String url = messageArrayList.get(position).getAttachment();
+                        String filename = (Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath()+ "/"+ url.substring(url.lastIndexOf('/') + 1)) ;
+                        Uri fileURI = FileProvider.getUriForFile(mContext, mContext.getApplicationContext().getPackageName()  + ".com.example.yadav.IM.provider", new File(filename));
+                        MimeTypeMap myMime = MimeTypeMap.getSingleton();
+                        Intent newIntent = new Intent(Intent.ACTION_VIEW);
+                        String mimeType = myMime.getMimeTypeFromExtension(fileExt(url));
+                        newIntent.setDataAndType(fileURI,mimeType);
+                        newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        newIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        try {
+                            mContext.startActivity(newIntent);
+                        } catch (ActivityNotFoundException e) {
+                            Toast.makeText( mContext, "No handler for this type of file.", Toast.LENGTH_LONG).show();
+                        }
+                    }
+
+
                 }
             });
 
@@ -227,7 +267,24 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
         return new ViewHolder(itemView);
     }
+    private String fileExt(String url) {
+        if (url.indexOf("?") > -1) {
+            url = url.substring(0, url.indexOf("?"));
+        }
+        if (url.lastIndexOf(".") == -1) {
+            return null;
+        } else {
+            String ext = url.substring(url.lastIndexOf(".") + 1);
+            if (ext.indexOf("%") > -1) {
+                ext = ext.substring(0, ext.indexOf("%"));
+            }
+            if (ext.indexOf("/") > -1) {
+                ext = ext.substring(0, ext.indexOf("/"));
+            }
+            return ext.toLowerCase();
 
+        }
+    }
 
     /* public void onReceive(Context context, Intent intent) {
          String action = intent.getAction();
@@ -301,8 +358,16 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
         Message message = messageArrayList.get(position);
-        ((ViewHolder) holder).message.setText(message.getMessage());
 
+
+        ((ViewHolder) holder).message.setText(message.getMessage());
+        String msgType = messageType(position);
+        if (msgType.equals("MSG")){
+            ((ViewHolder) holder).message.setVisibility(View.VISIBLE);
+        }
+        else {
+            ((ViewHolder) holder).message.setVisibility(View.GONE);
+        }
 
 
         //String timestamp = getTimeStamp(message.getCreatedAt());
@@ -332,7 +397,7 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                         //Splitting a File Name from SourceFileName
                         String DestinationName = url.substring(url.lastIndexOf('/') + 1, url.length());
                         //Saving an image into DCIM Folder
-                        File newFile = new File(mContext.getFilesDir(), DestinationName);
+                        File newFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), DestinationName);
                         cacheCopy(file, newFile);
                         String extension = url.substring(url.length()-3);
                         if (extension.equals("JPG") || extension.equals("jpg") || extension.equals("PNG") || extension.equals("png")){
@@ -365,12 +430,15 @@ public class ChatRoomThreadAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     }
 
     public Bitmap getFileFromCache(String fileName){
-        File dir = new File(mContext.getFilesDir(),"");
+        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),"");
         if (dir.exists()) {
-            for (File f : dir.listFiles()) {
-                //perform here your operation
-                if (f.getName().equals(fileName)){
-                    return BitmapFactory.decodeFile(f.getPath());
+            if(dir.listFiles() != null) {
+                for (File f : dir.listFiles()) {
+                    //perform here your operation
+                    if (f.getName().equals(fileName)) {
+                        return BitmapFactory.decodeFile(f.getPath());
+                    }
+
                 }
             }
         }
