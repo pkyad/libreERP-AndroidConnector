@@ -22,7 +22,7 @@ import java.util.List;
  */
 
 public class DBHandler extends SQLiteOpenHelper {
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 2;
     public static final String DATABASE_NAME = "message.db";
 
     // chat Room table
@@ -45,7 +45,7 @@ public class DBHandler extends SQLiteOpenHelper {
     public static final String COLUMN_MESSAGE_ORIGINATOR = "ORIGINATOR";
     public static final String COLUMN_MESSAGE_CREATED = "CREATED";
     public static final String COLUMN_MESSAGE_USER_PK = "USERPK";
-    public static final String COLUMN_MESSAGE_SENDER_CHANGE = "SENDERC";
+    public static final String COLUMN_MESSAGE_WITHID = "WITHID";
     public static final String COLUMN_MESSAGE_READ_STATUS = "READ"; // 0 for Unread and 1 for read
     //     file upload
 
@@ -74,7 +74,7 @@ public class DBHandler extends SQLiteOpenHelper {
                 + COLUMN_MESSAGE_CREATED + " TEXT,"
                 + COLUMN_MESSAGE_USER_PK + "  INTEGER,"
                 + COLUMN_MESSAGE_READ_STATUS + "  INTEGER,"
-                + COLUMN_MESSAGE_SENDER_CHANGE + "  INTEGER"
+                + COLUMN_MESSAGE_WITHID + "  INTEGER"
                 + ");";
 
 
@@ -119,7 +119,7 @@ public class DBHandler extends SQLiteOpenHelper {
         initialValues.put(COLUMN_MESSAGE_ORIGINATOR, chatRoomTable.getPkOriginator());
         initialValues.put(COLUMN_MESSAGE_CREATED,chatRoomTable.getCreated());
         initialValues.put(COLUMN_MESSAGE_USER_PK, chatRoomTable.getPkUser());
-        initialValues.put(COLUMN_MESSAGE_SENDER_CHANGE, chatRoomTable.isSender_change());
+        initialValues.put(COLUMN_MESSAGE_WITHID, chatRoomTable.getOtherPk());
         initialValues.put(COLUMN_MESSAGE_READ_STATUS, chatRoomTable.getIsReadStatus());
         SQLiteDatabase db = getWritableDatabase();
 
@@ -153,14 +153,14 @@ public class DBHandler extends SQLiteOpenHelper {
         return db.update(TABLE_CHATROOM, updateValues, COLUMN_WITH_PK + " = ?",new String[]{String.valueOf(with_pk)});
     }
 
-    public long  updateAllUnReadMessage(int chatRoomId ) {
+    public long  updateAllUnReadMessage(int withid ) {
         ContentValues updateValues = new ContentValues();
 
         updateValues.put(COLUMN_MESSAGE_READ_STATUS, 1);
 
         SQLiteDatabase db = getWritableDatabase();
 
-        return db.update(TABLE_MESSAGE, updateValues, COLUMN_CHATROOMID + " = ?",new String[]{String.valueOf(chatRoomId)});
+        return db.update(TABLE_MESSAGE, updateValues, COLUMN_MESSAGE_WITHID + " = ?",new String[]{String.valueOf(withid)});
     }
     // retrive data from table tasks
 
@@ -326,23 +326,7 @@ public class DBHandler extends SQLiteOpenHelper {
         return dbstring.get(position);
     }
 
-    public int message_getSenderChange(int position) {
-        ArrayList<Integer> dbstring = new ArrayList<Integer>();
-        SQLiteDatabase db = getWritableDatabase();
-        String query = "SELECT * FROM " + TABLE_MESSAGE + " WHERE 1";
 
-        Cursor c = db.rawQuery(query, null);
-        c.moveToFirst();
-
-        while (!c.isAfterLast()) {
-            if (c.getString(c.getColumnIndex("SENDERC")) != null) {
-                dbstring.add(c.getInt(c.getColumnIndex("SENDERC")));
-            }
-            c.moveToNext();
-        }
-        db.close(); c.close();
-        return dbstring.get(position);
-    }
 
     public int getTotalDBEntries_CHATROOM() {
         String countQuery = "SELECT  * FROM " + TABLE_CHATROOM;
@@ -353,6 +337,11 @@ public class DBHandler extends SQLiteOpenHelper {
         return cnt;
     }
 
+    public void deleteChatRoom(int withId){
+        String query = "DELETE FROM " +  TABLE_CHATROOM + " WHERE " + COLUMN_WITH_PK + " = " + withId;
+        getWritableDatabase().execSQL(query);
+
+    }
 
     public int getWithPK(int position) {
         ArrayList<Integer> dbstring = new ArrayList<Integer>();
@@ -389,10 +378,10 @@ public class DBHandler extends SQLiteOpenHelper {
         db.close(); c.close();
         return dbstring.get(position);
     }
-    public ArrayList<ChatRoomTable> getData(int chatRoomId ) {
+    public ArrayList<ChatRoomTable> getData(int withId ) {
         ArrayList<ChatRoomTable> dbstring = new ArrayList<ChatRoomTable>();
         SQLiteDatabase db = getWritableDatabase();
-        String query = "SELECT * FROM " + TABLE_MESSAGE + " WHERE " + COLUMN_CHATROOMID + " = " +chatRoomId;
+        String query = "SELECT * FROM " + TABLE_MESSAGE + " WHERE " + COLUMN_MESSAGE_WITHID + " = " +withId;
         Cursor c = db.rawQuery(query, null);
         c.moveToFirst();
 
@@ -415,8 +404,8 @@ public class DBHandler extends SQLiteOpenHelper {
             if (c.getString(c.getColumnIndex("USERPK")) != null) {
                 chatRoomTable.setPkUser(c.getInt(c.getColumnIndex("USERPK")));
             }
-            if (c.getString(c.getColumnIndex("SENDERC")) != null) {
-                chatRoomTable.setSender_change(c.getInt(c.getColumnIndex("SENDERC")));
+            if (c.getString(c.getColumnIndex("WITHID")) != null) {
+                chatRoomTable.setOtherPk(c.getInt(c.getColumnIndex("WITHID")));
             }
             if (c.getString(c.getColumnIndex("READ")) != null) {
                 chatRoomTable.setIsReadStatus(c.getInt(c.getColumnIndex("READ")));

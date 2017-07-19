@@ -84,13 +84,13 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(final ViewHolder holder, int position) {
         final int index = position ;
-        ChatRoom chatRoom = chatRoomArrayList.get(index);
+        final ChatRoom chatRoom = chatRoomArrayList.get(index);
         int size = chatRoomArrayList.size();
         final int with_pk = chatRoom.getWith_pk();
         Users users = new Users(context);
-        final String[] name = new String[1];
+        String name;
         final String[] username = new String[1];
         final Bitmap[] bp = new Bitmap[1];
         // Users user = new Users(dba.getPostUserPk(dba.getPostUser(comment_pk)));
@@ -99,25 +99,33 @@ public class ChatRoomsAdapter extends RecyclerView.Adapter<ChatRoomsAdapter.View
             @Override
             public void onSuccess(UserMeta user) {
                 System.out.println("yes65262626626");
-                name[0] = user.getFirstName() + " " + user.getLastName();
+                //name = user.getFirstName() + " " + user.getLastName();
                 // set text in the layout here'
-                username[0] = user.getUsername();
+                //username[0] = user.getUsername();
+                holder.name.setText( user.getFirstName() + " " + user.getLastName());
+                chatRoom.setName( user.getFirstName() + " " + user.getLastName());
+                chatRoom.setUsername(user.getUsername());
+                chatRoomArrayList.get(index).setName( user.getFirstName() + " " + user.getLastName());
+
             }
 
             @Override
             public void handleDP(Bitmap dp) {
                 System.out.println("dp dsda");
-                bp[0] = dp;
+
+                holder.chatRoomDP.setImageBitmap(dp);
+                chatRoom.setDP(dp);
+
                 // set text in the layout here
             }
 
         });
-        holder.name.setText(name[0]);
-        chatRoom.setName(name[0]);
-        chatRoom.setUsername(username[0]);
-        chatRoomArrayList.get(position).setName(name[0]);
-        holder.chatRoomDP.setImageBitmap(bp[0]);
-        chatRoom.setDP(bp[0]);
+//        holder.name.setText(name[0]);
+//        chatRoom.setName(name[0]);
+//        chatRoom.setUsername(username[0]);
+//        chatRoomArrayList.get(position).setName(name[0]);
+//        holder.chatRoomDP.setImageBitmap(bp[0]);
+//        chatRoom.setDP(bp[0]);
 
 //        holder.chatRoomDP.setImageBitmap(dpBitmap);
 

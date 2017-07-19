@@ -1,6 +1,7 @@
 package com.example.libreerp;
 
 import android.app.ActivityManager;
+import android.content.Intent;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -45,6 +46,22 @@ public class NewChat extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.homefragment_menu,menu);
         MenuItem item = menu.findItem(R.id.search_chat);
         SearchView searchview = (SearchView) item.getActionView();
+        searchview.isIconified();
+        item.expandActionView();
+        searchview.setIconifiedByDefault(true);
+        MenuItemCompat.setOnActionExpandListener(item, new MenuItemCompat.OnActionExpandListener() {
+            @Override
+            public boolean onMenuItemActionExpand(MenuItem item) {
+                return true;
+            }
+
+            @Override
+            public boolean onMenuItemActionCollapse(MenuItem item) {
+                // Write your code here
+                return true;
+            }
+        });
+
         searchview.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -91,7 +108,6 @@ public class NewChat extends AppCompatActivity {
                         }
                     });
 
-
                 return true;
             }
 
@@ -107,7 +123,7 @@ public class NewChat extends AppCompatActivity {
             }
 
         });
-
+        item.setVisible(true);
         userListAdapter.clearData();
         user_list.clear();
         return true;

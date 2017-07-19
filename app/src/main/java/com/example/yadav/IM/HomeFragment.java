@@ -81,6 +81,8 @@ public class HomeFragment extends Fragment {
     private ArrayList<ChatRoomTable> storeUnreadList = new ArrayList<ChatRoomTable>();
     static Boolean isReceive;
     static Bundle bundle;
+    static boolean isEmpty = false ;
+    static int withID = 0 ;
     @Override
     public void onResume() {
         // TODO Auto-generated method stub
@@ -277,11 +279,16 @@ public class HomeFragment extends Fragment {
         chatRoomArrayList = new ArrayList<>();
         context = getActivity().getApplicationContext();
        // load_data_from_database(0);
+
         isReceive = false ;
         bundle = getActivity().getIntent().getExtras();
         if(bundle!=null) {
             isReceive = bundle.getBoolean("isReceive");
+            isEmpty = bundle.getBoolean("isEmpty");
+            withID = (bundle.getInt("withId"));
+
         }
+
         setHasOptionsMenu(true);
         recyclerView = (RecyclerView)  myView.findViewById(R.id.chatList_recycler_view);
         FloatingActionButton newChat = (FloatingActionButton) myView.findViewById(R.id.newChat);
@@ -314,6 +321,7 @@ public class HomeFragment extends Fragment {
         recyclerView.setAdapter(mAdapter);
 
         fetchChatRooms();
+
         return myView;
     }
 
@@ -543,6 +551,7 @@ public class HomeFragment extends Fragment {
                     intent.putExtra("chatID", Integer.toString(chatRoom.getId()));
                     intent.putExtra("with_id", Integer.toString(pk_select));
                     intent.putExtra("name", chatRoomName);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(intent);
 
                     break ;
@@ -572,7 +581,7 @@ public class HomeFragment extends Fragment {
                 intent.putExtra("with_id", Integer.toString(chatRoom.getWith_pk()));
                 intent.putExtra("name", chatRoom.getName());
                 intent.putExtra("userName" , chatRoom.getUsername());
-
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intent);
 
             }
@@ -614,6 +623,16 @@ public class HomeFragment extends Fragment {
                 }
 
                 createnewChatroom();
+                if (isEmpty){
+                    for (int i = 0 ; i < chatRoomArrayList.size() ;i++){
+                        if (chatRoomArrayList.get(i).getWith_pk() == withID){
+                            chatRoomArrayList.remove(i);
+                            dba.deleteChatRoom(withID);
+                            break;
+                        }
+                    }
+
+                }
                 return null;
             }
             @Override

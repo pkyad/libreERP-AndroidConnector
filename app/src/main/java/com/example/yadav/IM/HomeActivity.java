@@ -1,5 +1,6 @@
 package com.example.yadav.IM;
 
+import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -7,11 +8,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AlertDialog;
@@ -85,7 +88,9 @@ public class HomeActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         context = getApplicationContext();
-
+        ActivityCompat.requestPermissions(HomeActivity.this,
+                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                1);
         unreadNotification = new ArrayList<NotificationMessage>();
         Intent newChatIntent = getIntent();
         isReceive = newChatIntent.getBooleanExtra("isReceive",isReceive);
@@ -93,7 +98,9 @@ public class HomeActivity extends AppCompatActivity
         newWithPk = newChatIntent.getIntExtra("with_PK",newWithPk );
         String chatRoomName = newChatIntent.getStringExtra("name");
         Users users = new Users(context);
-
+        Intent intentFromChatRoomActivity = getIntent();
+        int withId = intentFromChatRoomActivity.getIntExtra("withId",0);
+        boolean isEmpty = intentFromChatRoomActivity.getBooleanExtra("isEmpty",false);
 
 
 
@@ -101,7 +108,8 @@ public class HomeActivity extends AppCompatActivity
         bundle.putInt("with_PK",newWithPk);
         bundle.putString("name",chatRoomName);
         bundle.putBoolean("isReceive",isReceive);
-
+        bundle.putInt("withId",withId);
+        bundle.putBoolean("isEmpty",isEmpty);
         users.get(newWithPk , new UserMetaHandler(){
             @Override
             public void onSuccess(UserMeta user){
@@ -403,6 +411,31 @@ public class HomeActivity extends AppCompatActivity
 
 
 
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    Toast.makeText(HomeActivity.this, "Permission denied to read your External storage", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 
     public String getCommitDate(String timestamp) {

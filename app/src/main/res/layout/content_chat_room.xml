@@ -19,21 +19,14 @@
             android:layout_height="match_parent"
             android:layout_alignParentTop="true"
             android:background="@color/grey"
-
             android:scrollbars="vertical"
-            android:paddingBottom="50dp"
+            android:paddingBottom="10dp"
+            android:layout_above="@+id/linearLayout"
             android:windowSoftInputMode="adjustResize"
         />
 
 
-    <View
-        android:id="@+id/coverView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clickable="true"
-        android:background="#00000000"
-        android:visibility="gone"
-        />
+
 
     <LinearLayout
         android:background="@android:color/white"

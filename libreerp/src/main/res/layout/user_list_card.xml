@@ -10,14 +10,15 @@
         android:layout_height="wrap_content"
         android:visibility="gone"
         android:id="@+id/user_select"/>
-    <ImageView
-        android:layout_width="30dp"
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:layout_width="50dp"
         android:id="@+id/user_image"
-        android:layout_height="30dp"
+        android:layout_height="50dp"
         android:padding="5dp"/>
     <TextView
         android:layout_width="match_parent"
         android:padding="5dp"
+        android:textSize="20dp"
         android:layout_height="wrap_content"
         android:id="@+id/user_name"/>
 </LinearLayout>
