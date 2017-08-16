@@ -45,5 +45,5 @@
     <string name="click_with_item">You clicked on item #%d!</string>
 
     <string name="disabled_when_hidden">Disabled when the FAB is hidden</string>
-    <string name="title_activity_edit_task">EditTask</string>
+    <string name="title_activity_edit_task">Edit Task</string>
 </resources>
